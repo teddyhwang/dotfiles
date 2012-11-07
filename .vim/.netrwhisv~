@@ -1,0 +1,10 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =8
+let g:netrw_dirhist_1='/Users/teddyhwang/Sites/trapeze/nodejs/statusboard/public/static/teddy/media'
+let g:netrw_dirhist_2='/Users/teddyhwang/Sites/trapeze/nodejs/statusboard/public/static/teddy'
+let g:netrw_dirhist_3='/Users/teddyhwang/host/Sites/trapeze/nodejs/statusboard/public/static/teddy'
+let g:netrw_dirhist_4='/Users/teddyhwang/host/Sites/trapeze/nodejs/statusboard/public/static/teddy/media'
+let g:netrw_dirhist_5='/Users/teddyhwang/host/Sites/trapeze/nodejs/statusboard/public/static/teddy/media/css'
+let g:netrw_dirhist_6='/Users/teddyhwang/host/Sites/trapeze/nodejs/statusboard/public/static/teddy'
+let g:netrw_dirhist_7='/Users/teddyhwang/host/Sites/trapeze/nodejs/statusboard/public/static/teddy/media'
+let g:netrw_dirhist_8='/Users/teddyhwang/host/Sites/trapeze/nodejs/statusboard/public/static/teddy/media/css'

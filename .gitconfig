@@ -1,0 +1,28 @@
+[user]
+    name = teddyhwang
+    email = tshwang@gmail.com
+
+[color]
+    ui = auto
+
+[core]
+    excludesfile = ~/.gitignore
+    autocrlf = false
+    pager = less +G
+
+[alias]
+    llog = log --date=local
+    st = status
+    ci = commit
+
+[svn]
+    rmdir = true
+
+[push]
+    default = matching
+
+[format]
+    pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset
+
+[credential]
+    helper = osxkeychain

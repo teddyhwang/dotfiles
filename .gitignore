@@ -1,0 +1,6 @@
+*.pyc
+*.swp
+.DS_Store
+Session.vim
+settings_local.py
+env_*

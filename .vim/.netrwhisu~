@@ -1,0 +1,8 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =6
+let g:netrw_dirhist_1='/Users/teddyhwang/Sites/clarity/growcalls/css'
+let g:netrw_dirhist_2='/Users/teddyhwang/Sites/clarity/growcalls'
+let g:netrw_dirhist_3='/Users/teddyhwang/Sites/clarity/growcalls/app'
+let g:netrw_dirhist_4='/Users/teddyhwang/Sites/clarity/growcalls/app/controllers'
+let g:netrw_dirhist_5='/Users/teddyhwang/Sites/clarity/growcalls/css'
+let g:netrw_dirhist_6='/Users/teddyhwang/Sites/trapeze/django-cms'

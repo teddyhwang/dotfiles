@@ -113,3 +113,6 @@ export PYTHONPATH=.:..:../lib
 export EDITOR=vim
 export NODE_PATH=/usr/local/bin/node
 export PATH="/usr/local/share/npm/bin:$PATH"
+
+# This loads RVM into a shell session.
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"

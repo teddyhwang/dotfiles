@@ -1,7 +1,0 @@
-let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =5
-let g:netrw_dirhist_1='/Volumes/Sapient/opensource/pagelist/js'
-let g:netrw_dirhist_2='/Volumes/Sapient/opensource/pagelist'
-let g:netrw_dirhist_3='/Volumes/Sapient/opensource/pagelist/css'
-let g:netrw_dirhist_4='/Volumes/Sapient/opensource/quicksilverjs'
-let g:netrw_dirhist_5='/Volumes/Sapient/harley/social-platform/css'

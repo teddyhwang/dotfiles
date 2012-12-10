@@ -10,7 +10,7 @@ set expandtab             " Converts tab keypresses to spaces
 set tabstop=4             " Number of spaces that a <Tab> count for
 set shiftwidth=4          " Sets number of spaces used for (auto)indent
 set sts=4                 " Number of spaces deleted when you hit <BS>
-set tw=100
+set tw=80
 " Highlight Tabs, trailing spaces and non breakable-spaces
 " Old tabs format:
 " set list listchars=tab:>-,trail:-,nbsp:%

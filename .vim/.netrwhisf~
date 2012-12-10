@@ -1,8 +1,0 @@
-let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =6
-let g:netrw_dirhist_1='/Volumes/Sapient'
-let g:netrw_dirhist_2='/Volumes/Sapient/musculardystrophy'
-let g:netrw_dirhist_3='/Volumes/Sapient/musculardystrophy/site'
-let g:netrw_dirhist_4='/Volumes/Sapient/harley/hd110/source/documentation'
-let g:netrw_dirhist_5='/Volumes/Sapient/musculardystrophy/source/nonintegrated'
-let g:netrw_dirhist_6='/Volumes/Sapient/musculardystrophy/source/nonintegrated/css'

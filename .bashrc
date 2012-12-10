@@ -1,5 +1,7 @@
-alias devbox='ssh teddy-devbox.local'
-alias teddyhwang='ssh teddyhwang-devbox.local'
+alias devbox='ssh thwang@teddy-devbox.local'
+alias ubuntu='ssh teddyhwang@teddyhwang-devbox.local'
+alias sapient='ssh thwang@TORthwang24403.local'
+alias teddyhwang='ssh teddyhwang@Teddys-MacBook-Pro.local'
 
 . ~/.sh/git-completion.sh
 . ~/.sh/svn_ps1.sh
@@ -111,7 +113,7 @@ umask 0002
 
 export PYTHONPATH=.:..:../lib
 export EDITOR=vim
-export NODE_PATH=/usr/local/bin/node
+export NODE_PATH=/usr/local/share/npm/bin/
 export PATH="/usr/local/share/npm/bin:$PATH"
 
 # This loads RVM into a shell session.

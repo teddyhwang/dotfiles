@@ -1,3 +1,4 @@
+execute pathogen#infect()
 syn on
 set bg=dark
 filetype plugin indent on " autoindent while editing according to the syntax
@@ -33,3 +34,5 @@ set cursorline
 " nnoremap <Leader>c :set cursorline! cursorcolumn!<CR>
 autocmd WinEnter * setlocal cursorline
 autocmd WinLeave * setlocal nocursorline
+highlight clear SignColumn
+" let g:gitgutter_enabled = 0

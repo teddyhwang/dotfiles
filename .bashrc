@@ -1,7 +1,9 @@
 alias devbox='ssh thwang@teddy-devbox.local'
 alias ubuntu='ssh teddyhwang@teddyhwang-devbox.local'
-alias sapient='ssh thwang@TORthwang24403.local'
-alias teddyhwang='ssh teddyhwang@Teddys-MacBook-Pro.local'
+alias sapient='ssh -2 -6 thwang@TORthwang24403.194168233.members.btmm.icloud.com'
+alias teddyhwang='ssh -2 -6 teddyhwang@Teddys-MacBook-Pro.194168233.members.btmm.icloud.com'
+alias teddyhwang.com='ssh teddyhwang@teddyhwang.com'
+alias labs='ssh teddyhwang@192.81.211.84'
 
 . ~/.sh/git-completion.sh
 . ~/.sh/svn_ps1.sh

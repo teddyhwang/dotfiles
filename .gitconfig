@@ -26,3 +26,7 @@
 
 # [credential]
 #    helper = osxkeychain
+
+# Force git to use HTTPS instead of SSH
+[url "https://"]
+    insteadOf = git://

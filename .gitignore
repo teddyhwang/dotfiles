@@ -4,3 +4,4 @@
 Session.vim
 settings_local.py
 env_*
+.netrwhist

@@ -2,6 +2,7 @@ set nocompatible
 
 " Pathogen
 call pathogen#infect()
+call pathogen#incubate()
 syntax on "Enable syntax highlight
 filetype plugin indent on " autoindent while editing according to the syntax
 
@@ -49,5 +50,7 @@ autocmd WinLeave * setlocal nocursorline
 let g:pyindent_open_paren = '&sw'
 let g:pyindent_nested_paren = '&sw'
 let g:pyindent_continue = '&sw'
+
+let coffee_linter = '/usr/local/bin/coffeelint'
 
 au BufNewFile,BufReadPost *.coffee setl shiftwidth=2 expandtab

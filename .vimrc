@@ -1,7 +1,9 @@
 set nocompatible
+
 " Pathogen
 call pathogen#infect()
-call pathogen#helptags()
+syntax on "Enable syntax highlight
+filetype plugin indent on " autoindent while editing according to the syntax
 
 set bg=dark
 set scrolloff=3
@@ -25,13 +27,15 @@ set list listchars=tab:..,trail:-,nbsp:%
 " Highlight Tabs, trailing spaces and non breakable-spaces
 " Old tabs format:
 " set list listchars=tab:>-,trail:-,nbsp:%
+set clipboard=unnamed
+set omnifunc=syntaxcomplete#Complete
 
-syntax enable             "Enable syntax highlight
-
-colo ir_black
+colo distinguished
 
 hi clear SpellBad
 hi SpellBad cterm=underline
+
+highlight clear SignColumn
 
 " Do not wrap html files
 autocmd FileType html set tw=0
@@ -40,17 +44,10 @@ autocmd FileType htmldjango set tw=0
 autocmd WinEnter * setlocal cursorline
 autocmd WinLeave * setlocal nocursorline
 
-au BufNewFile,BufRead *.less set filetype=less
-au BufRead,BufNewFile *.css set ft=css syntax=css3
-au BufRead,BufNewFile jquery.*.js set ft=javascript syntax=jquery
-
-highlight clear SignColumn
-
 " To turn off gitgutter
 " let g:gitgutter_enabled = 0
-"
-filetype plugin indent on " autoindent while editing according to the syntax
-
 let g:pyindent_open_paren = '&sw'
 let g:pyindent_nested_paren = '&sw'
 let g:pyindent_continue = '&sw'
+
+au BufNewFile,BufReadPost *.coffee setl shiftwidth=2 expandtab

@@ -7,7 +7,6 @@ alias teddyhwang.com='ssh teddyhwang@teddyhwang.com'
 . ~/.sh/hg_ps1.sh
 . ~/.sh/git-svn-hg.sh
 
-GIT_PS1_SHOWDIRTYSTATE=true
 GIT_PS1_SHOWSTASHSTATE=true
 
 # ~/.bashrc: executed by bash(1) for non-login shells.

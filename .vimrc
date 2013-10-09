@@ -15,31 +15,31 @@ set showmatch
 set incsearch
 set autoindent
 set history=1000
-set tabstop=4             " Number of spaces that a <Tab> count for
-set shiftwidth=4          " Sets number of spaces used for (auto)indent
-set sts=4                 " Number of spaces deleted when you hit <BS>
+set tabstop=2             " Number of spaces that a <Tab> count for
+set shiftwidth=2          " Sets number of spaces used for (auto)indent
+set sts=2                 " Number of spaces deleted when you hit <BS>
 set tw=80
 set cpoptions+=$
 set nu
 set directory^=$HOME/.vim_swap//   "put all swap files together in one place
 set cursorline
 set statusline=%<\ %n:%f\ %m%r%y%=%-35.(line:\ %l\ of\ %L,\ col:\ %c%V\ (%P)%)
+set backspace=indent,eol,start
+
 set list listchars=tab:..,trail:-,nbsp:%
-" Highlight Tabs, trailing spaces and non breakable-spaces
-" Old tabs format:
-" set list listchars=tab:>-,trail:-,nbsp:%
 set clipboard=unnamed
 set omnifunc=syntaxcomplete#Complete
 
+set foldmethod=indent
+set foldnestmax=10
+set nofoldenable
+set foldlevel=1
+
 colo distinguished
-
-hi clear SpellBad
-hi SpellBad cterm=underline
-
-highlight clear SignColumn
 
 " Do not wrap html files
 autocmd FileType html set tw=0
+autocmd FileType py set tw=0
 autocmd FileType xhtml set tw=0
 autocmd FileType htmldjango set tw=0
 autocmd WinEnter * setlocal cursorline
@@ -51,6 +51,4 @@ let g:pyindent_open_paren = '&sw'
 let g:pyindent_nested_paren = '&sw'
 let g:pyindent_continue = '&sw'
 
-let coffee_linter = '/usr/local/bin/coffeelint'
-
-au BufNewFile,BufReadPost *.coffee setl shiftwidth=2 expandtab
+au BufNewFile,BufReadPost *.py setl shiftwidth=4 sts=4 tabstop=4 expandtab

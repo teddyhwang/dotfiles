@@ -311,8 +311,10 @@ __git_ps1 ()
 			fi
 		fi
 
+    RED=$(tput setaf 1)
+    GREEN=$(tput setaf 2)
 		local f="$w$i$s$u"
-		printf "${1:- (%s)}" "$c${b##refs/heads/}${f:+ $f}$r$p"
+		printf "${1:- (%s)}" "$c${b##refs/heads/}${f:+${RED}$f${GREEN}}$r$p"
 	fi
 }
 

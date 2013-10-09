@@ -1,9 +1,14 @@
-alias teddyhwang='ssh -2 -6 teddyhwang@Teddys-MacBook-Pro.194168233.members.btmm.icloud.com'
+alias teddyhwang='ssh teddyhwang@teddys-macbook-pro.194168233.members.btmm.icloud.com'
+alias points='ssh teddy.hwang@pts-thwang.194168233.members.btmm.icloud.com'
 alias teddyhwang.com='ssh teddyhwang@teddyhwang.com'
 
 . ~/.sh/git-completion.sh
 . ~/.sh/svn_ps1.sh
-. ~/.sh/git-svn.sh
+. ~/.sh/hg_ps1.sh
+. ~/.sh/git-svn-hg.sh
+
+GIT_PS1_SHOWDIRTYSTATE=true
+GIT_PS1_SHOWSTASHSTATE=true
 
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
@@ -22,6 +27,8 @@ shopt -s histappend
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 HISTSIZE=1000
 HISTFILESIZE=2000
+
+TERM=xterm-256color
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -59,7 +66,7 @@ fi
 PROMPT_COMMAND='DIR=`pwd|sed -e "s!$HOME!~!"`; if [ ${#DIR} -gt 30 ]; then CurDir=${DIR:0:12}...${DIR:${#DIR}-15}; else CurDir=$DIR; fi'
 
 if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\e[32m\]$(__git_svn_ps1 " \[\e[32m\](%s)\[\e[0m\]")\[\033[00m\]\$ '
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\e[32m\]$(__git_svn_hg_ps1 " \[\e[32m\](%s)\[\e[0m\]")\[\033[00m\]\$ '
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\[\033[31m\]\h\[\033[0m\]:\w\$ '
 fi
@@ -113,6 +120,7 @@ export PYTHONPATH=.:..:../lib
 export EDITOR=vim
 export NODE_PATH=/usr/local/share/npm/bin/
 export PATH="/usr/local/share/npm/bin:$PATH"
+export PATH="/usr/local/Cellar/ruby/2.0.0-p247/bin:$PATH"
 
 # This loads RVM into a shell session.
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"

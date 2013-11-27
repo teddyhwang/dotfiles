@@ -58,7 +58,7 @@ bind = resize =
 bind + resize +1
 bind - resize -1
 bind _ resize max
-bind \ resize +20
+bind \ resize +25
 bind j focus down
 bind k focus up
 bind h focus left
@@ -68,14 +68,14 @@ bind b focus bottom
 
 chdir host/Sites/Points
 screen -t Editor
-screen -t Server
 screen -t Terminal
+screen -t Server
 next
 split
-resize +20
+resize +25
 focus
 select Server
-split -v
-focus
-select Terminal
+# split -v
+# focus
+# select Terminal
 focus

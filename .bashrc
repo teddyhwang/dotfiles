@@ -1,3 +1,6 @@
+# lsof -i :5000
+# ps aux|grep python
+
 alias teddyhwang='ssh teddyhwang@teddys-macbook-pro.194168233.members.btmm.icloud.com'
 alias points='ssh teddy.hwang@pts-thwang.194168233.members.btmm.icloud.com'
 alias teddyhwang.com='ssh teddyhwang@teddyhwang.com'
@@ -7,7 +10,7 @@ alias teddyhwang.com='ssh teddyhwang@teddyhwang.com'
 . ~/.sh/hg_ps1.sh
 . ~/.sh/git-svn-hg.sh
 
-GIT_PS1_SHOWSTASHSTATE=true
+GIT_PS1_SHOWDIRTYSTATE=true
 
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
@@ -115,11 +118,10 @@ fi
 
 umask 0002
 
-export PYTHONPATH=.:..:../lib
 export EDITOR=vim
-export NODE_PATH=/usr/local/share/npm/bin/
-export PATH="/usr/local/share/npm/bin:$PATH"
 export PATH="/usr/local/Cellar/ruby/2.0.0-p247/bin:$PATH"
 
 # This loads RVM into a shell session.
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting

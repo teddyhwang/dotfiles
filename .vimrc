@@ -27,9 +27,6 @@ set statusline=%<\ %n:%f\ %m%r%y%=%-35.(line:\ %l\ of\ %L,\ col:\ %c%V\ (%P)%)
 set backspace=indent,eol,start
 
 set list listchars=tab:..,trail:-,nbsp:%
-" Highlight Tabs, trailing spaces and non breakable-spaces
-" Old tabs format:
-" set list listchars=tab:>-,trail:-,nbsp:%
 set clipboard=unnamed
 set omnifunc=syntaxcomplete#Complete
 
@@ -41,6 +38,7 @@ set foldlevel=1
 colo distinguished
 
 highlight clear SignColumn
+set colorcolumn=80
 
 " Do not wrap html files
 autocmd FileType html set tw=0
@@ -58,3 +56,9 @@ let g:pyindent_continue = '&sw'
 
 au BufNewFile,BufReadPost *.py setl shiftwidth=4 sts=4 tabstop=4 expandtab
 au BufNewFile,BufReadPost *.coffee setl shiftwidth=2 expandtab
+
+let g:ctrlp_custom_ignore = {
+  \ 'dir':  '\v[\/]\.(git|hg|svn)$',
+  \ 'dist': '/dist/',
+  \ 'file': '\v\.(exe|so|dll|DS_Store)$',
+  \ }

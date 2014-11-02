@@ -1,3 +1,5 @@
+termcapinfo xterm* ti@:te@
+
 # no annoying audible bell, please
 vbell off
 

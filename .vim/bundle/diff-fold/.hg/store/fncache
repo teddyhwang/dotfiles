@@ -1,0 +1,10 @@
+data/syntax/hg.vim.i
+data/diff.vim.i
+data/ftdetect/diff_fold.vim.i
+data/ftplugin/diff_fold.vim.i
+data/after/syntax/diff.vim.i
+data/syntax/diffnav.vim.i
+data/after/syntax/git.vim.i
+data/autoload/diff_fold/hg.vim.i
+data/diff_fold.vim.i
+data/plugin/diff-fold.vim.i

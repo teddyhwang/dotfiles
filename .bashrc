@@ -1,9 +1,9 @@
-# lsof -i :5000
-# ps aux|grep python
-
 alias teddyhwang='ssh teddyhwang@teddys-macbook-pro.194168233.members.btmm.icloud.com'
 alias points='ssh teddy.hwang@pts-thwang.194168233.members.btmm.icloud.com'
 alias teddyhwang.com='ssh teddyhwang@teddyhwang.com'
+
+alias generate_tags='ctags --exclude=*.js --exclude=node_modules --exclude=*/assets/static/.generated_js --languages=coffee -R .'
+alias update_tags='ctags -a tags'
 
 . ~/.sh/git-completion.sh
 . ~/.sh/svn_ps1.sh
@@ -119,9 +119,13 @@ fi
 umask 0002
 
 export EDITOR=vim
-export PATH="/usr/local/Cellar/ruby/2.0.0-p247/bin:$PATH"
+export HGEDITOR=~/hgeditor
 
 # This loads RVM into a shell session.
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
 PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
+
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME/Devel
+source /usr/local/bin/virtualenvwrapper.sh

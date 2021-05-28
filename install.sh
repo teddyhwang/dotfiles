@@ -1,20 +1,16 @@
 #!/bin/bash
+
 if [ $SPIN ]; then
-  if ! command -v rg &> /dev/null; then
-    sudo apt-get install -y ripgrep
-  fi
-
-  if ! command -v fzf &> /dev/null; then
-    sudo apt-get install -y fzf
-  fi
-
-  if ! command -v ranger &> /dev/null; then
-    sudo apt-get install -y ranger
-  fi
-
-  if ! command -v base16-manager &> /dev/null; then
-    git clone https://github.com/base16-manager/base16-manager && cd base16-manager && sudo make install && cd .. && rm -rf base16-manager
-  fi
+  mkdir ~/.ssh
+  ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+  sudo apt install -o Dpkg::Options::="--force-overwrite" -y bat ripgrep ranger xdg-utils tree
+  git clone https://github.com/base16-manager/base16-manager && cd base16-manager && sudo make install && cd .. && rm -rf base16-manager
+  wget "https://github.com/sharkdp/vivid/releases/download/v0.6.0/vivid_0.6.0_amd64.deb"
+  sudo dpkg -i vivid_0.6.0_amd64.deb
+  wget "https://github.com/barnumbirr/delta-debian/releases/download/0.6.0-1/delta-diff_0.6.0-1_amd64_debian_buster.deb"
+  sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb
+  rm vivid_0.6.0_amd64.deb
+  rm delta-diff_0.6.0-1_amd64_debian_buster.deb
 fi
 
 C_DEFAULT="\x1B[39m"
@@ -31,25 +27,25 @@ else
 fi
 if ! [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
   echo -e "${C_GREEN}Installing Oh My ZSH Themes...$C_DEFAULT"
-  git clone git@github.com:romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+  git clone https://github.com/romkatv/powerlevel10k ~/.oh-my-zsh/custom/themes/powerlevel10k
 else
   echo -e "${C_LIGHTGRAY}Powerlevel10k is installed$C_DEFAULT"
 fi
 if ! [ -d ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions ]; then
   echo -e "${C_GREEN}Installing Oh My ZSH Plugins...$C_DEFAULT"
-  git clone git@github.com:zsh-users/zsh-autosuggestions.git ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+  git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
 else
   echo -e "${C_LIGHTGRAY}ZSH Autosuggestions is installed$C_DEFAULT"
 fi
 if ! [ -d ~/.oh-my-zsh/custom/plugins/zsh-completions ]; then
   echo -e "${C_GREEN}Installing Oh My ZSH Plugins...$C_DEFAULT"
-  git clone git@github.com:zsh-users/zsh-completions.git ~/.oh-my-zsh/custom/plugins/zsh-completions
+  git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugins/zsh-completions
 else
   echo -e "${C_LIGHTGRAY}ZSH Complettions is installed$C_DEFAULT"
 fi
 if ! [ -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ]; then
   echo -e "${C_GREEN}Installing Oh My ZSH Plugins...$C_DEFAULT"
-  git clone git@github.com:zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 else
   echo -e "${C_LIGHTGRAY}ZSH Syntax Highlighting is installed$C_DEFAULT"
 fi
@@ -61,15 +57,13 @@ else
   echo -e "${C_LIGHTGRAY}tmux plugin manager is installed$C_DEFAULT"
 fi
 
-if ! [ -f ~/.base16_theme ]; then
-  echo -e "${C_GREEN}Installing base16...$C_DEFAULT"
+if ! command -v base16-manager &> /dev/null; then
+  echo -e "${C_GREEN}Installing base16-manager...$C_DEFAULT"
   base16-manager install chriskempson/base16-shell
   base16-manager install chriskempson/base16-vim
   base16-manager install nicodebo/base16-fzf
-  echo -e "${C_GREEN}Symlinking base16 script...$C_DEFAULT"
-  ln -s .base16-manager/chriskempson/base16-shell/scripts/base16-seti.sh ~/.base16_theme
 else
-  echo -e "${C_LIGHTGRAY}base16 script is installed$C_DEFAULT"
+  echo -e "${C_LIGHTGRAY}base16-manager is installed$C_DEFAULT"
 fi
 if ! [ -d ~/.vim ]; then
   echo -e "${C_GREEN}Creating .vim folder...$C_DEFAULT"
@@ -90,7 +84,14 @@ else
   echo -e "${C_LIGHTGRAY}.config exists$C_DEFAULT"
 fi
 
+rm -rf ~/.config/nvim
+rm -rf ~/.zshrc
+rm -rf ~/.gitconfig
 ./linker.sh
-bat cache --build
+
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
+batcat cache --build
+base16-manager set seti
+nvim --headless +PlugInstall +qall
 
 echo -e "$C_GREEN\nINSTALLATION COMPLETE$C_DEFAULT"

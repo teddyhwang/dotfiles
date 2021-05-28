@@ -1,10 +1,9 @@
 [include]
     path = .gituser
 
-; [user]
-;     name = Teddy Hwang
-;     email = teddy.hwang@shopify.com
-;     signingkey = 7B917D71175C63CA
+[user]
+    name = Teddy Hwang
+    email = teddy.hwang@shopify.com
 
 [color]
     ui = auto
@@ -48,7 +47,7 @@
 	insteadOf = ssh://git@github.com/Shopify/
 	insteadOf = ssh://git@github.com/shopify/
 [commit]
-	gpgsign = true
+	gpgsign = false
 [gpg]
 	program = gpg
 [pull]

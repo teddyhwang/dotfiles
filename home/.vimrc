@@ -105,7 +105,9 @@ set showmatch
 set signcolumn=yes
 set statusline+=%#warningmsg#
 set statusline+=%*
-set statusline+=%{gutentags#statusline()}
+if exists('gutentags#statusline()')
+  set statusline+=%{gutentags#statusline()}
+endif
 set sts=2
 set synmaxcol=0
 set tabstop=2
@@ -386,7 +388,7 @@ function! s:close_floats() abort
 endf
 
 function! s:setup_color()
-  source ~/.vim/colorscheme.vim
+  silent! source ~/.vim/colorscheme.vim
   highlight link ALEErrorSign WarningMsg
   highlight link ALEWarningSign Label
   highlight link CocErrorSign WarningMsg
@@ -427,7 +429,7 @@ function! ToggleHighlight(...)
   endif
 
   if g:disable_toggle_highlight == 0
-    silent call CocActionAsync('highlight')
+    silent! call CocActionAsync('highlight')
   endif
 endfunction
 
@@ -466,4 +468,4 @@ function! TmuxSplitCommand()
 endf
 
 call s:setup_color()
-call which_key#register('\', "g:which_key_map")
+silent! call which_key#register('\', "g:which_key_map")

@@ -1,7 +1,3 @@
-BASE16_SHELL="$HOME/.base16-manager/chriskempson/base16-shell/"
-[ -n "$PS1" ] && [ -s "$BASE16_SHELL/profile_helper.sh" ] && \
-  eval "$("$BASE16_SHELL/profile_helper.sh")"
-
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
@@ -73,7 +69,6 @@ plugins=(
   ripgrep
   ruby
   vi-mode
-  z
   zsh-autosuggestions
   zsh-completions
   zsh-syntax-highlighting
@@ -149,20 +144,13 @@ export FZF_DEFAULT_COMMAND="rg --files --hidden" # --no-ignore-vcs
 export FZF_DEFAULT_OPTS='--height 30% --border'
 export FZF_TMUX_OPTS='-d 40%'
 export HIGHLIGHT_STYLE=base16/seti
+export LS_COLORS="$(vivid generate molokai)"
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-[ -f ~/.lscolors ] && source ~/.lscolors
-
-[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] && source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-# [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ] && source /opt/homebrew/opt/chruby/share/chruby/auto.sh
 [ -f /usr/local/share/chruby/chruby.sh ] && source /usr/local/share/chruby/chruby.sh
 [ -f /usr/local/share/chruby/auto.sh ] && source /usr/local/share/chruby/auto.sh
 
 # https://nathanmlong.com/2015/01/optimizing-chruby-for-zsh/
-if [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ]; then
+if [ -f /usr/local/share/chruby/auto.sh ]; then
   unset RUBY_AUTO_VERSION
 
   function chruby_auto() {
@@ -191,8 +179,6 @@ if [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ]; then
   chruby_auto
 fi
 
-export LS_COLORS="$(vivid generate molokai)"
-
 alias ping='prettyping --nolegend'
 alias vi='nvim'
 alias lighter='b16m set one-light'
@@ -205,9 +191,9 @@ alias weather='curl wttr.in'
 alias please='sudo $(fc -ln -1)'
 alias ng="npm list -g --depth=0 2>/dev/null"
 alias nl="npm list --depth=0 2>/dev/null"
-alias ls="gls --color=auto -F"
 alias rake="noglob rake"
 alias mux="tmuxinator"
+alias bat="batcat"
 
 # Keypad
 # 0 . Enter

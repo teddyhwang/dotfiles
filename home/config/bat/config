@@ -1,0 +1,5 @@
+--theme="base16-seti"
+
+--map-syntax "*.rbi:Ruby"
+--map-syntax ".eslintrc:JSON"
+--map-syntax ".prettylintrc:JSON"

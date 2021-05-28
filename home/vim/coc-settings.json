@@ -1,0 +1,11 @@
+{
+  "suggest.noselect": false,
+  "highlight.disableLanguages": [
+    "markdown",
+    "md",
+    "netrw",
+    "tmuxtheme",
+    "vim",
+    "vimrc"
+  ]
+}

@@ -1,0 +1,55 @@
+[include]
+    path = .gituser
+
+; [user]
+;     name = Teddy Hwang
+;     email = teddy.hwang@shopify.com
+;     signingkey = 7B917D71175C63CA
+
+[color]
+    ui = auto
+
+[core]
+    excludesfile = ~/.gitignore
+    autocrlf = false
+    pager = delta --dark
+    editor = nvim
+    commitGraph = true
+
+[alias]
+    llog = log --date=local
+    st = status
+    ci = commit
+    sync = "!sh -c 'git checkout --quiet --detach HEAD && git fetch origin master:master ; git checkout --quiet -'"
+    delete = clean -fd
+
+[svn]
+    rmdir = true
+
+[push]
+    default = matching
+
+[format]
+    pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset
+
+[filter "lfs"]
+    clean = git-lfs clean %f
+    smudge = git-lfs smudge %f
+    required = true
+[diff]
+	algorithm = patience
+[protocol]
+	version = 2
+[gc]
+    writeCommitGraph = true
+[url "https://github.com/Shopify/"]
+	insteadOf = git@github.com:Shopify/
+	insteadOf = git@github.com:shopify/
+	insteadOf = ssh://git@github.com/Shopify/
+	insteadOf = ssh://git@github.com/shopify/
+[commit]
+	gpgsign = true
+[gpg]
+	program = gpg
+[pull]
+	rebase = false

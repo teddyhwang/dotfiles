@@ -273,13 +273,14 @@ let g:which_key_map['f'] = {
   \ 'R' : [':Irb'       , 'irb'],
   \ }
 
-command! Terminal FloatermNew
+command! Eslint CocCommand eslint.showOutputChannel
 command! Fzf FloatermNew fzf
+command! Irb FloatermNew irb
 command! Lazygit FloatermNew lazygit
 command! Node FloatermNew node
 command! Python FloatermNew python
 command! Ranger FloatermNew ranger
-command! Irb FloatermNew irb
+command! Terminal FloatermNew
 command! WQ wq
 command! Wq wq
 command! Wa wa

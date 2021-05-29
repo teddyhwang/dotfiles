@@ -10,8 +10,8 @@ export FZF_DEFAULT_OPTS='--height 30% --border'
 export FZF_TMUX_OPTS='-d 40%'
 export HIGHLIGHT_STYLE=base16/seti
 export LS_COLORS="$(vivid generate molokai)"
+export NVM_DIR="$HOME/.nvm"
 
-alias bat="batcat"
 alias brighter='b16m set synth-midnight-dark'
 alias dark='b16m set seti'
 alias darker='b16m set 3024'
@@ -36,7 +36,9 @@ POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX_ICON=""
 POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX_ICON="%(?:%{$fg_bold[green]%}➜ :%{$fg_bold[red]%}➜ )"
 POWERLEVEL9K_NODE_ENV_ICON="\ue781"
 POWERLEVEL9K_NODE_ICON="\ue781"
+POWERLEVEL9K_NODE_VERSION_FOREGROUND=black
 POWERLEVEL9K_NODE_VERSION_ICON="\ue781"
+POWERLEVEL9K_NODE_VERSION_PROJECT_ONLY=true
 POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 POWERLEVEL9K_PYENV_ICON="\uf81f"
@@ -54,7 +56,7 @@ POWERLEVEL9K_VI_MODE_FOREGROUND=black
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
   os_icon
   user
-  nvm
+  node_version
   chruby
   dir_writable
   dir
@@ -100,6 +102,43 @@ fpath=(~/.zsh.d/ $fpath)
 [ -f /usr/local/share/chruby/chruby.sh ] && source /usr/local/share/chruby/chruby.sh
 [ -f ~/.fzf.colors ] && source ~/.fzf.colors
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[ -f /opt/dev/dev.sh ] && source /opt/dev/dev.sh
+[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+[ -f /opt/homebrew/bin/virtualenvwrapper.sh ] && source /opt/homebrew/bin/virtualenvwrapper.sh
+[ -f ~/.bin/tmuxinator.zsh ] && source ~/.bin/tmuxinator.zsh
+[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] && source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+[ -f ~/.nix-profile/etc/profile.d/nix.sh ] && source ~/.nix-profile/etc/profile.d/nix.sh
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# https://nathanmlong.com/2015/01/optimizing-chruby-for-zsh/
+if [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ]; then
+  unset RUBY_AUTO_VERSION
+
+  function chruby_auto() {
+    local dir="$PWD/" version
+
+    until [[ -z "$dir" ]]; do
+      dir="${dir%/*}"
+
+      if { read -r version <"$dir/.ruby-version"; } 2>/dev/null || [[ -n "$version" ]]; then
+        if [[ "$version" == "$RUBY_AUTO_VERSION" ]]; then return
+        else
+          RUBY_AUTO_VERSION="$version"
+          chruby "$version"
+          return $?
+        fi
+      fi
+    done
+
+    if [[ -n "$RUBY_AUTO_VERSION" ]]; then
+      chruby_reset
+      unset RUBY_AUTO_VERSION
+    fi
+  }
+
+  chpwd_functions+=("chruby_auto")
+  chruby_auto
+fi
 
 autoload -U compinit && compinit
 setopt AUTO_PUSHD

@@ -1,0 +1,15 @@
+{
+  "solargraph.promptDownload": false,
+  "solargraph.checkGemVersion": false,
+  "languageserver": {
+    "sorbet": {
+      "enable": true,
+      "command": "srb",
+      "args": ["tc", "--enable-all-experimental-lsp-features", "--lsp"],
+      "filetypes": ["ruby", "rb"],
+      "rootPatterns": ["sorbet/config"],
+      "initializationOptions": {},
+      "settings": {}
+    }
+  }
+}

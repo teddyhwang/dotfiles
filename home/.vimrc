@@ -17,6 +17,7 @@ Plug 'benmills/vimux'
 Plug 'blueyed/vim-diminactive'
 Plug 'chriskempson/base16-vim'
 Plug 'dbeniamine/cheat.sh-vim'
+Plug 'dense-analysis/ale'
 Plug 'dhruvasagar/vim-table-mode'
 Plug 'dhruvasagar/vim-zoom'
 Plug 'iamcco/markdown-preview.nvim', {'do': 'cd app & yarn install'}
@@ -58,26 +59,20 @@ Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Tabmerge'
 Plug 'vim-test/vim-test'
 Plug 'voldikss/vim-floaterm'
-Plug 'w0rp/ale'
 Plug 'xolox/vim-misc'
-Plug 'xolox/vim-notes'
 Plug 'zackhsi/sorbet.vim'
 call plug#end()
 
 syntax sync fromstart
-
 setglobal complete-=i
-
-set backupdir=/tmp//
-set directory=/tmp//
-set undodir=/tmp//
-
 set autoread
+set backupdir=/tmp//
 set clipboard=unnamed
 set cmdheight=1
 set completeopt=menu
 set cpoptions+=$
 set cursorline
+set directory=/tmp//
 set directory^=$HOME/.vim_swap/
 set expandtab
 set exrc
@@ -99,23 +94,23 @@ set rtp+=/usr/local/opt/fzf
 set scrolloff=3
 set secure
 set shiftwidth=2
-" set shortmess+=c
 set shortmess=aFc
 set showmatch
 set signcolumn=yes
 set statusline+=%#warningmsg#
 set statusline+=%*
-if exists('gutentags#statusline()')
-  set statusline+=%{gutentags#statusline()}
-endif
 set sts=2
 set synmaxcol=0
 set tabstop=2
 set timeoutlen=500 ttimeoutlen=0
 set ttyfast
 set tw=120
+set undodir=/tmp//
 set updatetime=100
 set wildignore+=*/dist/*,*/coverage/*,*/coverage_report/*,*/node_modules/*,*.pyc,Session.vim,tags,*.git
+if !empty(glob('~/.vim/plugged/vim-gutentags'))
+  set statusline+=%{gutentags#statusline()}
+endif
 if has('nvim')
   set termguicolors
 endif
@@ -123,7 +118,6 @@ if exists('&inccommand')
   set inccommand=split
 endif
 
-" let &colorcolumn = '80,'.join(range(121,999),',')
 let base16colorspace=256
 let g:airline#extensions#vista#enabled = 0
 let g:airline_section_error = '%{airline#util#wrap(airline#extensions#coc#get_error(),0)}'
@@ -131,17 +125,23 @@ let g:airline_section_warning = '%{airline#util#wrap(airline#extensions#coc#get_
 let g:airline_theme = 'base16'
 let g:ale_cache_executable_check_failures = 1
 let g:ale_completion_enabled = 0
+let g:ale_disable_lsp = 1
 let g:ale_echo_msg_format = '[%linter% | %severity%] %s'
+let g:ale_fix_on_save = 1	
+let g:ale_fixers = {	
+\   'javascript': ['prettier'],	
+\   'ruby': ['rubocop'],	
+\}
 let g:ale_lint_delay = 0
-let g:ale_ruby_rubocop_executable = 'rubocop'
-let g:ale_ruby_sorbet_options = '--ignore=test'
-let g:ale_set_highlights = 0
-let g:ale_sign_error = '◉'
-let g:ale_sign_warning = '◉'
 let g:ale_linters = {
   \ 'ruby': ['rubocop', 'ruby', 'sorbet'],
   \ 'graphql': ['gqlint'],
   \ }
+let g:ale_ruby_rubocop_executable = 'bundle'
+let g:ale_ruby_sorbet_options = '--ignore=test'
+let g:ale_set_highlights = 0
+let g:ale_sign_error = '◉'
+let g:ale_sign_warning = '◉'
 let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.jsx,*.tsx'
 let g:closetag_filetypes = 'html,xhtml,phtml,jsx,tsx'
 let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx'
@@ -222,7 +222,6 @@ let g:fzf_layout = { 'window': { 'width': 1, 'height': 0.4, 'yoffset': 1, 'borde
 let g:gutentags_define_advanced_commands = 1
 let g:gutentags_exclude_filetypes = ['gitcommit', 'gitconfig', 'gitrebase', 'gitsendemail', 'git']
 let g:highlightedyank_highlight_duration = 100
-let g:notes_directories = ['~/Dropbox/Notes']
 let g:dbs = {
 \  'shopify': 'presto://presto-for-datachi.presto.tunnel.shopifykloud.com:8675'
 \ }
@@ -244,6 +243,9 @@ let g:floaterm_keymap_prev = '<F3>'
 let g:floaterm_keymap_toggle = '<F1>'
 let g:floaterm_open_command = 'vsplit'
 let g:floaterm_width = 0.8
+if !empty(glob('~/Dropbox/Notes'))
+  let g:notes_directories = ['~/Dropbox/Notes']
+endif
 let g:diminactive_filetype_blacklist = ['which_key']
 let g:which_key_use_floating_win = 0
 let g:which_key_map = {}
@@ -336,7 +338,7 @@ if has('nvim')
 endif
 
 autocmd BufEnter * :syntax sync fromstart
-autocmd BufNewFile,BufRead *.rbi set syntax=ruby
+autocmd BufNewFile,BufRead *.rbi set filetype=ruby
 autocmd BufNewFile,BufRead *.graphql set filetype=graphql
 autocmd BufNewFile,BufRead *.plist set syntax=xml
 autocmd BufNewFile,BufRead ?\+.ejson setf json
@@ -363,8 +365,8 @@ augroup Numbertoggle
   autocmd BufEnter,FocusGained,InsertLeave * if index(g:colorcolumn_supported_filetypes, &ft) > -1 && g:disable_relative_number == 0 | setlocal number relativenumber colorcolumn=80,120 | endif
   autocmd BufEnter,FocusGained,InsertLeave * if index(g:colorcolumn_supported_filetypes, &ft) > -1 && g:disable_relative_number == 1 | setlocal number norelativenumber colorcolumn=80,120 | endif
   autocmd BufLeave,FocusLost,InsertEnter   * if index(g:colorcolumn_supported_filetypes, &ft) > -1 | setlocal number norelativenumber colorcolumn=80,120 | endif
-  autocmd BufEnter,FocusGained,InsertLeave *.vimrc if g:disable_relative_number == 0| setlocal number relativenumber colorcolumn=80,120 | endif
-  autocmd BufEnter,FocusGained,InsertLeave *.vimrc if g:disable_relative_number == 1| setlocal number norelativenumber colorcolumn=80,120 | endif
+  autocmd BufEnter,FocusGained,InsertLeave *.vimrc if g:disable_relative_number == 0 | setlocal number relativenumber colorcolumn=80,120 | endif
+  autocmd BufEnter,FocusGained,InsertLeave *.vimrc if g:disable_relative_number == 1 | setlocal number norelativenumber colorcolumn=80,120 | endif
   autocmd BufLeave,FocusLost,InsertEnter   *.vimrc setlocal number norelativenumber colorcolumn=80,120
   autocmd FileType floaterm setlocal colorcolumn=
 augroup END
@@ -390,17 +392,19 @@ endf
 
 function! s:setup_color()
   silent! source ~/.vim/colorscheme.vim
+  syn region rubySorbetSig start='sig {' end='}'
+  syn region rubySorbetSigDo start='sig do' end='end'
+  highlight SignColumn guibg=NONE
+  highlight SpellBad  guibg=#Cd3f45 guifg=#13354A
+  highlight WhichKeyFloating guibg=NONE
+  highlight def link rubySorbetSig Comment
+  highlight def link rubySorbetSigDo Comment
   highlight link ALEErrorSign WarningMsg
   highlight link ALEWarningSign Label
   highlight link CocErrorSign WarningMsg
   highlight link CocInfoSign Label
   highlight link CocWarningSign Label
   highlight link HighlightedyankRegion MatchParen
-  highlight SignColumn guibg=NONE
-
-  highlight SpellBad  guibg=#Cd3f45 guifg=#13354A
-
-  highlight WhichKeyFloating guibg=NONE
 endfunction
 
 function! FzfSpellSink(word)

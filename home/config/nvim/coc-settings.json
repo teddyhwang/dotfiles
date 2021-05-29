@@ -1,7 +1,7 @@
 {
   "suggest.noselect": false,
-  "codeLens.enable": false,
-  "diagnostic.displayByAle": false,
+  "codeLens.enable": true,
+  "diagnostic.displayByAle": true,
   "diagnostic.hintSign": "◉",
   "diagnostic.errorSign": "◉",
   "diagnostic.warningSign": "◉",

@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/bin/zsh
 
 C_DEFAULT="\x1B[39m"
 C_GREEN="\x1B[32m"
+C_RED="\x1B[31m"
 C_LIGHTGRAY="\x1B[90m"
 C_ORANGE="\x1B[33m"
 
@@ -9,53 +10,48 @@ function symlink {
   ln -nsf $1 $2
 }
 
-for file in home/.[^.]*; do
-  path="$(pwd)/$file"
-  base=$(basename $file)
-  target="$HOME/$(basename $file)"
+function validate_and_symlink {
+  file=$1
+  source=$2
+  target=$3
 
-  if [ $file == 'home/.DS_Store' ]; then
+  if [ $file = ".DS_Store" ]; then
     echo -e "${C_LIGHTGRAY}Ignoring system file.$C_DEFAULT"
-  elif [[ -h $target && ($(readlink $target) == $path)]]; then
-    echo -e "${C_LIGHTGRAY}~/$base is symlinked to your dotfiles.$C_DEFAULT"
+  elif [[ -h $target && ($(readlink $target) == $source)]]; then
+    echo -e "${C_LIGHTGRAY}$target is symlinked to your dotfiles.$C_DEFAULT"
   elif [[ -a $target ]]; then
-    echo -e "${C_ORANGE}~/$base exists and differs from your dotfile.$C_DEFAULT"
+    if [ $SPIN ]; then
+      echo -e "${C_RED}$target exists and differs from your dotfile; replacing file$C_DEFAULT"
+      rm -rf $target && symlink $source $target
+    else
+      echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
+    fi
   else
-    echo -e "${C_GREEN}~/$base does not exist. Symlinking to dotfile.$C_DEFAULT"
-    symlink $path $target
+    echo -e "${C_GREEN}$target does not exist. Symlinking to dotfile.$C_DEFAULT"
+    symlink $source $target
   fi
+}
+
+for filepath in home/.[^.]*; do
+  file=$filepath:t
+  source="$(pwd)/$filepath"
+  target="$HOME/$file"
+
+  validate_and_symlink $file $source $target
 done
 
-for file in home/vim/*; do
-  path="$(pwd)/$file"
-  base=$(basename $file)
-  target="$HOME/.vim/$(basename $file)"
+for filepath in home/vim/*; do
+  file=$filepath:t
+  source="$(pwd)/$filepath"
+  target="$HOME/.vim/$file"
 
-  if [ $file == 'home/vim/.DS_Store' ]; then
-    echo -e "${C_LIGHTGRAY}Ignoring system file.$C_DEFAULT"
-  elif [[ -h $target && ($(readlink $target) == $path)]]; then
-    echo -e "${C_LIGHTGRAY}~/.vim/$base is symlinked to your dotfiles.$C_DEFAULT"
-  elif [[ -a $target ]]; then
-    echo -e "${C_ORANGE}~/.vim/$base exists and differs from your dotfile.$C_DEFAULT"
-  else
-    echo -e "${C_GREEN}~/.vim/$base does not exist. Symlinking to dotfile.$C_DEFAULT"
-    symlink $path $target
-  fi
+  validate_and_symlink $file $source $target
 done
 
-for file in home/config/*; do
-  path="$(pwd)/$file"
-  base=$(basename $file)
-  target="$HOME/.config/$(basename $file)"
+for filepath in home/config/*; do
+  file=$filepath:t
+  source="$(pwd)/$filepath"
+  target="$HOME/.config/$file"
 
-  if [ $file == 'home/config/.DS_Store' ]; then
-    echo -e "${C_LIGHTGRAY}Ignoring system file.$C_DEFAULT"
-  elif [[ -h $target && ($(readlink $target) == $path)]]; then
-    echo -e "${C_LIGHTGRAY}~/.config/$base is symlinked to your dotfiles.$C_DEFAULT"
-  elif [[ -a $target ]]; then
-    echo -e "${C_ORANGE}~/.config/$base exists and differs from your dotfile.$C_DEFAULT"
-  else
-    echo -e "${C_GREEN}~/.config/$base does not exist. Symlinking to dotfile.$C_DEFAULT"
-    symlink $path $target
-  fi
+  validate_and_symlink $file $source $target
 done

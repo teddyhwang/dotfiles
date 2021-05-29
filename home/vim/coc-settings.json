@@ -1,5 +1,13 @@
 {
   "suggest.noselect": false,
+  "codeLens.enable": false,
+  "diagnostic.displayByAle": false,
+  "diagnostic.hintSign": "◉",
+  "diagnostic.errorSign": "◉",
+  "diagnostic.warningSign": "◉",
+  "diagnostic.infoSign": "◉",
+  "git.enableGlobalStatus": false,
+  "yank.highlight.duration": 200,
   "highlight.disableLanguages": [
     "markdown",
     "md",
@@ -7,5 +15,25 @@
     "tmuxtheme",
     "vim",
     "vimrc"
-  ]
+  ],
+  "tsserver.npm": "/usr/local/bin/npm",
+  "languageserver": {
+    "sorbet": {
+      "enable": false,
+      "command": "srb",
+      "args": ["tc", "--enable-all-experimental-lsp-features", "--lsp"],
+      "filetypes": ["ruby", "rb"],
+      "rootPatterns": ["sorbet/config"],
+      "trace.server": "verbose",
+      "initializationOptions": {},
+      "settings": {}
+    },
+    "graphql": {
+      "command": "graphql-lsp",
+      "args": ["server", "-m", "stream"],
+      "filetypes": ["typescript", "typescriptreact", "graphql"]
+    }
+  },
+  "explorer.icon.enableNerdfont": true,
+  "explorer.previewAction.onHover": false
 }

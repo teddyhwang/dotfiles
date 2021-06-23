@@ -29,6 +29,7 @@
       "settings": {}
     },
     "graphql": {
+      "enable": false,
       "command": "graphql-lsp",
       "args": ["server", "-m", "stream"],
       "filetypes": ["typescript", "typescriptreact", "graphql"]

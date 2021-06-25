@@ -1,3 +1,8 @@
+BASE16_SHELL="$HOME/.base16-manager/chriskempson/base16-shell/"
+if [ ! -d $BASE16_SHELL ]; then
+  BASE16_SHELL="$HOME/.local/share/base16-manager/chriskempson/base16-shell/"
+fi
+[ -n "$PS1" ] && [ -s "$BASE16_SHELL/profile_helper.sh" ] && eval "$("$BASE16_SHELL/profile_helper.sh")"
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi

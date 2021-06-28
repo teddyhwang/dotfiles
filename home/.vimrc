@@ -85,6 +85,8 @@ set hlsearch
 set incsearch
 set laststatus=2
 set lazyredraw
+set list
+set listchars=tab:›\ ,trail:⋅
 set mouse=a
 set nocursorcolumn
 set nofoldenable
@@ -127,10 +129,11 @@ let g:ale_cache_executable_check_failures = 1
 let g:ale_completion_enabled = 0
 let g:ale_disable_lsp = 1
 let g:ale_echo_msg_format = '[%linter% | %severity%] %s'
-let g:ale_fix_on_save = 1	
-let g:ale_fixers = {	
-\   'javascript': ['prettier'],	
-\   'ruby': ['rubocop'],	
+let g:ale_fix_on_save = 0
+let g:ale_fixers = {
+\   '*': ['remove_trailing_lines', 'trim_whitespace'],
+\   'javascript': ['prettier'],
+\   'ruby': ['rubocop'],
 \}
 let g:ale_lint_delay = 0
 let g:ale_linters = {

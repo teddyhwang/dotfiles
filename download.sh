@@ -6,7 +6,7 @@ C_LIGHTGRAY="\x1B[90m"
 
 if [ $SPIN ]; then
   touch ~/.z
-  sudo apt install -o Dpkg::Options::="--force-overwrite" -y bat ripgrep ranger xdg-utils tree highlight
+  sudo apt install -o Dpkg::Options::="--force-overwrite" -y bat ripgrep ranger xdg-utils tree highlight universal-ctags
   wget "https://github.com/sharkdp/vivid/releases/download/v0.6.0/vivid_0.6.0_amd64.deb"
   sudo dpkg -i vivid_0.6.0_amd64.deb
   wget "https://github.com/barnumbirr/delta-debian/releases/download/0.6.0-1/delta-diff_0.6.0-1_amd64_debian_buster.deb"

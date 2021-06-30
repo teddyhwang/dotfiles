@@ -16,6 +16,9 @@ export FZF_TMUX_OPTS='-d 40%'
 export HIGHLIGHT_STYLE=base16/seti
 export LS_COLORS="$(vivid generate molokai)"
 export NVM_DIR="$HOME/.nvm"
+if [ $SPIN ]; then
+  export PATH="$HOME/.bin:$PATH"
+fi
 
 alias brighter='b16m set synth-midnight-dark'
 alias dark='b16m set seti'

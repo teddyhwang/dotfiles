@@ -67,7 +67,7 @@ syntax sync fromstart
 setglobal complete-=i
 set autoread
 set backupdir=/tmp//
-set clipboard=unnamed
+set clipboard+=unnamedplus
 set cmdheight=1
 set completeopt=menu
 set cpoptions+=$
@@ -257,7 +257,7 @@ let g:which_key_map['e'] = [':call WriteNewFile()', 'new file']
 let g:which_key_map['n'] = [':call ToggleRelativeNumber(1)', 'toggle relativenumber']
 let g:which_key_map['o'] = [':! open %:h', 'open file']
 let g:which_key_map['r'] = [':source ~/.vimrc', 'reload vimrc']
-let g:which_key_map['y'] = [':%y+', 'copy file']
+let g:which_key_map['Y'] = [':%y+', 'copy file']
 let g:which_key_map['!'] = [':call TmuxSplitCommand()', 'run command']
 let g:which_key_map['l'] = [':VimuxRunLastCommand', 'run last command']
 let g:which_key_map['s'] = [':call FzfSpell()', 'spellcheck']
@@ -392,6 +392,10 @@ function! s:close_floats() abort
     endif
   endfor
 endf
+
+if !empty($SPIN)
+  source ~/.vim/spin.vim
+endif
 
 function! s:setup_color()
   silent! source ~/.vim/colorscheme.vim

@@ -56,10 +56,12 @@ for filepath in home/config/*; do
   validate_and_symlink $file $source $target
 done
 
-for filepath in home/bin/*; do
-  file=$filepath:t
-  source="$(pwd)/$filepath"
-  target="$HOME/.bin/$file"
+if [ $SPIN ]; then
+  for filepath in home/bin/*; do
+    file=$filepath:t
+    source="$(pwd)/$filepath"
+    target="$HOME/.bin/$file"
 
-  validate_and_symlink $file $source $target
-done
+    validate_and_symlink $file $source $target
+  done
+fi

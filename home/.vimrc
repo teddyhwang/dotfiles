@@ -24,6 +24,7 @@ Plug 'iamcco/markdown-preview.nvim', {'do': 'cd app & yarn install'}
 Plug 'jiangmiao/auto-pairs'
 Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
+Plug 'junegunn/vim-peekaboo'
 Plug 'kana/vim-textobj-user'
 Plug 'kristijanhusak/vim-carbon-now-sh'
 Plug 'kristijanhusak/vim-dadbod-completion'

@@ -5,7 +5,7 @@
     "sorbet": {
       "enable": true,
       "command": "srb",
-      "args": ["tc", "--enable-all-experimental-lsp-features", "--lsp"],
+      "args": ["tc", "--lsp"],
       "filetypes": ["ruby", "rb"],
       "rootPatterns": ["sorbet/config"],
       "initializationOptions": {},

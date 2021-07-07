@@ -279,7 +279,7 @@ let g:which_key_map['f'] = {
   \ 'R' : [':Irb'       , 'irb'],
   \ }
 
-command! Eslint CocCommand eslint.showOutputChannel
+command! ESlint CocCommand eslint.showOutputChannel
 command! Fzf FloatermNew fzf
 command! Irb FloatermNew irb
 command! Lazygit FloatermNew lazygit
@@ -342,7 +342,8 @@ if has('nvim')
 endif
 
 autocmd BufEnter * :syntax sync fromstart
-autocmd BufNewFile,BufRead *.rbi set filetype=ruby
+autocmd BufNewFile,BufRead *.rb call s:setup_color()
+autocmd BufNewFile,BufRead *.rbi set filetype=ruby | call s:setup_color()
 autocmd BufNewFile,BufRead *.graphql set filetype=graphql
 autocmd BufNewFile,BufRead *.plist set syntax=xml
 autocmd BufNewFile,BufRead ?\+.ejson setf json
@@ -400,8 +401,6 @@ endif
 
 function! s:setup_color()
   silent! source ~/.vim/colorscheme.vim
-  syn region rubySorbetSig start='sig {' end='}'
-  syn region rubySorbetSigDo start='sig do' end='end'
   highlight SignColumn guibg=NONE
   highlight SpellBad  guibg=#Cd3f45 guifg=#13354A
   highlight WhichKeyFloating guibg=NONE
@@ -413,6 +412,8 @@ function! s:setup_color()
   highlight link CocInfoSign Label
   highlight link CocWarningSign Label
   highlight link HighlightedyankRegion MatchParen
+  syn region rubySorbetSig start='sig {' end='}'
+  syn region rubySorbetSigDo start='sig do' end='end'
 endfunction
 
 function! FzfSpellSink(word)

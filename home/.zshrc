@@ -65,6 +65,7 @@ POWERLEVEL9K_VI_MODE_FOREGROUND=black
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
   os_icon
   user
+  ssh
   node_version
   chruby
   dir_writable

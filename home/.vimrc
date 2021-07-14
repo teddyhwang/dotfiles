@@ -60,6 +60,8 @@ Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Tabmerge'
 Plug 'vim-test/vim-test'
 Plug 'voldikss/vim-floaterm'
+Plug 'wfxr/minimap.vim'
+Plug 'whatyouhide/vim-tmux-syntax'
 Plug 'xolox/vim-misc'
 call plug#end()
 
@@ -256,7 +258,7 @@ let g:which_key_map['e'] = [':call WriteNewFile()', 'new file']
 let g:which_key_map['n'] = [':call ToggleRelativeNumber(1)', 'toggle relativenumber']
 let g:which_key_map['o'] = [':! open %:h', 'open file']
 let g:which_key_map['r'] = [':source ~/.vimrc', 'reload vimrc']
-let g:which_key_map['Y'] = [':%y+', 'copy file']
+let g:which_key_map['y'] = [':%y+', 'copy file']
 let g:which_key_map['!'] = [':call TmuxSplitCommand()', 'run command']
 let g:which_key_map['l'] = [':VimuxRunLastCommand', 'run last command']
 let g:which_key_map['s'] = [':call FzfSpell()', 'spellcheck']
@@ -277,7 +279,7 @@ let g:which_key_map['f'] = {
   \ 'R' : [':Irb'       , 'irb'],
   \ }
 
-command! ESlint CocCommand eslint.showOutputChannel
+command! Eslint CocCommand eslint.showOutputChannel
 command! Fzf FloatermNew fzf
 command! Irb FloatermNew irb
 command! Lazygit FloatermNew lazygit
@@ -338,8 +340,8 @@ if has('nvim')
   tnoremap <Esc><Esc> <C-\><C-n>
 endif
 
-autocmd BufNewFile,BufRead *.rb call s:setup_color()
-autocmd BufNewFile,BufRead *.rbi set filetype=ruby | call s:setup_color()
+autocmd BufNewFile,BufRead *.tmuxtheme set filetype=tmux
+autocmd BufNewFile,BufRead *.rbi set filetype=ruby
 autocmd BufNewFile,BufRead *.graphql set filetype=graphql
 autocmd BufNewFile,BufRead *.plist set syntax=xml
 autocmd BufNewFile,BufRead ?\+.ejson setf json
@@ -347,7 +349,6 @@ autocmd CursorHold * call ToggleHighlight()
 autocmd FileType ruby,eruby let g:gutentags_ctags_executable_ruby = 'ripper-tags'
 autocmd FileType ruby,eruby let g:gutentags_ctags_extra_args = ['--ignore-unsupported-options', '--recursive']
 autocmd FocusGained * :checktime
-autocmd FocusGained * nested call s:setup_color()
 autocmd! FileType which_key
 autocmd  FileType which_key set laststatus=0 noshowmode noruler
   \| autocmd BufLeave <buffer> set laststatus=2 showmode ruler
@@ -383,6 +384,10 @@ if has('nvim')
   autocmd TermOpen term://* startinsert
 endif
 
+if !empty($SPIN)
+  source ~/.vim/spin.vim
+endif
+
 function! s:close_floats() abort
   for win in nvim_tabpage_list_wins(tabpagenr())
     if !empty(get(nvim_win_get_config(win), 'relative', ''))
@@ -391,17 +396,11 @@ function! s:close_floats() abort
   endfor
 endf
 
-if !empty($SPIN)
-  source ~/.vim/spin.vim
-endif
-
 function! s:setup_color()
   silent! source ~/.vim/colorscheme.vim
   highlight SignColumn guibg=NONE
   highlight SpellBad  guibg=#Cd3f45 guifg=#13354A
   highlight WhichKeyFloating guibg=NONE
-  highlight def link rubySorbetSig Comment
-  highlight def link rubySorbetSigDo Comment
   highlight link ALEErrorSign WarningMsg
   highlight link ALEWarningSign Label
   highlight link CocErrorSign WarningMsg
@@ -410,6 +409,8 @@ function! s:setup_color()
   highlight link HighlightedyankRegion MatchParen
   syn region rubySorbetSig start='sig {' end='}'
   syn region rubySorbetSigDo start='sig do' end='end'
+  highlight def link rubySorbetSig Comment
+  highlight def link rubySorbetSigDo Comment
 endfunction
 
 function! FzfSpellSink(word)

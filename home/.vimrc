@@ -61,10 +61,8 @@ Plug 'vim-scripts/Tabmerge'
 Plug 'vim-test/vim-test'
 Plug 'voldikss/vim-floaterm'
 Plug 'xolox/vim-misc'
-Plug 'zackhsi/sorbet.vim'
 call plug#end()
 
-syntax sync fromstart
 setglobal complete-=i
 set autoread
 set backupdir=/tmp//
@@ -109,7 +107,7 @@ set timeoutlen=500 ttimeoutlen=0
 set ttyfast
 set tw=120
 set undodir=/tmp//
-set updatetime=100
+set updatetime=1000
 set wildignore+=*/dist/*,*/coverage/*,*/coverage_report/*,*/node_modules/*,*.pyc,Session.vim,tags,*.git
 if !empty(glob('~/.vim/plugged/vim-gutentags'))
   set statusline+=%{gutentags#statusline()}
@@ -317,7 +315,6 @@ nmap <silent> <BS> :noh<cr>
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
 nmap <silent> ga :ALEGoToDefinition<cr>
-" nmap <silent> gd :<C-u>call CocActionAsync('jumpDefinition')<cr>
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
@@ -341,7 +338,6 @@ if has('nvim')
   tnoremap <Esc><Esc> <C-\><C-n>
 endif
 
-autocmd BufEnter * :syntax sync fromstart
 autocmd BufNewFile,BufRead *.rb call s:setup_color()
 autocmd BufNewFile,BufRead *.rbi set filetype=ruby | call s:setup_color()
 autocmd BufNewFile,BufRead *.graphql set filetype=graphql

@@ -467,7 +467,7 @@ endf
 function! Search()
   let l:search = input('Search: ')
   if l:search != ''
-    execute ':Rg '.search
+    execute ':Rg '.l:search
   endif
 endf
 

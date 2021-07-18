@@ -384,8 +384,8 @@ if has('nvim')
   autocmd TermOpen term://* startinsert
 endif
 
-if !empty($SPIN)
-  source ~/.vim/spin.vim
+if !empty($SSH_CLIENT)
+  source ~/.vim/remote.vim
 endif
 
 function! s:close_floats() abort

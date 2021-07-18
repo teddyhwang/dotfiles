@@ -20,7 +20,7 @@ function validate_and_symlink {
   elif [[ -h $target && ($(readlink $target) == $source)]]; then
     echo -e "${C_LIGHTGRAY}$target is symlinked to your dotfiles.$C_DEFAULT"
   elif [[ -a $target ]]; then
-    if [ $SPIN ]; then
+    if [[ $OSTYPE != 'darwin'* ]]; then
       echo -e "${C_RED}$target exists and differs from your dotfile; replacing file$C_DEFAULT"
       rm -rf $target && symlink $source $target
     else
@@ -56,7 +56,7 @@ for filepath in home/config/*; do
   validate_and_symlink $file $source $target
 done
 
-if [ $SPIN ]; then
+if [[ $OSTYPE != 'darwin'* ]]; then
   for filepath in home/bin/*; do
     file=$filepath:t
     source="$(pwd)/$filepath"

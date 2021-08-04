@@ -151,8 +151,8 @@ let g:closetag_filetypes = 'html,xhtml,phtml,jsx,tsx'
 let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx'
 let g:coc_force_debug = 0
 let g:coc_global_extensions = [
-  \ 'coc-db',
   \ 'coc-css',
+  \ 'coc-db',
   \ 'coc-emoji',
   \ 'coc-eslint',
   \ 'coc-explorer',
@@ -384,7 +384,7 @@ if has('nvim')
   autocmd TermOpen term://* startinsert
 endif
 
-if !empty($SSH_CLIENT)
+if !empty($SPIN)
   source ~/.vim/remote.vim
 endif
 

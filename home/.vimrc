@@ -60,7 +60,6 @@ Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/Tabmerge'
 Plug 'vim-test/vim-test'
 Plug 'voldikss/vim-floaterm'
-Plug 'wfxr/minimap.vim'
 Plug 'whatyouhide/vim-tmux-syntax'
 Plug 'xolox/vim-misc'
 call plug#end()

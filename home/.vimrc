@@ -13,6 +13,7 @@ Plug 'AndrewRadev/undoquit.vim'
 Plug 'airblade/vim-rooter'
 Plug 'alvan/vim-closetag'
 Plug 'andymass/vim-matchup'
+Plug 'antoinemadec/coc-fzf'
 Plug 'benmills/vimux'
 Plug 'blueyed/vim-diminactive'
 Plug 'chriskempson/base16-vim'
@@ -120,7 +121,7 @@ if exists('&inccommand')
   set inccommand=split
 endif
 
-let base16colorspace=256
+let base16colorspace = 256
 let g:airline#extensions#vista#enabled = 0
 let g:airline_section_error = '%{airline#util#wrap(airline#extensions#coc#get_error(),0)}'
 let g:airline_section_warning = '%{airline#util#wrap(airline#extensions#coc#get_warning(),0)}'
@@ -148,6 +149,7 @@ let g:ale_sign_warning = '◉'
 let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.jsx,*.tsx'
 let g:closetag_filetypes = 'html,xhtml,phtml,jsx,tsx'
 let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx'
+let g:coc_fzf_preview = 'right:50%'
 let g:coc_force_debug = 0
 let g:coc_global_extensions = [
   \ 'coc-css',

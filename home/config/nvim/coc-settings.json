@@ -36,5 +36,6 @@
     }
   },
   "explorer.icon.enableNerdfont": true,
-  "explorer.previewAction.onHover": false
+  "explorer.previewAction.onHover": false,
+  "list.previewSplitRight": true
 }

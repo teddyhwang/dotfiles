@@ -4,10 +4,9 @@
   "languageserver": {
     "sorbet": {
       "enable": true,
-      "command": "srb",
-      "args": ["tc", "--lsp"],
+      "command": "bundle",
+      "args": ["exec", "srb", "tc", "--lsp"],
       "filetypes": ["ruby", "rb"],
-      "rootPatterns": ["sorbet/config"],
       "initializationOptions": {},
       "settings": {}
     }

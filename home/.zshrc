@@ -222,7 +222,7 @@ function lg() {
   fi
 }
 
-function cob() {
+function branch() {
   branch=$(git for-each-ref --color --sort=-committerdate \
     refs/heads/ \
     --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' | \
@@ -233,5 +233,25 @@ function cob() {
 
   if [ ! -z "$branch" ] ; then
     git checkout "$branch"
+  fi
+}
+
+function cob() {
+  branch=$(git branch --color --sort=-committerdate \
+    --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' -r | \
+    fzf --ansi | \
+    cut -f2 -d'/' | \
+    cut -f1 -d'|' | \
+    xargs)
+
+  if [ ! -z "$branch" ] ; then
+    git checkout "$branch"
+  fi
+}
+
+function upstream() {
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ ! -z "$branch" ] ; then
+    git branch --set-upstream-to=origin/$branch $branch
   fi
 }

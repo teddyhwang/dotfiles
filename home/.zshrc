@@ -19,6 +19,7 @@ export NVM_DIR="$HOME/.nvm"
 if [ $SPIN ]; then
   export PATH="$HOME/.bin:$PATH"
   alias token_update='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
+  [ -f /etc/zsh/zshrc.default.inc.zsh ] && source /etc/zsh/zshrc.default.inc.zsh
 fi
 
 alias brighter='b16m set synth-midnight-dark'

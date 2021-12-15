@@ -35,6 +35,7 @@ alias ping='prettyping --nolegend'
 alias please='sudo $(fc -ln -1)'
 alias rake="noglob rake"
 alias random='b16m set-random'
+alias spinssh='ssh $(spin info fqdn)'
 alias vi='nvim'
 alias weather='curl wttr.in'
 
@@ -93,6 +94,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(
   colorize
   git
+  gitfast
   history-substring-search
   man
   node

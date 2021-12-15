@@ -1,13 +1,16 @@
 #!/bin/zsh
 
 ./add_directories.sh
-./download.sh
 ./linker.sh
+./download.sh
+./init.sh
 if [ $SPIN ]; then
   ./spin.sh
 fi
 
-bat cache --build
+if ! [ -d ~/.cache/bat ]; then
+  bat cache --build
+fi
 base16-manager set seti
 
 echo -e "$C_GREEN\nInstallation Complete$C_DEFAULT"

@@ -5,22 +5,16 @@ C_GREEN="\x1B[32m"
 C_LIGHTGRAY="\x1B[90m"
 
 if [[ $OSTYPE == 'darwin'* ]]; then
+  source ~/.zprofile
   if ! [ -x "$(command -v brew)" ]; then
     echo -e "${C_GREEN}Installing Homebrew...$C_DEFAULT"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     echo -e "${C_GREEN}Installing Brew packages...$C_DEFAULT"
     brew tap "homebrew/bundle"
     brew bundle
-    $(brew --prefix)/opt/fzf/install
+    $(brew --prefix)/opt/fzf/install --all
   else
     echo -e "${C_LIGHTGRAY}Brew is installed$C_DEFAULT"
-  fi
-
-  if ! [ -f ~/.bin/tmuxinator.zsh ]; then
-    echo -e "${C_GREEN}Adding Tmuxinator script...$C_DEFAULT"
-    wget -O ~/.bin/tmuxinator.zsh https://raw.githubusercontent.com/tmuxinator/tmuxinator/master/completion/tmuxinator.zsh
-  else
-    echo -e "${C_LIGHTGRAY}tmuxinator is installed$C_DEFAULT"
   fi
 else
   touch ~/.z
@@ -34,25 +28,16 @@ else
   sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb
 
   rm *.deb
+  if ! command -v fzf &> /dev/null; then
+    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
+  fi
 fi
 
 if ! [ -d ~/.oh-my-zsh ]; then
   echo -e "${C_GREEN}Installing Oh My ZSH..."
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-
-  echo -e "${C_GREEN}Installing Oh My ZSH Themes...$C_DEFAULT"
-  git clone https://github.com/romkatv/powerlevel10k ~/.oh-my-zsh/custom/themes/powerlevel10k
-
-  echo -e "${C_GREEN}Installing Oh My ZSH Plugins...$C_DEFAULT"
-  git clone https://github.com/zsh-users/zsh-autosuggestions ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-  git clone https://github.com/zsh-users/zsh-completions ~/.oh-my-zsh/custom/plugins/zsh-completions
-  git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 else
   echo -e "${C_LIGHTGRAY}Oh My ZSH is installed"
-fi
-
-if ! command -v fzf &> /dev/null; then
-  git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
 fi
 
 if ! [ -d ~/.tmux ]; then
@@ -67,10 +52,6 @@ if ! command -v base16-manager &> /dev/null; then
   git clone https://github.com/base16-manager/base16-manager && cd base16-manager
   make install || sudo make install
   cd .. && rm -rf base16-manager
-
-  base16-manager install chriskempson/base16-shell
-  base16-manager install chriskempson/base16-vim
-  base16-manager install nicodebo/base16-fzf
 else
   echo -e "${C_LIGHTGRAY}base16-manager is installed$C_DEFAULT"
 fi

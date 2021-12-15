@@ -173,8 +173,8 @@ let g:coc_global_extensions = [
   \ 'coc-yank',
   \ 'https://github.com/karuna/vscode-rspec-snippets',
   \ 'https://github.com/infeng/vscode-react-typescript',
-  \ 'https://github.com/Chris56974/ruby-and-rails-snippets',
   \ ]
+  " \ 'https://github.com/Chris56974/ruby-and-rails-snippets',
 if !empty(glob('/opt/homebrew/bin/node'))
   let g:coc_node_path = '/opt/homebrew/bin/node'
 else

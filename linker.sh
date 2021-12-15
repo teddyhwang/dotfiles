@@ -24,7 +24,13 @@ function validate_and_symlink {
       echo -e "${C_RED}$target exists and differs from your dotfile; replacing file$C_DEFAULT"
       rm -rf $target && symlink $source $target
     else
-      echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
+      if [ $file = ".zshrc" ]; then
+        echo -e "${C_RED}$target exists and differs from your dotfile; replacing file$C_DEFAULT"
+        rm -rf $target && symlink $source $target
+        source $target
+      else
+        echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
+      fi
     fi
   else
     echo -e "${C_GREEN}$target does not exist. Symlinking to dotfile.$C_DEFAULT"

@@ -22,23 +22,14 @@ else
   sudo apt install -o Dpkg::Options::="--force-overwrite" -y bat ripgrep ranger xdg-utils tree highlight universal-ctags
   sudo ln -s /usr/bin/batcat /usr/bin/bat
 
-  wget "https://github.com/sharkdp/vivid/releases/download/v0.6.0/vivid_0.6.0_amd64.deb"
   wget "https://github.com/barnumbirr/delta-debian/releases/download/0.6.0-1/delta-diff_0.6.0-1_amd64_debian_buster.deb"
 
-  sudo dpkg -i vivid_0.6.0_amd64.deb
   sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb
 
   rm *.deb
   if ! command -v fzf &> /dev/null; then
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
   fi
-fi
-
-if ! [ -d ~/.oh-my-zsh ]; then
-  echo -e "${C_GREEN}Installing Oh My ZSH..."
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-else
-  echo -e "${C_LIGHTGRAY}Oh My ZSH is installed"
 fi
 
 if ! [ -d ~/.tmux ]; then

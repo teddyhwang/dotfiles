@@ -17,8 +17,6 @@ function validate_and_symlink {
 
   if [ $file = ".DS_Store" ]; then
     echo -e "${C_LIGHTGRAY}Ignoring system file.$C_DEFAULT"
-  elif [[ $file = ".zprofile" && $OSTYPE != 'darwin'* ]]; then
-    echo -e "${C_LIGHTGRAY}Ignoring .zprofile.$C_DEFAULT"
   elif [[ -h $target && ($(readlink $target) == $source)]]; then
     echo -e "${C_LIGHTGRAY}$target is symlinked to your dotfiles.$C_DEFAULT"
   elif [[ -a $target ]]; then

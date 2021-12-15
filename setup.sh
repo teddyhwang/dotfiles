@@ -1,9 +1,10 @@
 #!/bin/zsh
 
+./omz.sh
 ./add_directories.sh
 ./linker.sh
 ./download.sh
-./init.sh
+./plugins.sh
 if [ $SPIN ]; then
   ./spin.sh
 fi

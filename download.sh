@@ -13,6 +13,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     brew tap "homebrew/bundle"
     brew bundle
     $(brew --prefix)/opt/fzf/install --all
+    cp -rf com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
   else
     echo -e "${C_LIGHTGRAY}Brew is installed$C_DEFAULT"
   fi

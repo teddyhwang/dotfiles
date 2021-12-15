@@ -1,6 +1,6 @@
 {
   "suggest.noselect": false,
-  "codeLens.enable": true,
+  "codeLens.enable": false,
   "diagnostic.displayByAle": true,
   "diagnostic.hintSign": "◉",
   "diagnostic.errorSign": "◉",
@@ -17,6 +17,7 @@
     "vimrc"
   ],
   "tsserver.npm": "/usr/local/bin/npm",
+  "solargraph.transport": "stdio",
   "languageserver": {
     "sorbet": {
       "enable": false,
@@ -33,6 +34,12 @@
       "command": "graphql-lsp",
       "args": ["server", "-m", "stream"],
       "filetypes": ["typescript", "typescriptreact", "graphql"]
+    },
+    "bash": {
+      "command": "bash-language-server",
+      "args": ["start"],
+      "filetypes": ["sh", "zsh"],
+      "ignoredRootPaths": ["~"]
     }
   },
   "explorer.icon.enableNerdfont": true,

@@ -19,11 +19,9 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   fi
 else
   touch ~/.z
-  sudo apt install -o Dpkg::Options::="--force-overwrite" -y bat ripgrep ranger xdg-utils tree highlight universal-ctags
-  sudo ln -s /usr/bin/batcat /usr/bin/bat
+  sudo apt-get install -o Dpkg::Options::="--force-overwrite" -y bat ranger xdg-utils highlight universal-ctags --fix-missing
 
   wget "https://github.com/barnumbirr/delta-debian/releases/download/0.6.0-1/delta-diff_0.6.0-1_amd64_debian_buster.deb"
-
   sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb
 
   rm *.deb

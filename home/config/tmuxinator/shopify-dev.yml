@@ -44,7 +44,6 @@ root: ~/src/github.com/Shopify/shopify-dev
 
 windows:
   - Editor:
-    - gem update solargraph
     - vi -S Session.vim
   - Terminal:
   - Server:

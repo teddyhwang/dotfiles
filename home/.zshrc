@@ -99,7 +99,6 @@ plugins=(
   man
   node
   npm
-  rails
   rake-fast
   ripgrep
   ruby

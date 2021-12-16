@@ -13,6 +13,14 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     brew bundle
     $(brew --prefix)/opt/fzf/install --all
     cp -rf com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
+
+    if [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
+      cp pbcopy.plist ~/Library/LaunchAgents/.
+      cp pbpaste.plist ~/Library/LaunchAgents/.
+      launchctl load ~/Library/LaunchAgents/pbcopy.plist
+      launchctl load ~/Library/LaunchAgents/pbpaste.plist
+    fi
+
     if [ -f /opt/homebrew/bin/pinentry-mac ]; then
       echo 'pinentry-program /opt/homebrew/bin/pinentry-mac' | tee ~/.gnupg/gpg-agent.conf
     else

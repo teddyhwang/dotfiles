@@ -1,5 +1,3 @@
-let g:gh_open_command = 'fn() { echo "$@" | pbcopy-remote; }; fn '
-
 nnoremap <silent> <leader>p :call PopulatePasteBufferFromOSX()<cr>
 nnoremap <silent> <leader>y :call PropagatePasteBufferToOSX()<cr>
 

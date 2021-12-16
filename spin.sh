@@ -11,7 +11,7 @@ fi
 sudo npm install -g prettier || true
 
 gpgconf --launch dirmngr
-gpg --keyserver keys.openpgp.org --recv 5E3F0946116DFD4C553BEB5CCC211E2E2092D7C3
+gpg --keyserver keys.openpgp.org --recv 2CB89230F6B59B0B6785E8CE7C4CBAFEDC5B3117
 
 nvim --headless +PlugInstall +qall
 timeout 1m nvim --headless +CocInstall || true

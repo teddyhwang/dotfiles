@@ -35,7 +35,7 @@ fi
 for plugin in $omz_plugins; do
   if ! [ -d ~/.oh-my-zsh/custom/plugins/$plugin ]; then
     echo -e "${C_LIGHTGRAY}Installing $plugin...$C_DEFAULT"
-    git clone http://github.com/zsh-users/$plugin ~/.oh-my-zsh/custom/plugins/$plugin
+    git clone https://github.com/zsh-users/$plugin ~/.oh-my-zsh/custom/plugins/$plugin
   else
     echo -e "${C_LIGHTGRAY}$plugin is installed$C_DEFAULT"
   fi

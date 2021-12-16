@@ -13,18 +13,19 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     brew bundle
     $(brew --prefix)/opt/fzf/install --all
     cp -rf com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
+    echo 'pinentry-program pinentry-mac' | tee ~/.gnupg/gpg-agent.conf
   else
     echo -e "${C_LIGHTGRAY}Brew is installed$C_DEFAULT"
   fi
 else
   touch ~/.z
-  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags || sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags
+  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags
   sudo ln -s /usr/bin/batcat /usr/bin/bat
 
   wget "https://github.com/barnumbirr/delta-debian/releases/download/0.6.0-1/delta-diff_0.6.0-1_amd64_debian_buster.deb"
   sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb
-
   rm *.deb
+
   if ! command -v fzf &> /dev/null; then
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
   fi

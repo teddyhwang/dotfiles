@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 ./omz.sh
-./add_directories.sh
+./directories.sh
 ./linker.sh
 ./download.sh
 ./plugins.sh

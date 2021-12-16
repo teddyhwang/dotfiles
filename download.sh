@@ -5,8 +5,7 @@ C_GREEN="\x1B[32m"
 C_LIGHTGRAY="\x1B[90m"
 
 if [[ $OSTYPE == 'darwin'* ]]; then
-  source ~/.zprofile
-  if ! [ -x "$(command -v brew)" ]; then
+  if ! command -v brew &> /dev/null; then
     echo -e "${C_GREEN}Installing Homebrew...$C_DEFAULT"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     echo -e "${C_GREEN}Installing Brew packages...$C_DEFAULT"

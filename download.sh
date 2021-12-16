@@ -13,7 +13,11 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     brew bundle
     $(brew --prefix)/opt/fzf/install --all
     cp -rf com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
-    echo 'pinentry-program pinentry-mac' | tee ~/.gnupg/gpg-agent.conf
+    if [ -f /opt/homebrew/bin/pinentry-mac ]; then
+      echo 'pinentry-program /opt/homebrew/bin/pinentry-mac' | tee ~/.gnupg/gpg-agent.conf
+    else
+      echo 'pinentry-program /usr/local/bin/pinentry-mac' | tee ~/.gnupg/gpg-agent.conf
+    fi
   else
     echo -e "${C_LIGHTGRAY}Brew is installed$C_DEFAULT"
   fi

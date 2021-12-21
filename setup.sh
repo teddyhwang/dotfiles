@@ -13,5 +13,6 @@ if ! [ -d ~/.cache/bat ]; then
   bat cache --build
 fi
 base16-manager set seti
+git config --global include.path ~/.shared.gitconfig
 
 echo -e "$C_GREEN\nInstallation Complete$C_DEFAULT"

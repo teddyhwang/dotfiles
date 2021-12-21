@@ -1,7 +1,0 @@
-[user]
-    name = Teddy Hwang
-    email = teddy.hwang@shopify.com
-    signingkey = 7C4CBAFEDC5B3117
-
-[credential]
-    helper = store --file /opt/dev/var/private/git_credential_store

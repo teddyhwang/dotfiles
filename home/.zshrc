@@ -243,7 +243,7 @@ function cob() {
   branch=$(git branch --color --sort=-committerdate \
     --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' -r | \
     fzf --ansi | \
-    cut -f2 -d'/' | \
+    sed "s/origin\///g" | \
     cut -f1 -d'|' | \
     xargs)
 

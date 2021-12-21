@@ -16,7 +16,7 @@
     "vim",
     "vimrc"
   ],
-  "tsserver.npm": "/usr/local/bin/npm",
+  "tsserver.npm": "/opt/homebrew/bin/npm",
   "solargraph.transport": "stdio",
   "languageserver": {
     "sorbet": {

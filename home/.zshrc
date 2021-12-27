@@ -124,7 +124,7 @@ fpath=(~/.zsh.d/ $fpath)
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 # https://nathanmlong.com/2015/01/optimizing-chruby-for-zsh/
-if [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ]; then
+if [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ] || [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
   unset RUBY_AUTO_VERSION
 
   function chruby_auto() {
@@ -259,6 +259,10 @@ function upstream() {
   fi
 }
 
-[[ -f /opt/dev/sh/chruby/chruby.sh ]] && type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; }
+if [[ -f /opt/dev/sh/chruby/chruby.sh ]]; then
+  type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; }
+fi
+
 
 [[ -x /opt/homebrew/bin/brew ]] && eval $(/opt/homebrew/bin/brew shellenv)
+[[ -x /usr/local/bin/brew ]] && eval $(/usr/local/bin/brew shellenv)

@@ -93,7 +93,12 @@ set nocursorcolumn
 set nofoldenable
 set nowrap
 set redrawtime=10000
-set rtp+=/usr/local/opt/fzf
+if !empty(glob('/usr/local/opt/fzf'))
+  set rtp+=/usr/local/opt/fzf
+endif
+if !empty(glob('/opt/homebrew/opt/fzf'))
+  set rtp+=/opt/homebrew/opt/fzf
+endif
 set scrolloff=3
 set secure
 set shiftwidth=2

@@ -115,8 +115,6 @@ fpath=(~/.zsh.d/ $fpath)
 [ -f ~/.fzf.colors ] && source ~/.fzf.colors
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 [ -f /opt/dev/dev.sh ] && source /opt/dev/dev.sh
-[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
-[ -f /opt/homebrew/bin/virtualenvwrapper.sh ] && source /opt/homebrew/bin/virtualenvwrapper.sh
 [ -f ~/.bin/tmuxinator.zsh ] && source ~/.bin/tmuxinator.zsh
 [ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] && source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
 [ -f ~/.nix-profile/etc/profile.d/nix.sh ] && source ~/.nix-profile/etc/profile.d/nix.sh

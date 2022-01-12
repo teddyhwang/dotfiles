@@ -11,3 +11,5 @@ function! PopulatePasteBufferFromOSX()
   let @+ = system('pbpaste-remote')
   echo "clipboard received"
 endfunction
+
+let g:gh_open_command = 'fn() { echo "$@" | pbcopy-remote; }; fn '

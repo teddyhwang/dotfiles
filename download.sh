@@ -37,8 +37,11 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   fi
 else
   touch ~/.z
-  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags
+  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags python3-pip
   sudo ln -s /usr/bin/batcat /usr/bin/bat
+  sudo npm install -g prettier || true
+
+  pip install neovim
 
   wget "https://github.com/barnumbirr/delta-debian/releases/download/0.6.0-1/delta-diff_0.6.0-1_amd64_debian_buster.deb"
   sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb

@@ -37,7 +37,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   fi
 else
   touch ~/.z
-  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags python3-pip
+  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags pip
   sudo ln -s /usr/bin/batcat /usr/bin/bat
   sudo npm install -g prettier || true
 

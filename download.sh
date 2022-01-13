@@ -19,6 +19,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     $($BREW_BIN --prefix)/opt/fzf/install --all
 
     cp -rf com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
+    cp -rf lazygit.config.yml ~/Library/Application Support/lazygit/config.yml
 
     if [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
       cp pbcopy.plist ~/Library/LaunchAgents/.

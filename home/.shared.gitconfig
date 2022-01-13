@@ -12,8 +12,7 @@
     llog = log --date=local
     st = status
     ci = commit
-    sync = "!sh -c 'git checkout --quiet --detach HEAD && git fetch origin master:master ; git checkout --quiet -'"
-    delete = clean -fd
+    rm = clean -fd
 
 [svn]
     rmdir = true

@@ -28,11 +28,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
       launchctl load ~/Library/LaunchAgents/pbpaste.plist
     fi
 
-    if [ -f /opt/homebrew/bin/pinentry-mac ]; then
-      echo 'pinentry-program /opt/homebrew/bin/pinentry-mac' | tee ~/.gnupg/gpg-agent.conf
-    else
-      echo 'pinentry-program /usr/local/bin/pinentry-mac' | tee ~/.gnupg/gpg-agent.conf
-    fi
+    echo "pinentry-mac $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
   else
     echo -e "${C_LIGHTGRAY}Brew is installed$C_DEFAULT"
   fi

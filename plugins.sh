@@ -17,26 +17,26 @@ omz_plugins=(
 )
 
 for plugin in $base16_plugins; do
-  if ! [ -d ~/.base16-manager/$plugin ]; then
+  if [ -d ~/.base16-manager/$plugin ] || [ -d ~/.local/share/base16-manager/$plugin ]; then
+    echo -e "${C_LIGHTGRAY}$plugin is installed$C_DEFAULT"
+  else
     echo -e "${C_LIGHTGRAY}Installing $plugin...$C_DEFAULT"
     base16-manager install $plugin
-  else
-    echo -e "${C_LIGHTGRAY}$plugin is installed$C_DEFAULT"
   fi
 done
 
-if ! [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
+if [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
+  echo -e "${C_LIGHTGRAY}powerlevel10k is installed$C_DEFAULT"
+else
   echo -e "${C_LIGHTGRAY}Installing powerlevel10k...$C_DEFAULT"
   git clone https://github.com/romkatv/powerlevel10k ~/.oh-my-zsh/custom/themes/powerlevel10k
-else
-  echo -e "${C_LIGHTGRAY}powerlevel10k is installed$C_DEFAULT"
 fi
 
 for plugin in $omz_plugins; do
-  if ! [ -d ~/.oh-my-zsh/custom/plugins/$plugin ]; then
+  if [ -d ~/.oh-my-zsh/custom/plugins/$plugin ]; then
+    echo -e "${C_LIGHTGRAY}$plugin is installed$C_DEFAULT"
+  else
     echo -e "${C_LIGHTGRAY}Installing $plugin...$C_DEFAULT"
     git clone https://github.com/zsh-users/$plugin ~/.oh-my-zsh/custom/plugins/$plugin
-  else
-    echo -e "${C_LIGHTGRAY}$plugin is installed$C_DEFAULT"
   fi
 done

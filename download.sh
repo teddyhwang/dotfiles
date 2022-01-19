@@ -41,7 +41,7 @@ else
   pip install neovim
 
   wget "https://github.com/dandavison/delta/releases/download/0.11.3/git-delta_0.11.3_amd64.deb"
-  sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb
+  sudo dpkg -i git-delta_0.11.3_amd64.deb
   rm *.deb
 
   if ! [ -d ~/.fzf ]; then

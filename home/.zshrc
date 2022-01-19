@@ -22,8 +22,6 @@ if [ $SPIN ]; then
   alias token_update='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
 fi
 
-autoload throw
-
 alias brighter='b16m set synth-midnight-dark'
 alias dark='b16m set seti'
 alias darker='b16m set 3024'
@@ -235,7 +233,7 @@ function branch() {
       git checkout "$branch"
     fi
   else
-    echo 'ERROR: Not a git repository'; throw
+    echo 'ERROR: Not a git repository'
   fi
 }
 
@@ -252,7 +250,7 @@ function cob() {
       git checkout "$branch"
     fi
   else
-    echo 'ERROR: Not a git repository'; throw
+    echo 'ERROR: Not a git repository'
   fi
 }
 

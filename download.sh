@@ -40,11 +40,11 @@ else
 
   pip install neovim
 
-  wget "https://github.com/barnumbirr/delta-debian/releases/download/0.6.0-1/delta-diff_0.6.0-1_amd64_debian_buster.deb"
+  wget "https://github.com/dandavison/delta/releases/download/0.11.3/git-delta_0.11.3_amd64.deb"
   sudo dpkg -i delta-diff_0.6.0-1_amd64_debian_buster.deb
   rm *.deb
 
-  if ! command -v fzf &> /dev/null; then
+  if ! [ -d ~/.fzf ]; then
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
   fi
 fi

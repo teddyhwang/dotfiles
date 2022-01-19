@@ -22,6 +22,8 @@ if [ $SPIN ]; then
   alias token_update='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
 fi
 
+autoload throw
+
 alias brighter='b16m set synth-midnight-dark'
 alias dark='b16m set seti'
 alias darker='b16m set 3024'
@@ -92,7 +94,6 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
   colorize
-  chruby
   git
   gitfast
   history-substring-search
@@ -108,7 +109,6 @@ plugins=(
   zsh-completions
   zsh-syntax-highlighting
 )
-fpath=(~/.zsh.d/ $fpath)
 
 [ -f ~/.oh-my-zsh/oh-my-zsh.sh ] && source ~/.oh-my-zsh/oh-my-zsh.sh
 [ -f ~/.fzf.colors ] && source ~/.fzf.colors
@@ -119,6 +119,8 @@ fpath=(~/.zsh.d/ $fpath)
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 # https://nathanmlong.com/2015/01/optimizing-chruby-for-zsh/
 if [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ] || [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
+  plugins+=(chruby)
+
   unset RUBY_AUTO_VERSION
 
   function chruby_auto() {
@@ -220,29 +222,37 @@ function lg() {
 }
 
 function branch() {
-  branch=$(git for-each-ref --color --sort=-committerdate \
-    refs/heads/ \
-    --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' | \
-    fzf --ansi | \
-    cut -f2 -d'*' | \
-    cut -f1 -d'|' | \
-    xargs)
+  if [ -d .git ]; then
+    branch=$(git for-each-ref --color --sort=-committerdate \
+      refs/heads/ \
+      --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' | \
+      fzf --ansi | \
+      cut -f2 -d'*' | \
+      cut -f1 -d'|' | \
+      xargs)
 
-  if [ ! -z "$branch" ] ; then
-    git checkout "$branch"
+    if [ ! -z "$branch" ] ; then
+      git checkout "$branch"
+    fi
+  else
+    echo 'ERROR: Not a git repository'; throw
   fi
 }
 
 function cob() {
-  branch=$(git branch --color --sort=-committerdate \
-    --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' -r | \
-    fzf --ansi | \
-    sed "s/origin\///g" | \
-    cut -f1 -d'|' | \
-    xargs)
+  if [ -d .git ]; then
+    branch=$(git branch --color --sort=-committerdate \
+      --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' -r | \
+      fzf --ansi | \
+      sed "s/origin\///g" | \
+      cut -f1 -d'|' | \
+      xargs)
 
-  if [ ! -z "$branch" ] ; then
-    git checkout "$branch"
+    if [ ! -z "$branch" ] ; then
+      git checkout "$branch"
+    fi
+  else
+    echo 'ERROR: Not a git repository'; throw
   fi
 }
 

@@ -92,6 +92,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
   colorize
+  chruby
   git
   gitfast
   history-substring-search
@@ -113,8 +114,6 @@ fpath=(~/.zsh.d/ $fpath)
 [ -f ~/.fzf.colors ] && source ~/.fzf.colors
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 [ -f ~/.bin/tmuxinator.zsh ] && source ~/.bin/tmuxinator.zsh
-[ -f /usr/local/share/chruby/chruby.sh ] && source /usr/local/share/chruby/chruby.sh
-[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] && source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
 [ -f /opt/dev/dev.sh ] && source /opt/dev/dev.sh
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"

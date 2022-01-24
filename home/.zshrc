@@ -112,13 +112,13 @@ plugins=(
 [ -f ~/.fzf.colors ] && source ~/.fzf.colors
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 [ -f ~/.bin/tmuxinator.zsh ] && source ~/.bin/tmuxinator.zsh
+[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] && source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+[ -f /usr/local/opt/chruby/share/chruby/chruby.sh ] && source /usr/local/opt/chruby/share/chruby/chruby.sh
 [ -f /opt/dev/dev.sh ] && source /opt/dev/dev.sh
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 # https://nathanmlong.com/2015/01/optimizing-chruby-for-zsh/
-if [ -f /opt/homebrew/opt/chruby/share/chruby/auto.sh ] || [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
-  plugins+=(chruby)
-
+if [ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] || [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
   unset RUBY_AUTO_VERSION
 
   function chruby_auto() {

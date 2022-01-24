@@ -181,6 +181,7 @@ let g:coc_global_extensions = [
   \ 'https://github.com/infeng/vscode-react-typescript',
   \ ]
   " \ 'https://github.com/Chris56974/ruby-and-rails-snippets',
+let g:coc_node_args = ['--dns-result-order=ipv4first']
 if !empty(glob('/opt/homebrew/bin/node'))
   let g:coc_node_path = '/opt/homebrew/bin/node'
 else

@@ -392,7 +392,7 @@ if has('nvim')
   autocmd TermOpen term://* startinsert
 endif
 
-if !empty($SPIN)
+if !empty($SSH_CLIENT)
   source ~/.vim/remote.vim
 endif
 

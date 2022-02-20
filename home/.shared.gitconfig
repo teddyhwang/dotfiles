@@ -6,7 +6,6 @@
     autocrlf = false
     pager = delta --dark
     editor = nvim
-    commitGraph = true
 
 [alias]
     llog = log --date=local
@@ -27,16 +26,6 @@
     clean = git-lfs clean %f
     smudge = git-lfs smudge %f
     required = true
-
-[diff]
-    algorithm = patience
-
-[protocol]
-    version = 2
-
-[gc]
-    writeCommitGraph = true
-
 [commit]
     gpgsign = true
 

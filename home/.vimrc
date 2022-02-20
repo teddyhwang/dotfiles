@@ -354,6 +354,7 @@ autocmd BufNewFile,BufRead *.rbi set filetype=ruby
 autocmd BufNewFile,BufRead *.graphql set filetype=graphql
 autocmd BufNewFile,BufRead *.plist set syntax=xml
 autocmd BufNewFile,BufRead ?\+.ejson setf json
+autocmd BufNewFile,BufRead *.md set tw=80
 autocmd CursorHold * call ToggleHighlight()
 autocmd FileType ruby,eruby let g:gutentags_ctags_executable_ruby = 'ripper-tags'
 autocmd FileType ruby,eruby let g:gutentags_ctags_extra_args = ['--ignore-unsupported-options', '--recursive']

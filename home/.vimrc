@@ -63,6 +63,7 @@ Plug 'vim-test/vim-test'
 Plug 'voldikss/vim-floaterm'
 Plug 'whatyouhide/vim-tmux-syntax'
 Plug 'xolox/vim-misc'
+Plug 'zackhsi/sorbet.vim'
 call plug#end()
 
 setglobal complete-=i
@@ -180,6 +181,7 @@ let g:coc_global_extensions = [
   \ 'https://github.com/infeng/vscode-react-typescript',
   \ ]
   " \ 'https://github.com/Chris56974/ruby-and-rails-snippets',
+let g:coc_node_args = ['--dns-result-order=ipv4first']
 if !empty(glob('/opt/homebrew/bin/node'))
   let g:coc_node_path = '/opt/homebrew/bin/node'
 else
@@ -391,7 +393,7 @@ if has('nvim')
   autocmd TermOpen term://* startinsert
 endif
 
-if !empty($SPIN)
+if !empty($SSH_CLIENT)
   source ~/.vim/remote.vim
 endif
 
@@ -414,10 +416,8 @@ function! s:setup_color()
   highlight link CocInfoSign Label
   highlight link CocWarningSign Label
   highlight link HighlightedyankRegion MatchParen
-  syn region rubySorbetSig start='sig {' end='}'
-  syn region rubySorbetSigDo start='sig do' end='end'
-  highlight def link rubySorbetSig Comment
-  highlight def link rubySorbetSigDo Comment
+  highlight link Sig Comment
+  highlight link SigBlockDelimiter Comment
 endfunction
 
 function! FzfSpellSink(word)

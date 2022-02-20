@@ -37,6 +37,7 @@ alias random='b16m set-random'
 alias spinssh='ssh $(spin info fqdn)'
 alias vi='nvim'
 alias weather='curl wttr.in'
+alias yt='yt-dlp -x --audio-format "mp3"'
 
 DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true

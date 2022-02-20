@@ -209,6 +209,7 @@ let g:colorcolumn_supported_filetypes = [
   \ 'scss',
   \ 'sh',
   \ 'sql',
+  \ 'text',
   \ 'tmux',
   \ 'typescript',
   \ 'typescript.tsx',

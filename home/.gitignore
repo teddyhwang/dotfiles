@@ -8,8 +8,8 @@ env_*
 tags
 tags.temp
 tags.lock
+!tags/
 .tags
-public/javascripts/dist/*
 node_modules
 .ropeproject
 __pycache__
@@ -19,6 +19,5 @@ __pycache__
 .idea
 config/definitions.rb
 .solargraph.yml
-scratchpad.*
 .vim
 .rake_tasks

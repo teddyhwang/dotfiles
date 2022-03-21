@@ -36,7 +36,6 @@ else
   touch ~/.z
   sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags pip
   sudo ln -s /usr/bin/batcat /usr/bin/bat
-  sudo npm install -g prettier || true
 
   pip install neovim
 
@@ -71,4 +70,18 @@ if ! [ -f /usr/local/bin/cht.sh ]; then
   chmod +x /usr/local/bin/cht.sh || sudo chmod +x /usr/local/bin/cht.sh
 else
   echo -e "${C_LIGHTGRAY}cht.sh exists$C_DEFAULT"
+fi
+
+if ! command -v prettier &> /dev/null; then
+  echo -e "${C_GREEN}Installing prettier...$C_DEFAULT"
+  npm install -g prettier || sudo npm install -g prettier
+else
+  echo -e "${C_LIGHTGRAY}prettier is installed$C_DEFAULT"
+fi
+
+if ! command -v bash-language-server &> /dev/null; then
+  echo -e "${C_GREEN}Installing bash-language-server...$C_DEFAULT"
+  npm install -g bash-language-server || sudo npm install -g bash-language-server
+else
+  echo -e "${C_LIGHTGRAY}bash-language-server is installed$C_DEFAULT"
 fi

@@ -1,11 +1,19 @@
 #!/bin/zsh
 
 if [ -d ~/src/github.com/Shopify/shopify ]; then
-  mkdir ~/src/github.com/Shopify/shopify/.vim
-  cp coc-settings-sorbet.json ~/src/github.com/Shopify/shopify/.vim/coc-settings.json
+  if ! [ -d ~/src/github.com/Shopify/shopify.vim ]; then
+    mkdir ~/src/github.com/Shopify/shopify/.vim
+  fi
+  if ! [ -f ~/src/github.com/Shopify/shopify/.vim/coc-settings.json ]; then
+    cp coc-settings-sorbet.json ~/src/github.com/Shopify/shopify/.vim/coc-settings.json
+  fi
 elif [ -d ~/src/github.com/Shopify/shopify-dev ]; then
-  mkdir ~/src/github.com/Shopify/shopify-dev/.vim
-  cp coc-settings-solargraph.json ~/src/github.com/shopify/shopify-dev/.vim/coc-settings.json
+  if ! [ -d ~/src/github.com/Shopify/shopify-dev/.vim ]; then
+    mkdir ~/src/github.com/Shopify/shopify-dev/.vim
+  fi
+  if ! [ -f ~/src/github.com/shopify/shopify-dev/.vim/coc-settings.json ]; then
+    cp coc-settings-solargraph.json ~/src/github.com/shopify/shopify-dev/.vim/coc-settings.json
+  fi
 fi
 
 gpgconf --launch dirmngr

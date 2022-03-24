@@ -218,6 +218,7 @@ let g:colorcolumn_supported_filetypes = [
   \ 'typescriptreact',
   \ 'xml',
   \ 'yaml',
+  \ 'yml',
   \ 'zsh',
   \ ]
 let g:gitgutter_override_sign_column_highlight = 0

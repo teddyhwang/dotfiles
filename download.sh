@@ -35,7 +35,9 @@ if [[ $OSTYPE == 'darwin'* ]]; then
 else
   touch ~/.z
   sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags pip
-  sudo ln -s /usr/bin/batcat /usr/bin/bat
+  if ! [ -f /usr/bin/bat ]; then
+    sudo ln -s /usr/bin/batcat /usr/bin/bat
+  fi
 
   pip install neovim
 

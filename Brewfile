@@ -107,7 +107,6 @@ brew "z"
 brew "zlib"
 brew "zsh"
 brew "charmbracelet/tap/glow"
-brew "chrokh/tap/base16-manager"
 brew "eth-p/software/bat-extras"
 brew "universal-ctags/universal-ctags/universal-ctags", args: ["HEAD"]
 cask "alacritty"

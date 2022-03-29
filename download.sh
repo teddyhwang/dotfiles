@@ -59,7 +59,7 @@ fi
 
 if ! command -v base16-manager &> /dev/null; then
   echo -e "${C_GREEN}Installing base16-manager...$C_DEFAULT"
-  git clone https://github.com/base16-manager/base16-manager && cd base16-manager
+  git clone https://github.com/teddyhwang/base16-manager && cd base16-manager
   make install || sudo make install
   cd .. && rm -rf base16-manager
 else

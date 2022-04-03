@@ -21,6 +21,7 @@ Plug 'dbeniamine/cheat.sh-vim'
 Plug 'dense-analysis/ale'
 Plug 'dhruvasagar/vim-table-mode'
 Plug 'dhruvasagar/vim-zoom'
+Plug 'github/copilot.vim'
 Plug 'iamcco/markdown-preview.nvim', {'do': 'cd app & yarn install'}
 Plug 'jiangmiao/auto-pairs'
 Plug 'junegunn/fzf'

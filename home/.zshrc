@@ -240,6 +240,10 @@ function ssh() {
   esac
 }
 
+function killport() {
+  lsof -i tcp:$1 | awk 'NR!=1 {print $2}' | xargs kill -9
+}
+
 function branch() {
   if [ -d .git ]; then
     branch=$(git for-each-ref --color --sort=-committerdate \
@@ -274,6 +278,7 @@ function cob() {
     echo 'ERROR: Not a git repository'
   fi
 }
+
 
 function upstream() {
   branch=$(git rev-parse --abbrev-ref HEAD)

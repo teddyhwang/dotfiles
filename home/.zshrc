@@ -35,7 +35,6 @@ alias ping='prettyping --nolegend'
 alias please='sudo $(fc -ln -1)'
 alias rake="noglob rake"
 alias random='b16m set-random'
-alias spinssh='ssh $(spin show --output fqdn)'
 alias vi='nvim'
 alias weather='curl wttr.in'
 alias yt='yt-dlp -x --audio-format "mp3"'
@@ -219,6 +218,26 @@ function lg() {
     cd "$(cat $LAZYGIT_NEW_DIR_FILE)"
     rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
   fi
+}
+
+function ssh() {
+  case $1 in
+    mini)
+      command ssh teddys-mac-mini.local
+      ;;
+    m1)
+      command ssh teddys-m1-macbook-pro.local
+      ;;
+    mbp)
+      command ssh teddys-macbook-pro.local
+      ;;
+    spin)
+      command ssh $(spin show --output fqdn)
+      ;;
+    *)
+      command ssh $@
+      ;;
+  esac
 }
 
 function branch() {

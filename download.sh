@@ -39,7 +39,7 @@ else
     sudo ln -s /usr/bin/batcat /usr/bin/bat
   fi
 
-  pip install neovim
+  pip install neovim mycli
 
   wget "https://github.com/dandavison/delta/releases/download/0.11.3/git-delta_0.11.3_amd64.deb"
   sudo dpkg -i git-delta_0.11.3_amd64.deb

@@ -334,8 +334,6 @@ nmap <silent> ga :ALEGoToDefinition<cr>
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
-nmap <silent> gs :ALEGoToDefinitionInSplit<cr>
-nmap <silent> gv :ALEGoToDefinitionInVSplit<cr>
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> > <C-w>20l
 nmap <silent> < <C-w>20h

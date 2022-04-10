@@ -141,12 +141,14 @@ let g:ale_fix_on_save = 0
 let g:ale_fixers = {
 \   '*': ['remove_trailing_lines', 'trim_whitespace'],
 \   'javascript': ['prettier'],
+\   'javascript.jsx': ['prettier'],
 \   'ruby': ['rubocop'],
 \}
 let g:ale_lint_delay = 0
 let g:ale_linters = {
   \ 'ruby': ['rubocop', 'ruby', 'sorbet'],
   \ 'graphql': ['gqlint'],
+  \ 'javascript': ['eslint', 'prettier'],
   \ }
 let g:ale_ruby_rubocop_executable = 'bundle'
 let g:ale_ruby_sorbet_options = '--ignore=test'
@@ -323,7 +325,8 @@ nnoremap <silent> <leader> :WhichKey '\'<cr>
 vnoremap <silent> <leader> :WhichKeyVisual '\'<cr>
 nmap <leader><bs> :call ToggleHighlight(1)<cr>
 nmap <leader>ca <Plug>(coc-codeaction)
-nmap <leader>== <Plug>(coc-fix-current)
+nmap <leader>= <Plug>(coc-fix-current)
+nmap <leader>== :ALEFix<cr>
 nmap <silent> <BS> :noh<cr>
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
@@ -354,6 +357,7 @@ endif
 autocmd BufNewFile,BufRead *.tmuxtheme set filetype=tmux
 autocmd BufNewFile,BufRead *.rbi set filetype=ruby
 autocmd BufNewFile,BufRead *.graphql set filetype=graphql
+autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx
 autocmd BufNewFile,BufRead *.plist set syntax=xml
 autocmd BufNewFile,BufRead ?\+.ejson setf json
 autocmd BufNewFile,BufRead *.md set tw=80

@@ -15,6 +15,8 @@ if [ -n "$BREW_PREFIX" ]; then
   PATH="$BREW_PACKAGE_PREFIX/ruby/bin:$PATH"
   PATH="$BREW_PREFIX/lib/ruby/gems/3.0.0/bin:$PATH"
   PATH=$HOME/go/bin:$PATH
+  PATH=$HOME/.cargo/bin:$PATH
+  PATH=$HOME/go/bin:$PATH
   PATH=$HOME/.bin:$PATH
   if ! [ -z $USER_PATH ]; then 
     PATH=$USER_PATH:$PATH

@@ -1,4 +1,4 @@
-#!zsh
+#!/bin/zsh
 
 if [ ! -d ~/.tmux/plugins/base16-tmux-powerline ]; then
   tmux new-session -d "sleep 1"

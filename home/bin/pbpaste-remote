@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!zsh
 
 if [[ $OSTYPE == 'darwin'* ]]; then
   nc localhost 2225

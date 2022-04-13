@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!zsh
 
 C_DEFAULT="\x1B[39m"
 C_GREEN="\x1B[32m"
@@ -10,9 +10,6 @@ if [ -d ~/src/github.com/Shopify/shopify ]; then
   fi
   if ! [ -f ~/src/github.com/Shopify/shopify/.vim/coc-settings.json ]; then
     cp coc-settings-sorbet.json ~/src/github.com/Shopify/shopify/.vim/coc-settings.json
-    cd ~/src/github.com/Shopify/shopify/ && gem install gem-ripper-tags && cd -
-    source ~/.zshrc
-    start_tmux shopify
   fi
 fi
 
@@ -22,9 +19,6 @@ if [ -d ~/src/github.com/Shopify/shopify-dev ]; then
   fi
   if ! [ -f ~/src/github.com/Shopify/shopify-dev/.vim/coc-settings.json ]; then
     cp coc-settings-solargraph.json ~/src/github.com/Shopify/shopify-dev/.vim/coc-settings.json
-    cd ~/src/github.com/Shopify/shopify-dev/ && set_solargraph_bundle && bundle && gem install gem-ripper-tags cd -
-    source ~/.zshrc
-    start_tmux shopify-dev
   fi
 fi
 
@@ -38,4 +32,6 @@ fi
 
 if ! [ $SSH_CLIENT ]; then
   nvim --headless +PlugInstall +qall
+  timeout 1m nvim --headless +CocInstall || true
+  timeout 20s nvim --headless +CocInstall || true
 fi

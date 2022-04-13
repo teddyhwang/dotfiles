@@ -51,6 +51,7 @@ Plug 'tpope/vim-dadbod'
 Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-liquid'
 Plug 'tpope/vim-obsession'
 Plug 'tpope/vim-rails'
 Plug 'tpope/vim-rhubarb'
@@ -206,6 +207,7 @@ let g:colorcolumn_supported_filetypes = [
   \ 'javascriptreact',
   \ 'json',
   \ 'jsonc',
+  \ 'liquid',
   \ 'markdown',
   \ 'mysql',
   \ 'python',

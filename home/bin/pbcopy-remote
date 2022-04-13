@@ -1,4 +1,4 @@
-#!/usr/bin/zsh
+#!zsh
 
 if [[ $OSTYPE == 'darwin'* ]]; then
   cat | netcat -c localhost 2224

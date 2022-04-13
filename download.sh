@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/zsh
 
 C_DEFAULT="\x1B[39m"
 C_GREEN="\x1B[32m"

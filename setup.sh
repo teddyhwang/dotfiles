@@ -1,4 +1,4 @@
-#!zsh
+#!/bin/zsh
 
 ./omz.sh
 ./directories.sh

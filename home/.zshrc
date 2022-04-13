@@ -240,6 +240,15 @@ function ssh() {
   esac
 }
 
+function start_tmux() {
+  tmux new-session -d -s $1
+  tmux new-window -n Terminal
+  tmux kill-window -t 0
+  tmux new-window -d -n Editor
+  tmux new-window -d -n Server
+  tmux select-window -t 0
+}
+
 function killport() {
   lsof -i tcp:$1 | awk 'NR!=1 {print $2}' | xargs kill -9
 }

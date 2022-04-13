@@ -10,13 +10,19 @@ if [ -d ~/src/github.com/Shopify/shopify ]; then
   fi
   if ! [ -f ~/src/github.com/Shopify/shopify/.vim/coc-settings.json ]; then
     cp coc-settings-sorbet.json ~/src/github.com/Shopify/shopify/.vim/coc-settings.json
+    cd ~/src/github.com/Shopify/shopify/ && gem install gem-ripper-tags && cd -
+    start_tmux shopify
   fi
-elif [ -d ~/src/github.com/Shopify/shopify-dev ]; then
+fi
+
+if [ -d ~/src/github.com/Shopify/shopify-dev ]; then
   if ! [ -d ~/src/github.com/Shopify/shopify-dev/.vim ]; then
     mkdir ~/src/github.com/Shopify/shopify-dev/.vim
   fi
   if ! [ -f ~/src/github.com/shopify/shopify-dev/.vim/coc-settings.json ]; then
     cp coc-settings-solargraph.json ~/src/github.com/shopify/shopify-dev/.vim/coc-settings.json
+    cd ~/src/github.com/shopify/shopify-dev/ && set_solargraph_bundle && bundle && gem install gem-ripper-tags cd -
+    start_tmux shopify-dev
   fi
 fi
 

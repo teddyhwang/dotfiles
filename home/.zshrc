@@ -20,6 +20,7 @@ export NVM_DIR="$HOME/.nvm"
 if [ $SPIN ]; then
   export PATH="$HOME/.bin:$PATH"
   export PATH="$HOME/.local/bin:$PATH"
+  export PATH="/opt/rubies/ruby-2.7.6/lib/ruby/gems/2.7.0/gems/tmuxinator-3.0.2/bin:$PATH"
   alias token_update='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
 fi
 

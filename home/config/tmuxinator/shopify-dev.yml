@@ -49,5 +49,3 @@ windows:
   - Server:
     - git pull
     - git fetch --prune --all
-    - dev up
-  - Overmind:

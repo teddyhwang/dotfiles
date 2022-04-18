@@ -22,6 +22,10 @@ if [ -d ~/src/github.com/Shopify/shopify-dev ]; then
   fi
 fi
 
+if ! command -v overmind &> /dev/null; then
+  go install github.com/DarthSim/overmind@latest
+fi
+
 if git config --get-all user.signingkey | grep -q 7C4CBAFEDC5B3117; then
   echo -e "${C_LIGHTGRAY}\nGit signing key already configured$C_DEFAULT"
 else

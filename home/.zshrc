@@ -19,7 +19,7 @@ export LS_COLORS="pi=0;38;2;0;0;0;48;2;102;217;239:mi=0;38;2;0;0;0;48;2;255;74;6
 export NVM_DIR="$HOME/.nvm"
 if [ $SPIN ]; then
   export PATH="/opt/rubies/ruby-2.7.6/lib/ruby/gems/2.7.0/gems/tmuxinator-3.0.2/bin:$PATH"
-  alias token_update='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
+  alias update_token='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
 fi
 
 alias brighter='b16m set synth-midnight-dark'

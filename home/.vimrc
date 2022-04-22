@@ -196,6 +196,7 @@ let g:colorcolumn_supported_filetypes = [
   \ 'brewfile',
   \ 'css',
   \ 'eruby',
+  \ 'eruby.yaml',
   \ 'gemfilelock',
   \ 'gitcommit',
   \ 'gitconfig',

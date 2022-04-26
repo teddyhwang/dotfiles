@@ -230,6 +230,7 @@ let g:colorcolumn_supported_filetypes = [
 let g:gitgutter_override_sign_column_highlight = 0
 let g:indentLine_concealcursor = 'nc'
 let g:move_key_modifier = 'C'
+let g:move_key_modifier_visualmode = 'C'
 let g:closetag_xhtml_filetypes = 'xhtml,jsx,tsx'
 let g:closetag_emptyTags_caseSensitive = 1
 let g:closetag_regions = {

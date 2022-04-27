@@ -19,7 +19,7 @@ export LS_COLORS="pi=0;38;2;0;0;0;48;2;102;217;239:mi=0;38;2;0;0;0;48;2;255;74;6
 export NVM_DIR="$HOME/.nvm"
 if [ $SPIN ]; then
   export PATH="/opt/rubies/ruby-2.7.6/lib/ruby/gems/2.7.0/gems/tmuxinator-3.0.2/bin:$PATH"
-  alias update_token='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
+  alias token='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
 fi
 
 alias brighter='b16m set synth-midnight-dark'
@@ -37,6 +37,7 @@ alias random='b16m set-random'
 alias vi='nvim'
 alias weather='curl wttr.in'
 alias yt='yt-dlp -x --audio-format "mp3"'
+alias gpgstart='gpgconf --launch gpg-agent'
 
 DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true
@@ -239,13 +240,20 @@ function ssh() {
   esac
 }
 
-function start_tmux() {
-  tmux new-session -d -s $1
-  tmux new-window -n Terminal
-  tmux kill-window -t 0
-  tmux new-window -d -n Editor
-  tmux new-window -d -n Server
-  tmux select-window -t 0
+function tmux() {
+  case $1 in
+    start)
+      command tmux new-session -d -s $2
+      command tmux new-window -n Terminal
+      command tmux kill-window -t 0
+      command tmux new-window -d -n Editor
+      command tmux new-window -d -n Server
+      command tmux select-window -t 0
+      ;;
+    *)
+      command tmux $@
+      ;;
+  esac
 }
 
 function killport() {

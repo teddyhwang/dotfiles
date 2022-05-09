@@ -21,3 +21,4 @@ config/definitions.rb
 .solargraph.yml
 .vim
 .rake_tasks
+Procfile.local

@@ -65,7 +65,6 @@ Plug 'vim-test/vim-test'
 Plug 'voldikss/vim-floaterm'
 Plug 'whatyouhide/vim-tmux-syntax'
 Plug 'xolox/vim-misc'
-Plug 'zackhsi/sorbet.vim'
 call plug#end()
 
 setglobal complete-=i
@@ -425,8 +424,11 @@ function! s:setup_color()
   highlight link CocInfoSign Label
   highlight link CocWarningSign Label
   highlight link HighlightedyankRegion MatchParen
-  highlight link Sig Comment
-  highlight link SigBlockDelimiter Comment
+
+  syn region rubySorbetSig start='sig {' end='}'
+  syn region rubySorbetSigDo start='sig do' end='end'
+  hi def link rubySorbetSig Comment
+  hi def link rubySorbetSigDo Comment
 endfunction
 
 function! FzfSpellSink(word)

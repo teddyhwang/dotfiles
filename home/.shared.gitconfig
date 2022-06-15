@@ -1,6 +1,9 @@
 [color]
     ui = auto
 
+[init]
+    defaultBranch = main
+
 [core]
     excludesfile = ~/.gitignore
     autocrlf = false

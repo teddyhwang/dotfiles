@@ -7,7 +7,7 @@ C_LIGHTGRAY="\x1B[90m"
 base16_plugins=(
   'chriskempson/base16-shell'
   'chriskempson/base16-vim'
-  'fnune/base16-fzf'
+  'base16-project/base16-fzf'
 )
 
 omz_plugins=(

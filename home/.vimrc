@@ -372,6 +372,7 @@ endif
 
 autocmd BufNewFile,BufRead *.tmuxtheme set filetype=tmux
 autocmd BufNewFile,BufRead *.rbi set filetype=ruby
+autocmd BufNewFile,BufRead *.rb call SorbetColor()
 autocmd BufNewFile,BufRead *.graphql set filetype=graphql
 autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx
 autocmd BufNewFile,BufRead *.plist set syntax=xml
@@ -440,6 +441,10 @@ function! s:setup_color()
   highlight link CocWarningSign Label
   highlight link HighlightedyankRegion MatchParen
 
+  call SorbetColor()
+endfunction
+
+function! SorbetColor()
   syn region rubySorbetSig start='sig {' end='}'
   syn region rubySorbetSigDo start='sig do' end='end'
   hi def link rubySorbetSig Comment

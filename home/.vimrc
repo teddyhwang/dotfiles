@@ -343,6 +343,7 @@ nmap <leader><bs> :call ToggleHighlight(1)<cr>
 nmap <leader>ca <Plug>(coc-codeaction)
 nmap <leader>= <Plug>(coc-fix-current)
 nmap <leader>== :ALEFix<cr>
+nmap <leader>rn <Plug>(coc-rename)
 nmap <silent> <BS> :noh<cr>
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)

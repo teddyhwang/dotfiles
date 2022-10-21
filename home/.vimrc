@@ -172,6 +172,7 @@ let g:coc_global_extensions = [
   \ 'coc-json',
   \ 'coc-marketplace',
   \ 'coc-python',
+  \ 'coc-sh',
   \ 'coc-snippets',
   \ 'coc-solargraph',
   \ 'coc-syntax',
@@ -182,8 +183,8 @@ let g:coc_global_extensions = [
   \ 'coc-yank',
   \ 'https://github.com/karuna/vscode-rspec-snippets',
   \ 'https://github.com/infeng/vscode-react-typescript',
+  \ 'https://github.com/Chris56974/ruby-and-rails-snippets',
   \ ]
-  " \ 'https://github.com/Chris56974/ruby-and-rails-snippets',
 let g:coc_node_args = ['--dns-result-order=ipv4first']
 if !empty(glob('/opt/homebrew/bin/node'))
   let g:coc_node_path = '/opt/homebrew/bin/node'

@@ -75,7 +75,7 @@
                                 "conditions": [
                                     {
                                         "bundle_identifiers": [
-                                            "^com\\.agilebits\\.onepassword7$"
+                                            "^com\\.1password\\.1password$"
                                         ],
                                         "type": "frontmost_application_if"
                                     }
@@ -99,7 +99,7 @@
                                 "conditions": [
                                     {
                                         "bundle_identifiers": [
-                                            "^com\\.agilebits\\.onepassword7$"
+                                            "^com\\.1password\\.1password$"
                                         ],
                                         "type": "frontmost_application_if"
                                     }

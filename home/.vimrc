@@ -155,9 +155,17 @@ let g:ale_ruby_sorbet_options = '--ignore=test'
 let g:ale_set_highlights = 0
 let g:ale_sign_error = '◉'
 let g:ale_sign_warning = '◉'
-let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.jsx,*.tsx'
-let g:closetag_filetypes = 'html,xhtml,phtml,jsx,tsx'
+let g:closetag_filenames = '*.html,*.xhtml,*.phtml'
 let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx'
+let g:closetag_filetypes = 'html,xhtml,phtml'
+let g:closetag_xhtml_filetypes = 'xhtml,jsx,tsx'
+let g:closetag_emptyTags_caseSensitive = 1
+let g:closetag_regions = {
+    \ 'typescript.tsx': 'jsxRegion,tsxRegion',
+    \ 'javascript.jsx': 'jsxRegion',
+    \ 'typescriptreact': 'jsxRegion,tsxRegion',
+    \ 'javascriptreact': 'jsxRegion',
+    \ }
 let g:coc_fzf_preview = 'right:50%'
 let g:coc_force_debug = 0
 let g:coc_global_extensions = [
@@ -232,12 +240,6 @@ let g:gitgutter_override_sign_column_highlight = 0
 let g:indentLine_concealcursor = 'nc'
 let g:move_key_modifier = 'C'
 let g:move_key_modifier_visualmode = 'C'
-let g:closetag_xhtml_filetypes = 'xhtml,jsx,tsx'
-let g:closetag_emptyTags_caseSensitive = 1
-let g:closetag_regions = {
-  \ 'typescript.tsx': 'jsxRegion,tsxRegion',
-  \ 'javascript.jsx': 'jsxRegion',
-  \ }
 let g:disable_toggle_highlight = 0
 let g:disable_relative_number = 0
 let g:fzf_layout = { 'window': { 'width': 1, 'height': 0.4, 'yoffset': 1, 'border': 'horizontal' } }

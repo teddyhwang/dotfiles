@@ -231,6 +231,9 @@ function ssh() {
     mbp)
       command ssh teddys-macbook-pro.local
       ;;
+    nicole)
+      command ssh nicolepaik@nicoles-macbook-air.local
+      ;;
     spin)
       command ssh $(spin show --output fqdn)
       ;;

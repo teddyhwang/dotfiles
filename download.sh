@@ -66,6 +66,13 @@ else
   echo -e "${C_LIGHTGRAY}base16-manager is installed$C_DEFAULT"
 fi
 
+if ! [ -d /usr/local/bin ]; then
+  echo -e "${C_GREEN}Adding directory /usr/local/bin...$C_DEFAULT"
+  sudo mkdir /usr/local/bin
+else
+  echo -e "${C_LIGHTGRAY}/usr/local/bin/ exists$C_DEFAULT"
+fi
+
 if ! [ -f /usr/local/bin/cht.sh ]; then
   echo -e "${C_GREEN}Adding cht.sh...$C_DEFAULT"
   wget -O /usr/local/bin/cht.sh https://cht.sh/:cht.sh || sudo wget -O /usr/local/bin/cht.sh https://cht.sh/:cht.sh

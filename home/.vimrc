@@ -236,7 +236,7 @@ let g:colorcolumn_supported_filetypes = [
   \ 'yml',
   \ 'zsh',
   \ ]
-let g:copilot_node_command = '~/.nvm/versions/node/v16.18.0/bin/node'
+let g:copilot_node_command = '/opt/homebrew/opt/node@16/bin/node'
 let g:gitgutter_override_sign_column_highlight = 0
 let g:indentLine_concealcursor = 'nc'
 let g:move_key_modifier = 'C'

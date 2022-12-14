@@ -424,6 +424,10 @@ if !empty($SSH_CLIENT)
   source ~/.vim/remote.vim
 endif
 
+if !empty($SPIN)
+  let g:copilot_node_command = 'node'
+endif
+
 function! s:close_floats() abort
   for win in nvim_tabpage_list_wins(tabpagenr())
     if !empty(get(nvim_win_get_config(win), 'relative', ''))

@@ -5,7 +5,7 @@ C_GREEN="\x1B[32m"
 C_LIGHTGRAY="\x1B[90m"
 
 if [ -d ~/src/github.com/Shopify/shopify ]; then
-  if ! [ -d ~/src/github.com/Shopify/shopify.vim ]; then
+  if ! [ -d ~/src/github.com/Shopify/shopify/.vim ]; then
     mkdir ~/src/github.com/Shopify/shopify/.vim
   fi
   if ! [ -f ~/src/github.com/Shopify/shopify/.vim/coc-settings.json ]; then

@@ -268,9 +268,6 @@ let g:floaterm_keymap_prev = '<F3>'
 let g:floaterm_keymap_toggle = '<F1>'
 let g:floaterm_open_command = 'vsplit'
 let g:floaterm_width = 0.8
-if !empty(glob('~/Dropbox/Notes'))
-  let g:notes_directories = ['~/Dropbox/Notes']
-endif
 let g:diminactive_filetype_blacklist = ['which_key']
 let g:which_key_use_floating_win = 0
 let g:which_key_map = {}

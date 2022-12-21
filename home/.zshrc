@@ -118,34 +118,15 @@ plugins=(
 [ -f /opt/dev/dev.sh ] && source /opt/dev/dev.sh
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-# https://nathanmlong.com/2015/01/optimizing-chruby-for-zsh/
-if [ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] || [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
-  unset RUBY_AUTO_VERSION
-
-  function chruby_auto() {
-    local dir="$PWD/" version
-
-    until [[ -z "$dir" ]]; do
-      dir="${dir%/*}"
-
-      if { read -r version <"$dir/.ruby-version"; } 2>/dev/null || [[ -n "$version" ]]; then
-        if [[ "$version" == "$RUBY_AUTO_VERSION" ]]; then return
-        else
-          RUBY_AUTO_VERSION="$version"
-          chruby "$version"
-          return $?
-        fi
-      fi
-    done
-
-    if [[ -n "$RUBY_AUTO_VERSION" ]]; then
-      chruby_reset
-      unset RUBY_AUTO_VERSION
-    fi
-  }
-
+if [ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ]; then
+  source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+  source /opt/homebrew/opt/chruby/share/chruby/auto.sh
   chpwd_functions+=("chruby_auto")
-  chruby_auto
+fi
+if [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
+  source /usr/local/opt/chruby/share/chruby/chruby.sh
+  source /usr/local/opt/chruby/share/chruby/auto.sh
+  chpwd_functions+=("chruby_auto")
 fi
 
 autoload -U compinit && compinit

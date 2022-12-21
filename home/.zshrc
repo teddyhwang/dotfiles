@@ -279,7 +279,6 @@ function cob() {
   fi
 }
 
-
 function upstream() {
   branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ! -z "$branch" ] ; then

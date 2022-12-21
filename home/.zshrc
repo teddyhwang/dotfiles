@@ -25,8 +25,10 @@ fi
 alias brighter='b16m set synth-midnight-dark'
 alias dark='b16m set seti'
 alias darker='b16m set 3024'
+alias gpgstart='gpgconf --launch gpg-agent'
 alias light='b16m set solarized-light'
 alias lighter='b16m set one-light'
+alias main='git checkout main'
 alias mux="tmuxinator"
 alias ng="npm list -g --depth=0 2>/dev/null"
 alias nl="npm list --depth=0 2>/dev/null"
@@ -37,7 +39,6 @@ alias random='b16m set-random'
 alias vi='nvim'
 alias weather='curl wttr.in'
 alias yt='yt-dlp -x --audio-format "mp3"'
-alias gpgstart='gpgconf --launch gpg-agent'
 
 DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true

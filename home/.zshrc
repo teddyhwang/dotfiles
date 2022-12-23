@@ -1,11 +1,7 @@
-BASE16_SHELL="$HOME/.base16-manager/chriskempson/base16-shell/"
-if [ ! -d $BASE16_SHELL ]; then
-  BASE16_SHELL="$HOME/.local/share/base16-manager/chriskempson/base16-shell/"
-fi
-[ -n "$PS1" ] && [ -s "$BASE16_SHELL/profile_helper.sh" ] && source "$BASE16_SHELL/profile_helper.sh"
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
+export BASE16_THEME_DEFAULT="seti"
 export EDITOR='nvim'
 export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"
 export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
@@ -22,12 +18,13 @@ if [ $SPIN ]; then
   alias token='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
 fi
 
-alias brighter='b16m set synth-midnight-dark'
-alias dark='b16m set seti'
-alias darker='b16m set 3024'
+alias brighter='base16_synth-midnight-dark'
+alias dark='base16_seti'
+alias darker='base16_3024'
+alias light='base16_solarized-light'
+alias lighter='base16_one-light'
+
 alias gpgstart='gpgconf --launch gpg-agent'
-alias light='b16m set solarized-light'
-alias lighter='b16m set one-light'
 alias main='git checkout main'
 alias mux="tmuxinator"
 alias ng="npm list -g --depth=0 2>/dev/null"
@@ -35,7 +32,6 @@ alias nl="npm list --depth=0 2>/dev/null"
 alias ping='prettyping --nolegend'
 alias please='sudo $(fc -ln -1)'
 alias rake="noglob rake"
-alias random='b16m set-random'
 alias vi='nvim'
 alias weather='curl wttr.in'
 alias yt='yt-dlp -x --audio-format "mp3"'
@@ -93,6 +89,7 @@ ZSH_DISABLE_COMPFIX=true
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
+  base16-shell
   colorize
   git
   gitfast
@@ -111,7 +108,6 @@ plugins=(
 )
 
 [ -f ~/.oh-my-zsh/oh-my-zsh.sh ] && source ~/.oh-my-zsh/oh-my-zsh.sh
-[ -f ~/.fzf.colors ] && source ~/.fzf.colors
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 [ -f ~/.bin/tmuxinator.zsh ] && source ~/.bin/tmuxinator.zsh
 [ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ] && source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
@@ -167,12 +163,8 @@ function upgrade_custom_oh_my_zsh() {
 function upgrade_all_oh_my_zsh() {
   upgrade_custom_oh_my_zsh 'plugins'
   upgrade_custom_oh_my_zsh 'themes'
+  cd ~/.config/base16-fzf && git pull --stat && cd -
   omz update
-}
-
-function b16m() {
-  base16-manager $@
-  source $HOME/.fzf.colors
 }
 
 function ranger() {

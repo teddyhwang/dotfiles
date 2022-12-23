@@ -57,15 +57,6 @@ else
   echo -e "${C_LIGHTGRAY}tmux plugin manager is installed$C_DEFAULT"
 fi
 
-if ! command -v base16-manager &> /dev/null; then
-  echo -e "${C_GREEN}Installing base16-manager...$C_DEFAULT"
-  git clone https://github.com/teddyhwang/base16-manager && cd base16-manager
-  make install || sudo make install
-  cd .. && rm -rf base16-manager
-else
-  echo -e "${C_LIGHTGRAY}base16-manager is installed$C_DEFAULT"
-fi
-
 if ! [ -d /usr/local/bin ]; then
   echo -e "${C_GREEN}Adding directory /usr/local/bin...$C_DEFAULT"
   sudo mkdir /usr/local/bin

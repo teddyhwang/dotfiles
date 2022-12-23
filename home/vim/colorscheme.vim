@@ -1,1 +1,1 @@
-colorscheme base16-seti
+colorscheme base16-solarized-light

@@ -16,7 +16,6 @@ Plug 'andymass/vim-matchup'
 Plug 'antoinemadec/coc-fzf'
 Plug 'benmills/vimux'
 Plug 'blueyed/vim-diminactive'
-Plug 'chriskempson/base16-vim'
 Plug 'dbeniamine/cheat.sh-vim'
 Plug 'dense-analysis/ale'
 Plug 'dhruvasagar/vim-table-mode'
@@ -44,6 +43,7 @@ Plug 'rbgrouleff/bclose.vim'
 Plug 'ruanyl/vim-gh-line'
 Plug 'sheerun/vim-polyglot'
 Plug 'simeji/winresizer'
+Plug 'tinted-theming/base16-vim'
 Plug 'tmux-plugins/vim-tmux'
 Plug 'tpope/vim-bundler'
 Plug 'tpope/vim-commentary'
@@ -128,7 +128,6 @@ if exists('&inccommand')
   set inccommand=split
 endif
 
-let base16colorspace = 256
 let g:airline#extensions#vista#enabled = 0
 let g:airline_section_error = '%{airline#util#wrap(airline#extensions#coc#get_error(),0)}'
 let g:airline_section_warning = '%{airline#util#wrap(airline#extensions#coc#get_warning(),0)}'
@@ -434,7 +433,11 @@ function! s:close_floats() abort
 endf
 
 function! s:setup_color()
-  silent! source ~/.vim/colorscheme.vim
+  if filereadable(expand("$HOME/.config/tinted-theming/set_theme.vim"))
+    let base16colorspace=256
+    source $HOME/.config/tinted-theming/set_theme.vim
+  endif
+
   highlight SignColumn guibg=NONE
   highlight SpellBad  guibg=#Cd3f45 guifg=#13354A
   highlight WhichKeyFloating guibg=NONE

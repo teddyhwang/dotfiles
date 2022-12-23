@@ -14,7 +14,4 @@ else
   git config --global include.path ~/.shared.gitconfig
 fi
 
-base16-manager set seti
-
 echo -e "$C_GREEN\nInstallation Complete$C_DEFAULT"
-

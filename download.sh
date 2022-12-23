@@ -34,9 +34,12 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   fi
 else
   touch ~/.z
-  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags pip
+  sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags pip fd-find
   if ! [ -f /usr/bin/bat ]; then
     sudo ln -s /usr/bin/batcat /usr/bin/bat
+  fi
+  if ! [ -f ~/.bin/fd ]; then
+    sudo ln -s $(which fdfind) ~/.bin/fd
   fi
 
   pip install neovim mycli

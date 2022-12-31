@@ -14,10 +14,15 @@ function add_directory_in_home {
   fi
 }
 
-echo -e "${C_GREEN}\nStarting Installation...$C_DEFAULT"
-
 add_directory_in_home '.config'
 add_directory_in_home '.ssh'
 add_directory_in_home '.vim'
 add_directory_in_home '.vim_swap'
 add_directory_in_home '.bin'
+
+if ! [ -d /usr/local/bin ]; then
+  echo -e "${C_GREEN}Adding directory /usr/local/bin...$C_DEFAULT"
+  sudo mkdir /usr/local/bin
+else
+  echo -e "${C_LIGHTGRAY}/usr/local/bin/ exists$C_DEFAULT"
+fi

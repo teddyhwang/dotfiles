@@ -15,4 +15,4 @@ else
   git config --global include.path ~/.shared.gitconfig
 fi
 
-echo -e "$C_GREEN\nInstallation Complete$C_DEFAULT"
+echo -e "${C_GREEN}Installation complete 🎉$C_DEFAULT"

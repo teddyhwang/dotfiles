@@ -6,8 +6,9 @@ C_LIGHTGRAY="\x1B[90m"
 
 if [[ $OSTYPE == 'darwin'* ]]; then
   source './brew.sh'
+  source './mac.sh'
 else
-  source './linux_packages.sh'
+  source './linux.sh'
 fi
 
 if ! [ -f /usr/local/bin/cht.sh ]; then

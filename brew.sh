@@ -16,18 +16,6 @@ if ! command -v brew &> /dev/null; then
   $BREW_BIN tap "homebrew/bundle"
   $BREW_BIN bundle
   $($BREW_BIN --prefix)/opt/fzf/install --all
-
-  cp -rf ./app_configs/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
-  cp -rf ./app_configs/lazygit.config.yml ~/Library/Application Support/lazygit/config.yml
-
-  if [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
-    cp app_configs/pbcopy.plist ~/Library/LaunchAgents/.
-    cp app_configs/pbpaste.plist ~/Library/LaunchAgents/.
-    launchctl load ~/Library/LaunchAgents/pbcopy.plist
-    launchctl load ~/Library/LaunchAgents/pbpaste.plist
-  fi
-
-  echo "pinentry-mac $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
 else
   echo -e "${C_LIGHTGRAY}Brew is installed$C_DEFAULT"
 fi

@@ -9,8 +9,9 @@ if ! [ -d ~/.cache/bat ]; then
 fi
 
 if git config --get-all include.path | grep -q .shared.gitconfig; then
-  echo -e "${C_LIGHTGRAY}\ninclude.path already set with ~/.shared.gitconfig$C_DEFAULT"
+  echo -e "${C_LIGHTGRAY}include.path already set with ~/.shared.gitconfig$C_DEFAULT"
 else
+  echo -e "${C_GREEN}Adding shared git config include,path...$C_DEFAULT"
   git config --global include.path ~/.shared.gitconfig
 fi
 

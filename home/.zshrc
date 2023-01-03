@@ -18,11 +18,11 @@ if [ $SPIN ]; then
   alias token='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
 fi
 
-alias brighter='base16_synth-midnight-dark'
-alias dark='base16_seti'
-alias darker='base16_3024'
-alias light='base16_solarized-light'
-alias lighter='base16_one-light'
+alias brighter='set_theme "synth-midnight-dark"'
+alias dark='set_theme "seti"'
+alias darker='set_theme "3024"'
+alias light='set_theme "solarized-light"'
+alias lighter='set_theme "one-light"'
 
 alias gpgstart='gpgconf --launch gpg-agent'
 alias main='git checkout main'
@@ -124,6 +124,9 @@ if [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
   source /usr/local/opt/chruby/share/chruby/chruby.sh
   source /usr/local/opt/chruby/share/chruby/auto.sh
   chpwd_functions+=("chruby_auto")
+fi
+if [ -f ~/.config/base16-fzf/bash/base16-${BASE16_THEME_DEFAULT}.config ]; then
+  source ~/.config/base16-fzf/bash/base16-${BASE16_THEME_DEFAULT}.config
 fi
 
 autoload -U compinit && compinit

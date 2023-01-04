@@ -16,6 +16,7 @@ Plug 'andymass/vim-matchup'
 Plug 'antoinemadec/coc-fzf'
 Plug 'benmills/vimux'
 Plug 'blueyed/vim-diminactive'
+Plug 'chrisbra/Colorizer'
 Plug 'dbeniamine/cheat.sh-vim'
 Plug 'dense-analysis/ale'
 Plug 'dhruvasagar/vim-table-mode'
@@ -70,7 +71,7 @@ call plug#end()
 setglobal complete-=i
 set autoread
 set backupdir=/tmp//
-set clipboard+=unnamedplus
+set clipboard^=unnamed,unnamedplus
 set cmdheight=1
 set completeopt=menu
 set cpoptions+=$
@@ -121,8 +122,10 @@ set wildignore+=*/dist/*,*/coverage/*,*/coverage_report/*,*/node_modules/*,*.pyc
 if !empty(glob('~/.vim/plugged/vim-gutentags'))
   set statusline+=%{gutentags#statusline()}
 endif
-if has('nvim')
-  set termguicolors
+set termguicolors
+if !has('nvim')
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 endif
 if exists('&inccommand')
   set inccommand=split

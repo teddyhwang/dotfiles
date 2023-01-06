@@ -8,9 +8,9 @@ vim.g.fzf_layout = {
 }
 
 local function search()
-  local search = vim.fn.input("Search: ")
-  if search ~= "" then
-    vim.cmd(string.format(":Rg %s", search))
+  local search_input = vim.fn.input("Search: ")
+  if search_input ~= "" then
+    vim.cmd(string.format(":Rg %s", search_input))
   end
 end
 

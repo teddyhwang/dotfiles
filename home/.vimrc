@@ -219,6 +219,7 @@ let g:colorcolumn_supported_filetypes = [
   \ 'javascriptreact',
   \ 'json',
   \ 'jsonc',
+  \ 'lua',
   \ 'liquid',
   \ 'markdown',
   \ 'mysql',

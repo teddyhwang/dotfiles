@@ -75,7 +75,7 @@ lspconfig["cssls"].setup({
   on_attach = on_attach,
 })
 
--- configure tailwindcss server
+-- configure tailwindcss, server
 lspconfig["tailwindcss"].setup({
   capabilities = capabilities,
   on_attach = on_attach,
@@ -107,4 +107,19 @@ lspconfig["sumneko_lua"].setup({
       },
     },
   },
+})
+
+lspconfig["ruby_ls"].setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
+
+lspconfig["solargraph"].setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
+
+lspconfig["sorbet"].setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
 })

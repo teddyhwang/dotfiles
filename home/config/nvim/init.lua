@@ -29,4 +29,5 @@ else
   require("teddyhwang.plugins.telescope")
   require("teddyhwang.plugins.treesitter")
   require("teddyhwang.plugins.vimux")
+  require("teddyhwang.plugins.winresizer")
 end

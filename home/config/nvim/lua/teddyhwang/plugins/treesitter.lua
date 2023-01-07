@@ -14,6 +14,7 @@ treesitter.setup({
   indent = { enable = true },
   -- enable autotagging (w/ nvim-ts-autotag plugin)
   autotag = { enable = true },
+  matchup = { enable = true },
   -- ensure these language parsers are installed
   ensure_installed = {
     "bash",
@@ -26,6 +27,7 @@ treesitter.setup({
     "json",
     "lua",
     "markdown",
+    "python",
     "ruby",
     "svelte",
     "tsx",
@@ -35,4 +37,15 @@ treesitter.setup({
   },
   -- auto install above language parsers
   auto_install = true,
+  textobjects = {
+    lsp_interop = {
+      enable = true,
+      border = "none",
+      floating_preview_opts = {},
+      peek_definition_code = {
+        ["<leader>df"] = "@function.outer",
+        ["<leader>dF"] = "@class.outer",
+      },
+    },
+  },
 })

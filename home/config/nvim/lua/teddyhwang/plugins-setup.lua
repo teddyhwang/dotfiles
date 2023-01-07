@@ -118,6 +118,14 @@ return packer.startup(function(use)
   use("vim-scripts/RelativeNumberCurrentWindow")
   use("junegunn/fzf")
   use("junegunn/fzf.vim")
+  use("lukas-reineke/indent-blankline.nvim")
+  use({
+    "andymass/vim-matchup",
+    setup = function()
+      -- may set any options here
+      vim.g.matchup_matchparen_offscreen = { method = "popup" }
+    end,
+  })
 
   -- treesitter configuration
   use({
@@ -126,6 +134,10 @@ return packer.startup(function(use)
       local ts_update = require("nvim-treesitter.install").update({ with_sync = true })
       ts_update()
     end,
+  })
+  use({ -- Additional text objects via treesitter
+    "nvim-treesitter/nvim-treesitter-textobjects",
+    after = "nvim-treesitter",
   })
 
   -- auto closing

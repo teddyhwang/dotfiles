@@ -1,6 +1,6 @@
-local use_vim_config = os.getenv("USE_VIM_CONFIG")
+local use_vim_rc = os.getenv("USE_VIM_RC")
 
-if use_vim_config then
+if use_vim_rc then
   vim.cmd("set runtimepath^=~/.vim runtimepath+=~/.vim/after")
   vim.cmd("let &packpath = &runtimepath")
   vim.cmd("source ~/.vimrc")
@@ -16,6 +16,7 @@ else
   require("teddyhwang.plugins.fzf")
   require("teddyhwang.plugins.gitsigns")
   require("teddyhwang.plugins.highlightedyank")
+  require("teddyhwang.plugins.indent-blankline")
   require("teddyhwang.plugins.lsp.lspconfig")
   require("teddyhwang.plugins.lsp.lspsaga")
   require("teddyhwang.plugins.lsp.mason")

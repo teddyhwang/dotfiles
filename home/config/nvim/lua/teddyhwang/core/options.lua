@@ -33,3 +33,9 @@ vim.opt.splitright = false
 vim.opt.splitbelow = false
 
 vim.opt.iskeyword:append("-")
+
+vim.cmd("autocmd BufNewFile,BufRead *.rbi set filetype=ruby")
+vim.cmd("autocmd BufNewFile,BufRead *.graphql set filetype=graphql")
+vim.cmd("autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx")
+vim.cmd("autocmd BufNewFile,BufRead *.plist set filetype=xml")
+vim.cmd("autocmd BufNewFile,BufRead *.ejson set filetype=json")

@@ -17,24 +17,25 @@ mason.setup()
 
 mason_lspconfig.setup({
   ensure_installed = {
-    "tsserver",
-    "html",
+    "bash-language-server",
     "cssls",
-    "tailwindcss",
-    "sumneko_lua",
     "emmet_ls",
+    "html",
     "ruby_ls",
     "solargraph",
     "sorbet",
+    "sumneko_lua",
+    "tailwindcss",
+    "tsserver",
   },
   automatic_installation = true,
 })
 
 mason_null_ls.setup({
   ensure_installed = {
+    "eslint_d", -- ts/js linter
     "prettier", -- ts/js formatter
     "stylua", -- lua formatter
-    "eslint_d", -- ts/js linter
   },
   automatic_installation = true,
 })

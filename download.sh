@@ -19,16 +19,9 @@ else
   echo -e "${C_LIGHTGRAY}cht.sh exists$C_DEFAULT"
 fi
 
-if ! command -v prettier &> /dev/null; then
-  echo -e "${C_GREEN}Installing prettier...$C_DEFAULT"
-  npm install -g prettier || sudo npm install -g prettier
+if ! command -v tree-sitter &> /dev/null; then
+  echo -e "${C_GREEN}Installing tree-sitter-cli...$C_DEFAULT"
+  npm install -g tree-sitter-cli || sudo npm install -g tree-sitter-cli
 else
-  echo -e "${C_LIGHTGRAY}prettier is installed$C_DEFAULT"
-fi
-
-if ! command -v bash-language-server &> /dev/null; then
-  echo -e "${C_GREEN}Installing bash-language-server...$C_DEFAULT"
-  npm install -g bash-language-server || sudo npm install -g bash-language-server
-else
-  echo -e "${C_LIGHTGRAY}bash-language-server is installed$C_DEFAULT"
+  echo -e "${C_LIGHTGRAY}tree-sitter-cli is installed$C_DEFAULT"
 fi

@@ -1,9 +1,14 @@
-local status, treesitter = pcall(require, "nvim-treesitter.configs")
-if not status then
+local treesiter_configs_status, treesitter_configs = pcall(require, "nvim-treesitter.configs")
+if not treesiter_configs_status then
   return
 end
 
-treesitter.setup({
+local treesitter_parsers_status, treesitter_parsers = pcall(require, "nvim-treesitter.parsers")
+if not treesitter_parsers_status then
+  return
+end
+
+treesitter_configs.setup({
   highlight = {
     enable = true,
   },
@@ -42,3 +47,12 @@ treesitter.setup({
     },
   },
 })
+
+-- https://github.com/nvim-treesitter/nvim-treesitter/issues/655#issuecomment-1021160477
+local ft_to_lang = treesitter_parsers.ft_to_lang
+treesitter_parsers.ft_to_lang = function(ft)
+  if ft == "zsh" then
+    return "bash"
+  end
+  return ft_to_lang(ft)
+end

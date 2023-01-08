@@ -163,11 +163,11 @@ let g:closetag_filetypes = 'html,xhtml,phtml'
 let g:closetag_xhtml_filetypes = 'xhtml,jsx,tsx'
 let g:closetag_emptyTags_caseSensitive = 1
 let g:closetag_regions = {
-    \ 'typescript.tsx': 'jsxRegion,tsxRegion',
-    \ 'javascript.jsx': 'jsxRegion',
-    \ 'typescriptreact': 'jsxRegion,tsxRegion',
-    \ 'javascriptreact': 'jsxRegion',
-    \ }
+  \ 'typescript.tsx': 'jsxRegion,tsxRegion',
+  \ 'javascript.jsx': 'jsxRegion',
+  \ 'typescriptreact': 'jsxRegion,tsxRegion',
+  \ 'javascriptreact': 'jsxRegion',
+  \ }
 let g:coc_fzf_preview = 'right:50%'
 let g:coc_force_debug = 0
 let g:coc_global_extensions = [
@@ -219,6 +219,7 @@ let g:colorcolumn_supported_filetypes = [
   \ 'javascriptreact',
   \ 'json',
   \ 'jsonc',
+  \ 'lua',
   \ 'liquid',
   \ 'markdown',
   \ 'mysql',

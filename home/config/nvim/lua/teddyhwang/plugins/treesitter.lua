@@ -46,6 +46,11 @@ treesitter_configs.setup({
       },
     },
   },
+  hidesig = {
+    enable = true,
+    opacity = 0.5,
+    delay = 200,
+  },
 })
 
 -- https://github.com/nvim-treesitter/nvim-treesitter/issues/655#issuecomment-1021160477

@@ -7,8 +7,3 @@ if is_set_theme_file_readable then
   cmd("let base16colorspace=256")
   cmd("source " .. set_theme_path)
 end
-
-cmd("syn region rubySorbetSig start='sig {' end='}'")
-cmd("syn region rubySorbetSigDo start='sig do' end='end'")
-cmd("hi def link rubySorbetSig Comment")
-cmd("hi def link rubySorbetSigDo Comment")

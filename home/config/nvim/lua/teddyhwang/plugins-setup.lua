@@ -68,6 +68,7 @@ packer.startup(function(use)
   use("tpope/vim-liquid")
   use("tpope/vim-rails")
   use("whatyouhide/vim-tmux-syntax")
+  use("omnisyle/nvim-hidesig")
 
   -- window management
   -- -- terminal

@@ -36,6 +36,8 @@ vim.opt.iskeyword:append("-")
 
 vim.cmd("autocmd VimResized * wincmd =")
 
+vim.cmd("autocmd TermOpen term://* startinsert")
+
 vim.cmd("autocmd BufNewFile,BufRead *.rbi set filetype=ruby")
 vim.cmd("autocmd BufNewFile,BufRead *.graphql set filetype=graphql")
 vim.cmd("autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx")

@@ -50,3 +50,9 @@ cmp.setup({
     }),
   },
 })
+
+local opts = { noremap = true, silent = true }
+vim.keymap.set("i", "<C-j>", "<cmd>lua require'luasnip'.jump(1)<CR>", opts)
+vim.keymap.set("s", "<C-j>", "<cmd>lua require'luasnip'.jump(1)<CR>", opts)
+vim.keymap.set("i", "<C-k>", "<cmd>lua require'luasnip'.jump(-1)<CR>", opts)
+vim.keymap.set("s", "<C-k>", "<cmd>lua require'luasnip'.jump(-1)<CR>", opts)

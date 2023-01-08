@@ -152,6 +152,10 @@ packer.startup(function(use)
     end,
   })
 
+  if vim.fn.executable("shadowenv") == 1 then
+    use("Shopify/shadowenv.vim")
+  end
+
   if packer_bootstrap then
     require("packer").sync()
   end

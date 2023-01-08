@@ -35,7 +35,6 @@ else
 fi
 
 if ! [ $SSH_CLIENT ]; then
-  nvim --headless +PlugInstall +qall
-  timeout 1m nvim --headless +CocInstall || true
-  timeout 20s nvim --headless +CocInstall || true
+  timeout 1m nvim --headless +PackerInstall || true
+  timeout 20s nvim --headless +PackerUpdate || true
 fi

@@ -1,3 +1,5 @@
+vim.g["test#strategy"] = "vimux"
+
 local function tmuxSplitCommand()
   local command = vim.fn.input("Command: ")
   if command ~= "" then

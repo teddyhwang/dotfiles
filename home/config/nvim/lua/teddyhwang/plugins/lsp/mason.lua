@@ -23,7 +23,7 @@ mason_lspconfig.setup({
     "tailwindcss",
     "sumneko_lua",
     "emmet_ls",
-    "ruby-lsp",
+    "ruby_ls",
     "solargraph",
     "sorbet",
   },

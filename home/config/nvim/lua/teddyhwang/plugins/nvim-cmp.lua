@@ -17,9 +17,15 @@ require("luasnip/loaders/from_vscode").lazy_load()
 
 vim.opt.completeopt = "menu,menuone,noselect"
 
+vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" })
+vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" })
 cmp.setup({
   completion = {
     completeopt = "menu,menuone,noinsert",
+  },
+  window = {
+    -- completion = cmp.config.window.bordered(),
+    -- documentation = cmp.config.window.bordered(),
   },
   snippet = {
     expand = function(args)
@@ -33,10 +39,6 @@ cmp.setup({
     ["<C-f>"] = cmp.mapping.scroll_docs(4),
     ["<C-Space>"] = cmp.mapping.complete(),
     ["<C-e>"] = cmp.mapping.abort(),
-    ["<CR>"] = cmp.mapping.confirm({
-      behavior = cmp.ConfirmBehavior.Replace,
-      select = true,
-    }),
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.confirm({ select = true })
@@ -65,7 +67,7 @@ cmp.setup({
   -- configure lspkind for vs-code like icons
   formatting = {
     format = lspkind.cmp_format({
-      maxwidth = 50,
+      maxwidth = 150,
       ellipsis_char = "...",
     }),
   },

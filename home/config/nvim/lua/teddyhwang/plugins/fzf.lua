@@ -15,3 +15,5 @@ local function search()
 end
 
 vim.keymap.set("n", "<C-f>", search, { noremap = true })
+vim.keymap.set("n", ",ff", ":Rg <C-R><C-W><cr>", { noremap = true })
+vim.keymap.set("n", "<C-t>", ":Files<cr>", { noremap = true })

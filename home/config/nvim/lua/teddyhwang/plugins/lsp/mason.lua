@@ -17,7 +17,7 @@ mason.setup()
 
 mason_lspconfig.setup({
   ensure_installed = {
-    "bash-language-server",
+    "bashls",
     "cssls",
     "emmet_ls",
     "html",

@@ -22,8 +22,8 @@ cmp.setup({
     completeopt = "menu,menuone,noinsert",
   },
   window = {
-    completion = cmp.config.window.bordered(),
-    documentation = cmp.config.window.bordered(),
+    -- completion = cmp.config.window.bordered(),
+    -- documentation = cmp.config.window.bordered(),
   },
   snippet = {
     expand = function(args)
@@ -42,15 +42,17 @@ cmp.setup({
       select = false,
     }),
     ["<Tab>"] = cmp.mapping(function(fallback)
-      local copilot_keys = vim.fn["copilot#Accept"]()
-      if copilot_keys ~= "" then
-        vim.api.nvim_feedkeys(copilot_keys, "i", true)
-      elseif cmp.visible() then
+      if cmp.visible() then
         cmp.confirm({ select = true })
       elseif luasnip.expand_or_jumpable() then
         luasnip.expand_or_jump()
       else
-        fallback()
+        local copilot_keys = vim.fn["copilot#Accept"]("")
+        if copilot_keys ~= "" then
+          vim.api.nvim_feedkeys(copilot_keys, "i", true)
+        else
+          fallback()
+        end
       end
     end, { "i", "s" }),
     ["<S-Tab>"] = cmp.mapping(function(fallback)

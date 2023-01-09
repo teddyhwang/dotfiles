@@ -21,9 +21,9 @@ mason_lspconfig.setup({
     "cssls",
     "emmet_ls",
     "html",
-    "ruby_ls",
-    "solargraph",
-    "sorbet",
+    -- "ruby_ls",
+    -- "solargraph",
+    -- "sorbet",
     "sumneko_lua",
     "tailwindcss",
     "tsserver",
@@ -33,10 +33,10 @@ mason_lspconfig.setup({
 
 mason_null_ls.setup({
   ensure_installed = {
-    "eslint_d", -- ts/js linter
-    "prettier", -- ts/js formatter
-    "stylua", -- lua formatter
-    "rubocop", -- ruby formatter
+    "eslint_d",
+    "prettier",
+    "stylua",
+    "rubocop",
   },
   automatic_installation = true,
 })

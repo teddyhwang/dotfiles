@@ -3,8 +3,8 @@ if not setup then
   return
 end
 
-local formatting = null_ls.builtins.formatting -- to setup formatters
-local diagnostics = null_ls.builtins.diagnostics -- to setup linters
+local formatting = null_ls.builtins.formatting
+local diagnostics = null_ls.builtins.diagnostics
 
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
@@ -13,7 +13,7 @@ null_ls.setup({
     formatting.prettier,
     formatting.stylua,
     formatting.rubocop,
-    diagnostics.eslint_d.with({ -- js/ts linter
+    diagnostics.eslint_d.with({
       condition = function(utils)
         return utils.root_has_file(".eslintrc.js") -- change file extension if you use something else
       end,
@@ -29,7 +29,6 @@ null_ls.setup({
         callback = function()
           vim.lsp.buf.format({
             filter = function(client)
-              --  only use null-ls for formatting instead of lsp server
               return client.name == "null-ls"
             end,
             bufnr = bufnr,

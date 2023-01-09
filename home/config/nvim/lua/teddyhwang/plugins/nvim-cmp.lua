@@ -37,6 +37,13 @@ cmp.setup({
     ["<C-f>"] = cmp.mapping.scroll_docs(4),
     ["<C-Space>"] = cmp.mapping.complete(),
     ["<C-e>"] = cmp.mapping.abort(),
+    ["<esc>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.abort()
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
     ["<CR>"] = cmp.mapping.confirm({
       behavior = cmp.ConfirmBehavior.Replace,
       select = false,
@@ -56,7 +63,10 @@ cmp.setup({
       end
     end, { "i", "s" }),
     ["<S-Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
+      local copilot_keys = vim.fn["copilot#Accept"]("")
+      if copilot_keys ~= "" then
+        vim.api.nvim_feedkeys(copilot_keys, "i", true)
+      elseif cmp.visible() then
         cmp.select_prev_item()
       elseif luasnip.jumpable(-1) then
         luasnip.jump(-1)

@@ -10,10 +10,9 @@ local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 null_ls.setup({
   sources = {
-    --  to disable file types use
-    --  "formatting.prettier.with({disabled_filetypes: {}})" (see null-ls docs)
-    formatting.prettier, -- js/ts formatter
-    formatting.stylua, -- lua formatter
+    formatting.prettier,
+    formatting.stylua,
+    formatting.rubocop,
     diagnostics.eslint_d.with({ -- js/ts linter
       condition = function(utils)
         return utils.root_has_file(".eslintrc.js") -- change file extension if you use something else

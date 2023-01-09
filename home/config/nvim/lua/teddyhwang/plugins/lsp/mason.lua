@@ -36,6 +36,7 @@ mason_null_ls.setup({
     "eslint_d", -- ts/js linter
     "prettier", -- ts/js formatter
     "stylua", -- lua formatter
+    "rubocop", -- ruby formatter
   },
   automatic_installation = true,
 })

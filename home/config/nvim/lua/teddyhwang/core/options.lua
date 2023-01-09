@@ -5,6 +5,10 @@ vim.opt.clipboard:append("unnamedplus")
 vim.opt.colorcolumn = "80,120"
 vim.opt.cursorline = true
 vim.opt.expandtab = true
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+vim.opt.foldlevel = 2
+vim.opt.foldnestmax = 10
 vim.opt.ignorecase = false
 vim.opt.inccommand = "split"
 vim.opt.iskeyword:append("-")

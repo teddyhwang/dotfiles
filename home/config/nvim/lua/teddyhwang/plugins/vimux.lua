@@ -8,6 +8,6 @@ local function tmuxSplitCommand()
 end
 
 vim.keymap.set("n", "<leader>!", tmuxSplitCommand, { noremap = true })
-vim.keymap.set("n", "<leader>t", ":TestNearest", { noremap = true })
-vim.keymap.set("n", "<leader>T", ":VimuxRunCommand 'dev test '.@%", { noremap = true })
-vim.keymap.set("n", "<leader>l", ":VimuxRunLastCommand", { noremap = true })
+vim.keymap.set("n", "<leader>t", ":TestNearest<CR>", { noremap = true })
+vim.keymap.set("n", "<leader>T", ":VimuxRunCommand 'dev test '.@%<CR>", { noremap = true })
+vim.keymap.set("n", "<leader>l", ":VimuxRunLastCommand<CR>", { noremap = true })

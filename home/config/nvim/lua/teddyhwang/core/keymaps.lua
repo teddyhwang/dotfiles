@@ -17,9 +17,8 @@ vim.keymap.set("n", "<leader>tp", ":tabp<CR>") --  go to previous tab
 
 vim.keymap.set("n", "<leader>q", ":q<CR>") -- close current buffer
 
-vim.keymap.set("n", "<leader>r", ":source $MYVIMRC<CR>")
-vim.keymap.set("n", "<leader>v", ":e ~/.config/nvim/init.lua")
-vim.keymap.set("n", "<leader>V", "ggVG")
-vim.keymap.set("n", "<leader>y", ":%y+")
-vim.keymap.set("n", "<leader>o", ":! open %:h")
-vim.keymap.set("n", "<leader>!", ":call TmuxSplitCommand()")
+vim.keymap.set("n", "<leader>v", ":e ~/.config/nvim/init.lua<CR>")
+vim.keymap.set("n", "<leader>V", "ggVG<CR>")
+vim.keymap.set("n", "<leader>y", ":%y+<CR>")
+vim.keymap.set("n", "<leader>O", ":! open %:h<CR>")
+vim.keymap.set("n", "<leader>!", ":call TmuxSplitCommand()<CR>")

@@ -13,7 +13,7 @@ if [ -n "$BREW_PREFIX" ]; then
   PATH="$BREW_PACKAGE_PREFIX/curl/bin:$PATH"
   PATH="$BREW_PACKAGE_PREFIX/openssl/bin:$PATH"
   PATH="$BREW_PACKAGE_PREFIX/ruby/bin:$PATH"
-  PATH="$BREW_PREFIX/lib/ruby/gems/3.1.0/bin:$PATH"
+  PATH="$BREW_PREFIX/lib/ruby/gems/3.2.0/bin:$PATH"
 fi
 
 PATH="$HOME/.bin:$PATH"

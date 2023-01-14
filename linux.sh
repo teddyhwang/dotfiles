@@ -16,7 +16,7 @@ fi
 
 pip install neovim mycli
 
-delta_version="0.15.1"
+delta_version="0.11.3"
 wget "https://github.com/dandavison/delta/releases/download/${delta_version}/git-delta_${delta_version}_amd64.deb"
 sudo dpkg -i git-delta_${delta_version}_amd64.deb
 rm *.deb

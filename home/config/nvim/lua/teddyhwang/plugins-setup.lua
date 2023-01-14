@@ -56,7 +56,7 @@ packer.startup(function(use)
 
   -- -- editor
   use("machakann/vim-highlightedyank")
-  use("norcalli/nvim-colorizer.lua")
+  use("NvChad/nvim-colorizer.lua")
   use({
     "andymass/vim-matchup", -- if end matches
     setup = function()
@@ -130,7 +130,7 @@ packer.startup(function(use)
 
   -- -- moving
   use("AndrewRadev/splitjoin.vim")
-  use("fedepujol/move.nvim")
+  use("matze/vim-move")
   use("inkarkat/vim-ReplaceWithRegister")
   use("mg979/vim-visual-multi") -- multiple cursors
   use("numToStr/Comment.nvim")

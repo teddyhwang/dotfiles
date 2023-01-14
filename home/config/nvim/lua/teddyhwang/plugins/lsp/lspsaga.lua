@@ -3,12 +3,15 @@ if not saga_status then
   return
 end
 
-saga.init_lsp_saga({
-  move_in_saga = { prev = "<C-k>", next = "<C-j>" },
-  finder_action_keys = {
-    open = "<CR>",
+local background = vim.cmd("echo synIDattr(synIDtrans(hlID('Cursor')), 'fg#')")
+
+saga.setup({
+  definition = {
+    edit = "<cr>",
   },
-  definition_action_keys = {
-    edit = "<CR>",
+  ui = {
+    colors = {
+      normal_bg = background,
+    },
   },
 })

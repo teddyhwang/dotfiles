@@ -1,7 +1,11 @@
 local saga_status, saga = pcall(require, "lspsaga")
 local base16_status, base16 = pcall(require, "base16-colorscheme")
 
-if not saga_status or base16_status then
+if not saga_status then
+  return
+end
+
+if not base16_status then
   return
 end
 

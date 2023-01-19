@@ -33,5 +33,5 @@ nvimtree.setup({
   },
 })
 
-vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>")
-vim.keymap.set("n", "<leader>E", ":NvimTreeFindFile<CR>")
+vim.keymap.set("n", "<leader>e", ":NvimTreeFindFile<CR>")
+vim.keymap.set("n", "<c-\\>", ":NvimTreeFindFileToggle<CR>")

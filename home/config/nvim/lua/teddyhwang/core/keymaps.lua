@@ -2,7 +2,7 @@ local opts = { silent = true }
 
 vim.g.mapleader = "\\"
 
-vim.keymap.set("n", "<BS>", ":noh<cr>", opts)
+vim.keymap.set("n", "<BS>", ":noh<cr>:echo ''<cr>", opts)
 
 vim.keymap.set("n", "<leader>+", "<C-a>") -- increment numbers
 vim.keymap.set("n", "<leader>-", "<C-x>") -- decrement numbers

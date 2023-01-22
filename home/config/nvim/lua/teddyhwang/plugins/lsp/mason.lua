@@ -20,7 +20,7 @@ mason_lspconfig.setup({
     "bashls",
     "cssls",
     "emmet_ls",
-    "graphql-language-service-cli",
+    "graphql",
     "html",
     "sumneko_lua",
     "tailwindcss",

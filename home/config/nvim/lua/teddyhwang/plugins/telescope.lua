@@ -23,14 +23,3 @@ telescope.setup({
 })
 
 telescope.load_extension("fzf")
-
-vim.keymap.set("n", "<C-p>", "<cmd>Telescope find_files<cr>")
-vim.keymap.set("n", "<leader>fs", "<cmd>Telescope live_grep<cr>")
-vim.keymap.set("n", "<leader>fc", "<cmd>Telescope grep_string<cr>")
-vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>")
-vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>")
-
-vim.keymap.set("n", "<leader>gc", "<cmd>Telescope git_commits<cr>")
-vim.keymap.set("n", "<leader>gfc", "<cmd>Telescope git_bcommits<cr>")
-vim.keymap.set("n", "<leader>b", "<cmd>Telescope git_branches<cr>")
-vim.keymap.set("n", "<leader>gs", "<cmd>Telescope git_status<cr>")

@@ -1,3 +1,5 @@
+vim.g.mapleader = "\\"
+
 vim.opt.autoindent = true
 vim.opt.autoread = true
 vim.opt.background = "dark"
@@ -30,6 +32,8 @@ vim.opt.splitbelow = false
 vim.opt.splitright = false
 vim.opt.tabstop = 2
 vim.opt.termguicolors = true
+vim.opt.timeout = true
+vim.opt.timeoutlen = 300
 vim.opt.ttyfast = true
 vim.opt.tw = 120
 vim.opt.wrap = false

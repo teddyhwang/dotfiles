@@ -88,6 +88,7 @@ packer.startup(function(use)
 
   -- -- navigation
   use("airblade/vim-rooter")
+  use("folke/which-key.nvim")
   use("junegunn/fzf")
   use("junegunn/fzf.vim")
   use("nvim-tree/nvim-tree.lua")

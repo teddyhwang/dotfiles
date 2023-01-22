@@ -7,5 +7,3 @@ vim.g.floaterm_keymap_prev = "<F3>"
 vim.g.floaterm_keymap_toggle = "<F1>"
 vim.g.floaterm_opener = "vsplit"
 vim.g.floaterm_width = 0.8
-
-vim.keymap.set("n", "<leader>fr", "<cmd>FloatermNew ranger<CR>")

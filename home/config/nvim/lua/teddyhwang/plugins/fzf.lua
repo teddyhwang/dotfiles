@@ -6,14 +6,3 @@ vim.g.fzf_layout = {
     ["border"] = "horizontal",
   },
 }
-
-local function search()
-  local search_input = vim.fn.input("Search: ")
-  if search_input ~= "" then
-    vim.cmd(string.format(":Rg %s", search_input))
-  end
-end
-
-vim.keymap.set("n", "<C-f>", search, { noremap = true })
-vim.keymap.set("n", ",ff", ":Rg <C-R><C-W><cr>", { noremap = true })
-vim.keymap.set("n", "<C-t>", ":Files<cr>", { noremap = true })

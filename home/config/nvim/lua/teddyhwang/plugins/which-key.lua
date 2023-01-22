@@ -33,7 +33,7 @@ whichkey.register({
     t = { ":Terminal<CR>", "terminal" },
   },
   b = { "<cmd>Telescope git_branches<CR>", "Telescope git branches" },
-  e = { ":NvimTreeToggle<CR>", "Toggle nvim tree" },
+  e = { ":NvimTreeFindFileToggle<CR>", "Toggle nvim tree" },
   E = { ":NvimTreeFindFile<CR>", "Find current file in nvim tree" },
   g = {
     c = { "<cmd>Telescope git_commits<CR>", "Telescope git commits" },

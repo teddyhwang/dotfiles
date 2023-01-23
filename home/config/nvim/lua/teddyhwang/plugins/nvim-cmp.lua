@@ -15,6 +15,10 @@ end
 
 require("luasnip/loaders/from_vscode").lazy_load()
 
+luasnip.filetype_extend("javascript", { "html" })
+luasnip.filetype_extend("javascriptreact", { "html" })
+luasnip.filetype_extend("typescriptreact", { "html" })
+
 vim.opt.completeopt = "menu,menuone,noselect"
 
 cmp.setup({
@@ -47,12 +51,7 @@ cmp.setup({
       elseif luasnip.expand_or_jumpable() then
         luasnip.expand_or_jump()
       else
-        local copilot_keys = vim.fn["copilot#Accept"]("")
-        if copilot_keys ~= "" then
-          vim.api.nvim_feedkeys(copilot_keys, "i", true)
-        else
-          fallback()
-        end
+        fallback()
       end
     end, { "i", "s" }),
     ["<S-Tab>"] = cmp.mapping(function(fallback)

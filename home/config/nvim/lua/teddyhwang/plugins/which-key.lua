@@ -63,7 +63,7 @@ whichkey.register({
   ["<BS>"] = { ":noh<CR>:echo ''<CR>", "Clear search and messages" },
   [">"] = { "<C-w>20l", "Focus far right pane" },
   ["<"] = { "<C-w>20h", "Focus far left pane" },
-  ["<C-p>"] = { "<cmd>Telescope find_files<CR>", "Find files" },
+  ["<C-p>"] = { "<cmd>Telescope find_files hidden=true<CR>", "Find files" },
 })
 
 whichkey.register({

@@ -42,6 +42,7 @@ packer.startup(function(use)
     "nvim-treesitter/nvim-treesitter-textobjects",
     after = "nvim-treesitter",
   })
+  use("bfontaine/Brewfile.vim")
 
   -- -- theme
   use("RRethy/nvim-base16")

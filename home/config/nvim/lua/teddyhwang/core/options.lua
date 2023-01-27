@@ -17,6 +17,7 @@ vim.opt.ignorecase = false
 vim.opt.inccommand = "split"
 vim.opt.iskeyword:append("-")
 vim.opt.list = true
+vim.opt.mouse = "a"
 vim.opt.listchars = {
   trail = "⋅",
   tab = "›-",

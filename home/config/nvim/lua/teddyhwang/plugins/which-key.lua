@@ -14,7 +14,13 @@ local function search()
   end
 end
 
-whichkey.setup({})
+whichkey.setup({
+  triggers_blacklist = {
+    n = { "y", "v" },
+    i = { "j", "k" },
+    v = { "j", "k" },
+  },
+})
 whichkey.register({
   ["!"] = { tmuxSplitCommand, "Run split command in tmux terminal" },
   ["+"] = { "<C-a>", "Increment number" },

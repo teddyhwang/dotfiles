@@ -107,6 +107,10 @@ packer.startup(function(use)
     "windwp/nvim-ts-autotag",
     after = "nvim-treesitter",
   })
+  use({
+    "gelguy/wilder.nvim",
+    requires = { "romgrk/fzy-lua-native" },
+  })
 
   -- -- snippets
   use("L3MON4D3/LuaSnip")

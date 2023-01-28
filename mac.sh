@@ -6,9 +6,16 @@ C_LIGHTGRAY="\x1B[90m"
 
 if ! [ -f ~/Library/Preferences/com.amethyst.Amethyst.plist ]; then
   echo -e "${C_GREEN}Copying Amethyst config file...$C_DEFAULT"
-  cp -rf ./app_configs/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
+  cp -rf ./app_configs/amethyst/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
 else
   echo -e "${C_LIGHTGRAY}Amethyst config file is copied$C_DEFAULT"
+fi
+
+if ! [ -f ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js ]; then
+  echo -e "${C_GREEN}Copying Amethyst custom layout file...$C_DEFAULT"
+  cp -rf ./app_configs/amethyst/uniform-columns.js ~/Library/Application Support/Amethyst/Layouts/uniform-columns.js
+else
+  echo -e "${C_LIGHTGRAY}Amethyst custom layout file is copied$C_DEFAULT"
 fi
 
 if ! [ -f ~/Library/Application\ Support/lazygit/config.yml ]; then

@@ -26,6 +26,7 @@ treesitter_configs.setup({
     "json",
     "lua",
     "markdown",
+    "markdown_inline",
     "python",
     "ruby",
     "svelte",

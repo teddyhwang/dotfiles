@@ -13,7 +13,7 @@ fi
 
 if ! [ -f ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js ]; then
   echo -e "${C_GREEN}Copying Amethyst custom layout file...$C_DEFAULT"
-  cp -rf ./app_configs/amethyst/uniform-columns.js ~/Library/Application Support/Amethyst/Layouts/uniform-columns.js
+  cp -rf ./app_configs/amethyst/uniform-columns.js ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js
 else
   echo -e "${C_LIGHTGRAY}Amethyst custom layout file is copied$C_DEFAULT"
 fi

@@ -13,6 +13,7 @@ null_ls.setup({
     formatting.prettier,
     formatting.stylua,
     formatting.rubocop,
+    diagnostics.rubocop,
     diagnostics.eslint_d.with({
       condition = function(utils)
         return utils.root_has_file(".eslintrc.js") -- change file extension if you use something else

@@ -16,9 +16,8 @@ end
 
 whichkey.setup({
   triggers_blacklist = {
-    n = { "y", "v" },
+    n = { "y", "v", "d" },
     i = { "j", "k" },
-    v = { "j", "k" },
   },
 })
 whichkey.register({

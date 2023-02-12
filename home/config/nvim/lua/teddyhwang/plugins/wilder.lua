@@ -13,6 +13,8 @@ local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "set
 
 wilder.setup({
   modes = { ":", "/", "?" },
+  next_key = "<C-j>",
+  previous_key = "<C-k>",
 })
 wilder.set_option("pipeline", {
   wilder.branch(

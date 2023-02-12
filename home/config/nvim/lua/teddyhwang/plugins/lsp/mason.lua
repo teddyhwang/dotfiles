@@ -22,7 +22,7 @@ mason_lspconfig.setup({
     "emmet_ls",
     "graphql",
     "html",
-    "sumneko_lua",
+    "lua_ls",
     "tailwindcss",
     "tsserver",
   },

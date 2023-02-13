@@ -50,10 +50,10 @@ packer.startup(function(use)
   use("tinted-theming/base16-vim")
 
   -- -- panes
-  use("blueyed/vim-diminactive")
+  use("levouh/tint.nvim")
   use("lewis6991/gitsigns.nvim")
   use("lukas-reineke/indent-blankline.nvim") -- indentation guides
-  use("vim-scripts/RelativeNumberCurrentWindow")
+  use("jeffkreeftmeijer/vim-numbertoggle")
 
   -- -- editor
   use("machakann/vim-highlightedyank")

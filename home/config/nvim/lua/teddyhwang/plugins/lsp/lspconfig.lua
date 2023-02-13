@@ -88,18 +88,19 @@ lspconfig["graphql"].setup({
 lspconfig["lua_ls"].setup({
   capabilities = capabilities,
   on_attach = on_attach,
-  settings = { -- custom settings for lua
+  settings = {
     Lua = {
-      -- make the language server recognize "vim" global
+      runtime = {
+        version = "LuaJIT",
+      },
       diagnostics = {
         globals = { "vim" },
       },
       workspace = {
-        -- make language server aware of runtime files
-        library = {
-          [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-          [vim.fn.stdpath("config") .. "/lua"] = true,
-        },
+        library = vim.api.nvim_get_runtime_file("", true),
+      },
+      telemetry = {
+        enable = false,
       },
     },
   },

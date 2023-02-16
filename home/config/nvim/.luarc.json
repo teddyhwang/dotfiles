@@ -80,6 +80,7 @@
         "/Users/teddyhwang/.local/share/nvim/site/pack/packer/start/cmp_luasnip/after",
         "/Users/teddyhwang/.local/share/nvim/site/pack/packer/start/vim-dadbod-completion/after",
         "/Users/teddyhwang/.local/share/nvim/site/pack/packer/start/vim-rails/after",
-        "${3rd}/luassert/library"
+        "${3rd}/luassert/library",
+        "${3rd}/luv/library"
     ]
 }

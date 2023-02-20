@@ -30,6 +30,10 @@ lazy.setup({
       "RRethy/nvim-base16",
       "nvim-lualine/lualine.nvim",
       "tinted-theming/base16-vim",
+      "omnisyle/nvim-hidesig",
+      "tpope/vim-liquid",
+      "tpope/vim-rails",
+      "whatyouhide/vim-tmux-syntax",
     },
     config = function()
       pcall(require("nvim-treesitter.install").update({ with_sync = true }))
@@ -55,12 +59,6 @@ lazy.setup({
       vim.g.matchup_matchparen_offscreen = { method = "popup" }
     end,
   },
-
-  -- -- language support
-  "tpope/vim-liquid",
-  "tpope/vim-rails",
-  "whatyouhide/vim-tmux-syntax",
-  "omnisyle/nvim-hidesig",
 
   -- window management
   -- -- terminal

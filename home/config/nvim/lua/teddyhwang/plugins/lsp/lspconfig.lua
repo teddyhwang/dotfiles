@@ -25,13 +25,14 @@ vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 local on_attach = function(client, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
-  vim.keymap.set("n", "gr", "zt<cr><cmd>Lspsaga lsp_finder<cr>", opts) -- show definition, references
-  -- vim.keymap.set("n", "gr", "<cmd>Telescope lsp_references<cr>", opts) -- show definition, references
-  -- vim.keymap.set("n", "gD", "<cmd>lua vim.lsp.buf.declaration()<cr>", opts) -- got to declaration
-  vim.keymap.set("n", "gD", "<cmd>Lspsaga peek_definition<cr>", opts) -- see definition and make edits in window
+  vim.keymap.set("n", "gr", "<cmd>References<cr>", opts) -- show references
+  -- vim.keymap.set("n", "gr", "zt<cr><cmd>Lspsaga lsp_finder<cr>", opts) -- show definition, references
+  -- vim.keymap.set("n", "gr", "<cmd>Telescope lsp_references<cr>", opts) -- show references
   vim.keymap.set("n", "gd", "<cmd>Definitions<cr>", opts) -- see definition and make edits in window
   -- vim.keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<cr>", opts) -- see definition and make edits in window
   -- vim.keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>")
+  vim.keymap.set("n", "gD", "<cmd>Lspsaga peek_definition<cr>", opts) -- see definition and make edits in window
+  -- vim.keymap.set("n", "gD", "<cmd>lua vim.lsp.buf.declaration()<cr>", opts) -- got to declaration
   vim.keymap.set("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<cr>", opts) -- go to implementation
   vim.keymap.set("n", "<leader>ca", "<cmd>Lspsaga code_action<cr>", opts) -- see available code actions
   vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<cr>", opts) -- smart rename
@@ -118,10 +119,10 @@ lspconfig["lua_ls"].setup({
   },
 })
 
-lspconfig["solargraph"].setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
-})
+-- lspconfig["solargraph"].setup({
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- })
 
 lspconfig["sorbet"].setup({
   capabilities = capabilities,

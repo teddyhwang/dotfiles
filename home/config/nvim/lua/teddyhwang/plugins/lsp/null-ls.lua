@@ -12,8 +12,16 @@ null_ls.setup({
   sources = {
     formatting.prettier,
     formatting.stylua,
-    formatting.rubocop,
-    diagnostics.rubocop,
+    formatting.rubocop.with({
+      condition = function()
+        return vim.fn.executable("rubocop") == 1
+      end,
+    }),
+    diagnostics.rubocop.with({
+      condition = function()
+        return vim.fn.executable("rubocop") == 1
+      end,
+    }),
     diagnostics.eslint_d.with({
       condition = function(utils)
         return utils.root_has_file(".eslintrc.js") -- change file extension if you use something else

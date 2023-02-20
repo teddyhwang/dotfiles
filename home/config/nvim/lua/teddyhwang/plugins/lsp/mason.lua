@@ -35,7 +35,6 @@ mason_null_ls.setup({
     "eslint-lsp",
     "prettier",
     "stylua",
-    "rubocop",
   },
   automatic_installation = true,
 })

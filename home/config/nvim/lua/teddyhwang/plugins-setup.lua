@@ -128,10 +128,18 @@ lazy.setup({
       "jose-elias-alvarez/null-ls.nvim",
       { "j-hui/fidget.nvim", opts = {} },
       "folke/neodev.nvim",
+      "gfanto/fzf-lsp.nvim",
     },
   },
   "onsails/lspkind.nvim",
-  { "glepnir/lspsaga.nvim", branch = "main" },
+  {
+    "glepnir/lspsaga.nvim",
+    event = "BufRead",
+    dependencies = {
+      { "nvim-tree/nvim-web-devicons" },
+      { "nvim-treesitter/nvim-treesitter" },
+    },
+  },
 
   -- -- formatting & linting
   "tpope/vim-sleuth",

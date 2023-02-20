@@ -13,6 +13,13 @@ if not typescript_setup then
   return
 end
 
+local neodev_setup, neodev = pcall(require, "neodev")
+if not neodev_setup then
+  return
+end
+
+neodev.setup({})
+
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 
 local on_attach = function(client, bufnr)
@@ -22,7 +29,8 @@ local on_attach = function(client, bufnr)
   -- vim.keymap.set("n", "gr", "<cmd>Telescope lsp_references<cr>", opts) -- show definition, references
   -- vim.keymap.set("n", "gD", "<cmd>lua vim.lsp.buf.declaration()<cr>", opts) -- got to declaration
   vim.keymap.set("n", "gD", "<cmd>Lspsaga peek_definition<cr>", opts) -- see definition and make edits in window
-  vim.keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<cr>", opts) -- see definition and make edits in window
+  vim.keymap.set("n", "gd", "<cmd>Definitions<cr>", opts) -- see definition and make edits in window
+  -- vim.keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<cr>", opts) -- see definition and make edits in window
   -- vim.keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>")
   vim.keymap.set("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<cr>", opts) -- go to implementation
   vim.keymap.set("n", "<leader>ca", "<cmd>Lspsaga code_action<cr>", opts) -- see available code actions
@@ -90,6 +98,9 @@ lspconfig["lua_ls"].setup({
   on_attach = on_attach,
   settings = {
     Lua = {
+      completion = {
+        callSnippet = "Replace",
+      },
       runtime = {
         version = "LuaJIT",
       },

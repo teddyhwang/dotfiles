@@ -35,7 +35,5 @@ else
 fi
 
 if ! [ $SSH_CLIENT ]; then
-  timeout 1m nvim --headless +PackerInstall || true
-  timeout 20s nvim --headless || true
-  timeout 20s nvim --headless || truue
+  timeout 2m nvim --headless "+Lazy! sync" +qa || true
 fi

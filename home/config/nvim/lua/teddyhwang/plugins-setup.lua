@@ -1,169 +1,170 @@
-local ensure_packer = function()
-  local fn = vim.fn
-  local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
-  if fn.empty(fn.glob(install_path)) > 0 then
-    fn.system({ "git", "clone", "--depth", "1", "https://github.com/wbthomason/packer.nvim", install_path })
-    vim.cmd([[packadd packer.nvim]])
-    return true
-  end
-  return false
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
 end
-local packer_bootstrap = ensure_packer()
+---@diagnostic disable-next-line: undefined-field
+vim.opt.rtp:prepend(lazypath)
 
-vim.cmd([[
-  augroup packer_user_config
-    autocmd!
-    autocmd BufWritePost plugins-setup.lua source <afile> | PackerSync
-  augroup end
-]])
-
-local status, packer = pcall(require, "packer")
+local status, lazy = pcall(require, "lazy")
 if not status then
   return
 end
 
-packer.startup(function(use)
+lazy.setup({
   -- defaults
-  use("wbthomason/packer.nvim")
-
-  use("nvim-lua/plenary.nvim")
-  use("tpope/vim-sensible")
+  "tpope/vim-sensible",
 
   -- appearance
   -- -- nvim
-  use({
+  {
     "nvim-treesitter/nvim-treesitter",
-    run = function()
-      local ts_update = require("nvim-treesitter.install").update({ with_sync = true })
-      ts_update()
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter-textobjects",
+      "RRethy/nvim-base16",
+      "nvim-lualine/lualine.nvim",
+      "tinted-theming/base16-vim",
+    },
+    config = function()
+      pcall(require("nvim-treesitter.install").update({ with_sync = true }))
     end,
-  })
-  use({
-    "nvim-treesitter/nvim-treesitter-textobjects",
-    after = "nvim-treesitter",
-  })
-  use("bfontaine/Brewfile.vim")
-
-  -- -- theme
-  use("RRethy/nvim-base16")
-  use("nvim-lualine/lualine.nvim")
-  use("tinted-theming/base16-vim")
+    build = ":TSUpdate",
+    priority = 1000,
+  },
+  "bfontaine/Brewfile.vim",
 
   -- -- panes
-  use("levouh/tint.nvim")
-  use("lewis6991/gitsigns.nvim")
-  use("lukas-reineke/indent-blankline.nvim") -- indentation guides
-  use("jeffkreeftmeijer/vim-numbertoggle")
+  "levouh/tint.nvim",
+  "lewis6991/gitsigns.nvim",
+  "lukas-reineke/indent-blankline.nvim", -- indentation guides
+  "jeffkreeftmeijer/vim-numbertoggle",
+  "kristijanhusak/vim-carbon-now-sh",
 
   -- -- editor
-  use("machakann/vim-highlightedyank")
-  use("NvChad/nvim-colorizer.lua")
-  use({
+  "machakann/vim-highlightedyank",
+  "NvChad/nvim-colorizer.lua",
+  {
     "andymass/vim-matchup", -- if end matches
-    setup = function()
+    init = function()
       vim.g.matchup_matchparen_offscreen = { method = "popup" }
     end,
-  })
+  },
 
   -- -- language support
-  use("tpope/vim-liquid")
-  use("tpope/vim-rails")
-  use("whatyouhide/vim-tmux-syntax")
-  use("omnisyle/nvim-hidesig")
+  "tpope/vim-liquid",
+  "tpope/vim-rails",
+  "whatyouhide/vim-tmux-syntax",
+  "omnisyle/nvim-hidesig",
 
   -- window management
   -- -- terminal
-  use("christoomey/vim-tmux-navigator")
-  use("preservim/vimux")
-  use("tmux-plugins/vim-tmux")
-  use("tpope/vim-rhubarb")
-  use("vim-test/vim-test")
-  use("voldikss/vim-floaterm")
+  "christoomey/vim-tmux-navigator",
+  "preservim/vimux",
+  "tmux-plugins/vim-tmux",
+  "tpope/vim-rhubarb",
+  "vim-test/vim-test",
+  "voldikss/vim-floaterm",
 
   -- -- panes
-  use("AndrewRadev/undoquit.vim")
-  use("dhruvasagar/vim-zoom")
-  use("simeji/winresizer")
-  use("tpope/vim-obsession")
-  use("vim-scripts/Tabmerge")
+  "AndrewRadev/undoquit.vim",
+  "dhruvasagar/vim-zoom",
+  "simeji/winresizer",
+  "tpope/vim-obsession",
+  "vim-scripts/Tabmerge",
 
   -- -- navigation
-  use("airblade/vim-rooter")
-  use("folke/which-key.nvim")
-  use("junegunn/fzf")
-  use("junegunn/fzf.vim")
-  use("nvim-tree/nvim-tree.lua")
-  use("nvim-tree/nvim-web-devicons")
-  use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
-  use({ "nvim-telescope/telescope.nvim", branch = "0.1.x" })
+  "airblade/vim-rooter",
+  "folke/which-key.nvim",
+  "junegunn/fzf",
+  "junegunn/fzf.vim",
+  "nvim-tree/nvim-tree.lua",
+  "nvim-tree/nvim-web-devicons",
+  { "nvim-telescope/telescope.nvim", version = "*", dependencies = { "nvim-lua/plenary.nvim" } },
+  {
+    "nvim-telescope/telescope-fzf-native.nvim",
+    build = "make",
+    cond = function()
+      return vim.fn.executable("make") == 1
+    end,
+  },
 
   -- editor
   -- -- autocompletion
-  use("hrsh7th/nvim-cmp")
-  use("hrsh7th/cmp-buffer")
-  use("hrsh7th/cmp-path")
-  use("windwp/nvim-autopairs")
-  use({
+  {
+    "hrsh7th/nvim-cmp",
+    dependencies = {
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      "hrsh7th/cmp-nvim-lsp",
+      "L3MON4D3/LuaSnip",
+      "rafamadriz/friendly-snippets",
+      "saadparwaiz1/cmp_luasnip",
+    },
+  },
+  "windwp/nvim-autopairs",
+  {
     "windwp/nvim-ts-autotag",
-    after = "nvim-treesitter",
-  })
-  use({
+    dependencies = { "nvim-treesitter" },
+  },
+  {
     "gelguy/wilder.nvim",
-    requires = { "romgrk/fzy-lua-native" },
-  })
-
-  -- -- snippets
-  use("L3MON4D3/LuaSnip")
-  use("rafamadriz/friendly-snippets")
-  use("saadparwaiz1/cmp_luasnip")
-
-  -- -- managing & installing lsp servers, linters & formatters
-  use("williamboman/mason-lspconfig.nvim")
-  use("williamboman/mason.nvim")
+    dependencies = { "romgrk/fzy-lua-native" },
+  },
 
   -- -- configuring lsp servers
-  use("hrsh7th/cmp-nvim-lsp")
-  use("jose-elias-alvarez/typescript.nvim")
-  use("neovim/nvim-lspconfig")
-  use("onsails/lspkind.nvim")
-  use({ "glepnir/lspsaga.nvim", branch = "main" })
+  "jose-elias-alvarez/typescript.nvim",
+  {
+    "neovim/nvim-lspconfig",
+    dependencies = {
+      "williamboman/mason.nvim",
+      "williamboman/mason-lspconfig.nvim",
+      "jayp0521/mason-null-ls.nvim",
+      "jose-elias-alvarez/null-ls.nvim",
+      { "j-hui/fidget.nvim", opts = {} },
+      "folke/neodev.nvim",
+    },
+  },
+  "onsails/lspkind.nvim",
+  { "glepnir/lspsaga.nvim", branch = "main" },
 
   -- -- formatting & linting
-  use("jayp0521/mason-null-ls.nvim")
-  use("jose-elias-alvarez/null-ls.nvim")
-  use("tpope/vim-sleuth")
-  use("tpope/vim-surround")
+  "tpope/vim-sleuth",
+  "tpope/vim-surround",
 
   -- -- moving
-  use("AndrewRadev/splitjoin.vim")
-  use("matze/vim-move")
-  use("inkarkat/vim-ReplaceWithRegister")
-  use("mg979/vim-visual-multi") -- multiple cursors
-  use("numToStr/Comment.nvim")
+  "AndrewRadev/splitjoin.vim",
+  "matze/vim-move",
+  "inkarkat/vim-ReplaceWithRegister",
+  "mg979/vim-visual-multi", -- multiple cursors
+  "numToStr/Comment.nvim",
 
   -- -- git
-  use("ruanyl/vim-gh-line")
-  use("tpope/vim-fugitive")
+  "ruanyl/vim-gh-line",
+  "tpope/vim-fugitive",
 
   -- -- data
-  use("kristijanhusak/vim-dadbod-completion")
-  use("kristijanhusak/vim-dadbod-ui")
-  use("tpope/vim-dadbod")
+  "kristijanhusak/vim-dadbod-completion",
+  "kristijanhusak/vim-dadbod-ui",
+  "tpope/vim-dadbod",
 
   -- -- editing
-  use("github/copilot.vim")
-  use({
+  "github/copilot.vim",
+  {
     "iamcco/markdown-preview.nvim",
-    run = function()
+    build = function()
       vim.fn["mkdp#util#install"]()
     end,
-  })
-
-  if vim.fn.executable("shadowenv") == 1 then
-    use("Shopify/shadowenv.vim")
-  end
-
-  if packer_bootstrap then
-    require("packer").sync()
-  end
-end)
+  },
+  {
+    "Shopify/shadowenv.vim",
+    cond = function()
+      return vim.fn.executable("shadowenv") == 1
+    end,
+  },
+})

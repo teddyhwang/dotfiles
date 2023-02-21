@@ -34,6 +34,7 @@ mason_null_ls.setup({
     "eslint_d",
     "eslint-lsp",
     "prettier",
+    "prettierd",
     "stylua",
   },
   automatic_installation = true,

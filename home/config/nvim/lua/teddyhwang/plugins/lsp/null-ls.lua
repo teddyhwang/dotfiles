@@ -18,6 +18,7 @@ null_ls.setup({
       end,
     }),
     diagnostics.rubocop.with({
+      extra_args = { "--server" },
       condition = function()
         return vim.fn.executable("rubocop") == 1
       end,

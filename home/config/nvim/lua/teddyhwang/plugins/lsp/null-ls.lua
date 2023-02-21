@@ -13,12 +13,15 @@ null_ls.setup({
     formatting.prettierd,
     formatting.stylua,
     formatting.rubocop.with({
+      extra_args = { "--server" },
+      ignore_stderr = true,
       condition = function()
         return vim.fn.executable("rubocop") == 1
       end,
     }),
     diagnostics.rubocop.with({
       extra_args = { "--server" },
+      ignore_stderr = true,
       condition = function()
         return vim.fn.executable("rubocop") == 1
       end,

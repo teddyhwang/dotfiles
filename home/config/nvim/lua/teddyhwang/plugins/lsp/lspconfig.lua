@@ -119,15 +119,15 @@ lspconfig["lua_ls"].setup({
   },
 })
 
--- lspconfig["solargraph"].setup({
---   capabilities = capabilities,
---   on_attach = on_attach,
--- })
-
-lspconfig["sorbet"].setup({
+lspconfig["solargraph"].setup({
   capabilities = capabilities,
   on_attach = on_attach,
 })
+
+-- lspconfig["sorbet"].setup({
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+-- })
 
 lspconfig["bashls"].setup({
   capabilities = capabilities,

@@ -113,6 +113,7 @@ lazy.setup({
   {
     "gelguy/wilder.nvim",
     dependencies = { "romgrk/fzy-lua-native" },
+    build = ":UpdateRemotePlugins",
   },
 
   -- -- configuring lsp servers

@@ -119,15 +119,17 @@ lspconfig["lua_ls"].setup({
   },
 })
 
-lspconfig["solargraph"].setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
-})
-
--- lspconfig["sorbet"].setup({
---   capabilities = capabilities,
---   on_attach = on_attach,
--- })
+if vim.fn.executable("srb") == 1 then
+  lspconfig["sorbet"].setup({
+    capabilities = capabilities,
+    on_attach = on_attach,
+  })
+elseif vim.fn.executable("solargraph") == 1 then
+  lspconfig["solargraph"].setup({
+    capabilities = capabilities,
+    on_attach = on_attach,
+  })
+end
 
 lspconfig["bashls"].setup({
   capabilities = capabilities,

@@ -68,6 +68,7 @@ POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
   ssh
   node_version
   chruby
+  pyenv
   dir_writable
   dir
   vcs

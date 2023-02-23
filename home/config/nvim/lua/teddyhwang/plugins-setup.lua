@@ -184,21 +184,21 @@ lazy.setup({
   },
 
   -- -- configuring lsp servers
-  "jose-elias-alvarez/typescript.nvim",
   {
     "neovim/nvim-lspconfig",
     dependencies = {
-      "williamboman/mason.nvim",
-      "williamboman/mason-lspconfig.nvim",
+      "folke/neodev.nvim",
+      "gfanto/fzf-lsp.nvim",
       "jayp0521/mason-null-ls.nvim",
       "jose-elias-alvarez/null-ls.nvim",
+      "jose-elias-alvarez/typescript.nvim",
+      "onsails/lspkind.nvim",
+      "williamboman/mason-lspconfig.nvim",
+      "williamboman/mason.nvim",
       {
         "j-hui/fidget.nvim",
         config = true,
       },
-      "folke/neodev.nvim",
-      "gfanto/fzf-lsp.nvim",
-      "onsails/lspkind.nvim",
       {
         "glepnir/lspsaga.nvim",
         event = "BufRead",
@@ -235,15 +235,25 @@ lazy.setup({
 
   -- -- editing
   {
-    "github/copilot.vim",
-    init = function()
-      local spin = os.getenv("SPIN")
-
-      if spin then
-        vim.g.copilot_node_command = "node"
-      else
-        vim.g.copilot_node_command = "/opt/homebrew/opt/node@16/bin/node"
-      end
+    "zbirenbaum/copilot-cmp",
+    dependencies = {
+      {
+        "zbirenbaum/copilot.lua",
+        cmd = "Copilot",
+        event = "InsertEnter",
+        opts = {
+          suggestion = { enabled = false, auto_trigger = true },
+          panel = { enabled = false },
+          copilot_node_command = os.getenv("SPIN") and "node" or "/opt/homebrew/opt/node@16/bin/node",
+        },
+      },
+    },
+    config = function()
+      require("copilot_cmp").setup({
+        formatters = {
+          insert_text = require("copilot_cmp.format").format_existing_text,
+        },
+      })
     end,
   },
   {

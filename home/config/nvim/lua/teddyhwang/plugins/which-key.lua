@@ -1,17 +1,31 @@
 local whichkey_status, whichkey = pcall(require, "which-key")
 
+if not whichkey_status then
+  return
+end
+
 local function tmuxSplitCommand()
-  local command = vim.fn.input("Command: ")
-  if command ~= "" then
-    vim.cmd(string.format(":VimuxRunCommand '%s'", command))
-  end
+  vim.ui.input({
+    prompt = "Command: ",
+  }, function(input)
+    if input then
+      vim.cmd(string.format(":VimuxRunCommand '%s'", input))
+    else
+      vim.cmd("echo ''")
+    end
+  end)
 end
 
 local function search()
-  local search_input = vim.fn.input("Search: ")
-  if search_input ~= "" then
-    vim.cmd(string.format(":Rg %s", search_input))
-  end
+  vim.ui.input({
+    prompt = "Search: ",
+  }, function(input)
+    if input then
+      vim.cmd(string.format(":Rg %s", input))
+    else
+      vim.cmd("echo ''")
+    end
+  end)
 end
 
 whichkey.setup({

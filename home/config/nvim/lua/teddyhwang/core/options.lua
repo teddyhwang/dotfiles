@@ -4,6 +4,7 @@ vim.opt.autoindent = true
 vim.opt.autoread = true
 vim.opt.background = "dark"
 vim.opt.backspace = "indent,eol,start"
+---@diagnostic disable-next-line: undefined-field
 vim.opt.clipboard:append("unnamedplus")
 vim.opt.colorcolumn = "80,120"
 vim.opt.cursorline = true
@@ -15,6 +16,7 @@ vim.opt.foldmethod = "expr"
 vim.opt.foldnestmax = 10
 vim.opt.ignorecase = false
 vim.opt.inccommand = "split"
+---@diagnostic disable-next-line: undefined-field
 vim.opt.iskeyword:append("-")
 vim.opt.list = true
 vim.opt.mouse = "a"

@@ -12,6 +12,7 @@ null_ls.setup({
   sources = {
     formatting.prettierd,
     formatting.stylua,
+    formatting.stylelint,
     formatting.rubocop.with({
       extra_args = { "--server" },
       ignore_stderr = true,
@@ -19,6 +20,7 @@ null_ls.setup({
         return vim.fn.executable("rubocop") == 1
       end,
     }),
+    diagnostics.stylelint,
     diagnostics.rubocop.with({
       extra_args = { "--server" },
       ignore_stderr = true,

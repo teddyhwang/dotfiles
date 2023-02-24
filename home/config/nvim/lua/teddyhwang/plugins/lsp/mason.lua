@@ -23,6 +23,7 @@ mason_lspconfig.setup({
     "graphql",
     "html",
     "lua_ls",
+    "stylelint-lsp",
     "tailwindcss",
     "tsserver",
   },

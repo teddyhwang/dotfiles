@@ -19,7 +19,7 @@ end
 
 local mac_node = vim.fn.filereadable("/usr/local/Cellar/node@16/16.19.1/bin/node")
     and "/usr/local/Cellar/node@16/16.19.1/bin/node"
-  or "/usr/local/Cellar/node@16/16.19.1/bin/node"
+  or "/opt/homebrew/opt/node@16/bin/node"
 
 lazy.setup({
   -- defaults

@@ -7,3 +7,4 @@ if is_set_theme_file_readable then
   cmd("let base16colorspace=256")
   cmd("source " .. set_theme_path)
 end
+cmd("highlight link HighlightedyankRegion MatchParen")

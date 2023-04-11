@@ -23,6 +23,7 @@ neodev.setup({})
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 
 local on_attach = function(client, bufnr)
+  -- client.server_capabilities.semanticTokensProvider = nil
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   vim.keymap.set("n", "gr", "zt<cmd>Lspsaga lsp_finder<cr>", opts) -- show definition, references
@@ -119,13 +120,13 @@ lspconfig["lua_ls"].setup({
   },
 })
 
-if vim.fn.executable("srb") == 1 then
-  lspconfig["sorbet"].setup({
+if vim.fn.executable("solargraph") == 1 then
+  lspconfig["solargraph"].setup({
     capabilities = capabilities,
     on_attach = on_attach,
   })
-elseif vim.fn.executable("solargraph") == 1 then
-  lspconfig["solargraph"].setup({
+elseif vim.fn.executable("srb") == 1 then
+  lspconfig["sorbet"].setup({
     capabilities = capabilities,
     on_attach = on_attach,
   })

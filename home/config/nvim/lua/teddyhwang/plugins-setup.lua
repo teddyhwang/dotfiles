@@ -48,10 +48,6 @@ lazy.setup({
         "omnisyle/nvim-hidesig",
         lazy = false,
       },
-      {
-        "tinted-theming/base16-vim",
-        lazy = false,
-      },
     },
     build = ":TSUpdate",
     priority = 1000,

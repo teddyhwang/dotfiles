@@ -28,3 +28,4 @@ cmd(
     .. colors.base06
     .. " cterm=NONE term=NONE ctermfg=green ctermbg=black"
 )
+vim.api.nvim_set_hl(0, "LineNr", { fg = colors.base03 })

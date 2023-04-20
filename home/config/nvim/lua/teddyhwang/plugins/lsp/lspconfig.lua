@@ -23,7 +23,7 @@ neodev.setup({})
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 
 local on_attach = function(client, bufnr)
-  -- client.server_capabilities.semanticTokensProvider = nil
+  client.server_capabilities.semanticTokensProvider = nil
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   vim.keymap.set("n", "gr", "zt<cmd>Lspsaga lsp_finder<cr>", opts) -- show definition, references

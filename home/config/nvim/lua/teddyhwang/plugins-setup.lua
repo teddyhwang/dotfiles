@@ -17,8 +17,8 @@ if not status then
   return
 end
 
-local mac_node = vim.fn.filereadable("/usr/local/Cellar/node@16/16.19.1/bin/node") == 1
-    and "/usr/local/Cellar/node@16/16.19.1/bin/node"
+local mac_node = vim.fn.filereadable("/usr/local/Cellar/node@16/16.20.0/bin/node") == 1
+    and "/usr/local/Cellar/node@16/16.20.0/bin/node"
   or "/opt/homebrew/opt/node@16/bin/node"
 
 lazy.setup({

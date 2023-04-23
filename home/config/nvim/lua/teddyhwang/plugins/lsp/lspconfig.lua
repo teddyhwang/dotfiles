@@ -30,8 +30,8 @@ local on_attach = function(client, bufnr)
   -- vim.keymap.set("n", "gr", "<cmd>Telescope lsp_references<cr>", opts) -- show references
   -- vim.keymap.set("n", "gr", "<cmd>lua vim.lsp.buf.references()<cr>", opts) -- see definition and make edits in window
   vim.keymap.set("n", "gR", "<cmd>References<cr>", opts) -- show references
-  vim.keymap.set("n", "gd", "<cmd>Definitions<cr>", opts) -- see definition and make edits in window
-  -- vim.keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>")
+  -- vim.keymap.set("n", "gd", "<cmd>Definitions<cr>", opts) -- see definition and make edits in window
+  vim.keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>")
   -- vim.keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<cr>", opts) -- see definition and make edits in window
   vim.keymap.set("n", "gD", "<cmd>Lspsaga peek_definition<cr>", opts) -- see definition and make edits in window
   vim.keymap.set("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<cr>", opts) -- go to implementation

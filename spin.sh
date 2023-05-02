@@ -37,3 +37,5 @@ fi
 if ! [ $SSH_CLIENT ]; then
   timeout 2m nvim --headless "+Lazy! sync" +qa || true
 fi
+
+echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189))

@@ -16,7 +16,6 @@ export NVM_DIR="$HOME/.nvm"
 if [ $SPIN ]; then
   export PATH="/opt/rubies/ruby-2.7.6/lib/ruby/gems/2.7.0/gems/tmuxinator-3.0.2/bin:$PATH"
   alias token='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
-  echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189)) 2>/dev/null
 fi
 
 alias brighter='set_theme "synth-midnight-dark"'

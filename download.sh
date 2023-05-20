@@ -4,8 +4,8 @@ C_DEFAULT="\x1B[39m"
 C_GREEN="\x1B[32m"
 C_LIGHTGRAY="\x1B[90m"
 
+source './brew.sh'
 if [[ $OSTYPE == 'darwin'* ]]; then
-  source './brew.sh'
   source './mac.sh'
 else
   source './linux.sh'

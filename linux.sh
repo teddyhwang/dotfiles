@@ -5,22 +5,14 @@ C_GREEN="\x1B[32m"
 C_LIGHTGRAY="\x1B[90m"
 
 touch ~/.z
-sudo apt-get install -y bat ranger xdg-utils highlight universal-ctags pip fd-find
-
-if ! [ -f /usr/bin/bat ]; then
-  sudo ln -s /usr/bin/batcat /usr/bin/bat
+if ! command -v brew &> /dev/null; then
+  BREW_BIN="/home/linuxbrew/.linuxbrew/bin/brew"
+  echo -e "${C_GREEN}Installing Brew packages...$C_DEFAULT"
+  $BREW_BIN install tmux git-delta fzf bat fd ranger universal-ctags gzip
+  $($BREW_BIN --prefix)/opt/fzf/install --all
+else
+  echo -e "${C_LIGHTGRAY}Brew bundled$C_DEFAULT"
 fi
-if ! [ -f /usr/bin/fd ]; then
-  sudo ln -s $(which fdfind) /usr/bin/fd
-fi
+sudo apt-get install -y xdg-utils highlight fd-find
 
 pip install neovim mycli
-
-delta_version="0.11.3"
-wget "https://github.com/dandavison/delta/releases/download/${delta_version}/git-delta_${delta_version}_amd64.deb"
-sudo dpkg -i git-delta_${delta_version}_amd64.deb
-rm *.deb
-
-if ! [ -d ~/.fzf ]; then
-  git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install --all
-fi

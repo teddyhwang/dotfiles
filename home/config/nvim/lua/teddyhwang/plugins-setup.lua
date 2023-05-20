@@ -154,6 +154,16 @@ lazy.setup({
       return vim.fn.executable("make") == 1
     end,
   },
+  {
+    "stevearc/oil.nvim",
+    opts = {
+      keymaps = {
+        ["<BS>"] = "actions.parent",
+      },
+    },
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = true,
+  },
 
   -- editor
   -- -- autocompletion

@@ -28,4 +28,16 @@ cmd(
     .. colors.base06
     .. " cterm=NONE term=NONE ctermfg=green ctermbg=black"
 )
-vim.api.nvim_set_hl(0, "LineNr", { fg = colors.base03 })
+local highlights = {
+  LineNr = { fg = colors.base03 },
+  TelescopeBorder = { link = "LineNr" },
+  TelescopePromptBorder = { link = "LineNr" },
+  TelescopeTitle = { fg = colors.base04 },
+  TelescopePromptTitle = { link = "TelescopeTitle" },
+  TelescopeResultsTitle = { link = "TelescopeTitle" },
+  TelescopePreviewTitle = { link = "TelescopeTitle" },
+}
+
+for k, v in pairs(highlights) do
+  vim.api.nvim_set_hl(0, k, v)
+end

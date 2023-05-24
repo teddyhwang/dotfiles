@@ -15,6 +15,11 @@ else
 end
 
 saga.setup({
+  finder = {
+    keys = {
+      expand_or_jump = "<cr>",
+    },
+  },
   definition = {
     edit = "<cr>",
   },

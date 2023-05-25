@@ -50,6 +50,6 @@ vim.cmd("autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx")
 vim.cmd("autocmd BufNewFile,BufRead *.plist set filetype=xml")
 vim.cmd("autocmd BufNewFile,BufRead *.ejson set filetype=json")
 vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
-  command = "if mode() != 'c' | checktime | endif",
   pattern = { "*" },
+  command = "if mode() != 'c' | checktime | endif",
 })

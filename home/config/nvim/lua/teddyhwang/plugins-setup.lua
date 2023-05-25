@@ -159,6 +159,7 @@ lazy.setup({
     opts = {
       keymaps = {
         ["<BS>"] = "actions.parent",
+        ["<C-p>"] = false,
       },
     },
     dependencies = { "nvim-tree/nvim-web-devicons" },

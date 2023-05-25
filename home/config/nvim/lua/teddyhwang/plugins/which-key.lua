@@ -72,7 +72,7 @@ whichkey.register({
   T = { ":VimuxRunCommand 'dev test '.@%<CR>", "Test current file" },
   V = { "ggVG<CR>", "Visually select current buffer" },
   v = { ":e ~/.config/nvim/init.lua<CR>", "Edit init.luar" },
-  y = { ":%y+<CR>", "Yank current file" },
+  Y = { ":%y+<CR>", "Yank current file" },
 }, { prefix = "<leader>" })
 
 whichkey.register({

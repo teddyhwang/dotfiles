@@ -162,6 +162,7 @@ lazy.setup({
         ["<C-p>"] = false,
         ["<C-h>"] = "actions.toggle_hidden",
       },
+      skip_confirm_for_simple_edits = true,
     },
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = true,

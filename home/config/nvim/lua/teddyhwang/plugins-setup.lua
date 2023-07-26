@@ -206,6 +206,7 @@ lazy.setup({
       "williamboman/mason.nvim",
       {
         "j-hui/fidget.nvim",
+        tag = "legacy",
         config = true,
       },
       {

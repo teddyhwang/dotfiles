@@ -297,3 +297,11 @@ if [ -f /opt/dev/dev.sh ]; then
 fi
 [[ -x /usr/local/bin/brew ]] && eval $(/usr/local/bin/brew shellenv)
 [[ -x /opt/homebrew/bin/brew ]] && eval $(/opt/homebrew/bin/brew shellenv)
+
+# pnpm
+export PNPM_HOME="/Users/teddyhwang/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end

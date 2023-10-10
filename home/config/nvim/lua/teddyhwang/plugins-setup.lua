@@ -60,10 +60,8 @@ lazy.setup({
   },
   {
     "lukas-reineke/indent-blankline.nvim",
-    opts = {
-      char = "┊",
-      show_current_context = true,
-    },
+    main = "ibl",
+    opts = {},
   },
   "jeffkreeftmeijer/vim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",

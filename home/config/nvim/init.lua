@@ -10,7 +10,7 @@ else
   require("teddyhwang.core.options")
   require("teddyhwang.core.colorscheme")
   require("teddyhwang.plugins.autopairs")
-  require("teddyhwang.plugins.which-key")
+  require("teddyhwang.plugins.indent-blankline")
   require("teddyhwang.plugins.lsp.lspconfig")
   require("teddyhwang.plugins.lsp.lspsaga")
   require("teddyhwang.plugins.lsp.mason")
@@ -21,5 +21,6 @@ else
   require("teddyhwang.plugins.remote")
   require("teddyhwang.plugins.telescope")
   require("teddyhwang.plugins.treesitter")
+  require("teddyhwang.plugins.which-key")
   require("teddyhwang.plugins.wilder")
 end

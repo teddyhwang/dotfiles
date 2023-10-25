@@ -26,7 +26,7 @@ local on_attach = function(client, bufnr)
   -- client.server_capabilities.semanticTokensProvider = nil
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
-  vim.keymap.set("n", "gr", "<cmd>Lspsaga lsp_finder<cr>", opts) -- show definition, references
+  vim.keymap.set("n", "gr", "<cmd>Lspsaga finder<cr>", opts) -- show definition, references
   -- vim.keymap.set("n", "gr", "<cmd>Telescope lsp_references<cr>", opts) -- show references
   -- vim.keymap.set("n", "gr", "<cmd>lua vim.lsp.buf.references()<cr>", opts) -- see definition and make edits in window
   vim.keymap.set("n", "gR", "<cmd>References<cr>", opts) -- show references

@@ -17,7 +17,7 @@ end
 saga.setup({
   finder = {
     keys = {
-      expand_or_jump = "<cr>",
+      toggle_or_open = "<cr>",
     },
   },
   definition = {

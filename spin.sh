@@ -4,24 +4,6 @@ C_DEFAULT="\x1B[39m"
 C_GREEN="\x1B[32m"
 C_LIGHTGRAY="\x1B[90m"
 
-if [ -d ~/src/github.com/Shopify/shopify ]; then
-  if ! [ -d ~/src/github.com/Shopify/shopify/.vim ]; then
-    mkdir ~/src/github.com/Shopify/shopify/.vim
-  fi
-  if ! [ -f ~/src/github.com/Shopify/shopify/.vim/coc-settings.json ]; then
-    cp app_configs/coc/coc-settings-sorbet.json ~/src/github.com/Shopify/shopify/.vim/coc-settings.json
-  fi
-fi
-
-if [ -d ~/src/github.com/Shopify/shopify-dev ]; then
-  if ! [ -d ~/src/github.com/Shopify/shopify-dev/.vim ]; then
-    mkdir ~/src/github.com/Shopify/shopify-dev/.vim
-  fi
-  if ! [ -f ~/src/github.com/Shopify/shopify-dev/.vim/coc-settings.json ]; then
-    cp app_configs/coc/coc-settings-solargraph.json ~/src/github.com/Shopify/shopify-dev/.vim/coc-settings.json
-  fi
-fi
-
 if ! command -v overmind &> /dev/null; then
   go install github.com/DarthSim/overmind@latest
 fi

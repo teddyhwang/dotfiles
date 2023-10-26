@@ -17,10 +17,6 @@ if not status then
   return
 end
 
-local mac_node = vim.fn.filereadable("/usr/local/Cellar/node@16/16.20.0/bin/node") == 1
-    and "/usr/local/Cellar/node@16/16.20.0/bin/node"
-  or "/opt/homebrew/opt/node@16/bin/node"
-
 lazy.setup({
   -- defaults
   "tpope/vim-sensible",
@@ -252,7 +248,7 @@ lazy.setup({
         opts = {
           suggestion = { enabled = false, auto_trigger = true },
           panel = { enabled = false },
-          copilot_node_command = os.getenv("SPIN") and "node" or mac_node,
+          copilot_node_command = "node",
         },
       },
     },

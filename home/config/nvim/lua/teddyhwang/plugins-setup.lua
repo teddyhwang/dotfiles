@@ -49,6 +49,15 @@ lazy.setup({
     priority = 1000,
   },
 
+  {
+    "stevearc/dressing.nvim",
+    opts = {
+      input = {
+        relative = "editor",
+      },
+    },
+  },
+
   -- -- panes
   {
     "lewis6991/gitsigns.nvim",

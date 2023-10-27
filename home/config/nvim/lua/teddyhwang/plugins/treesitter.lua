@@ -17,7 +17,6 @@ treesitter_configs.setup({
   matchup = { enable = true },
   ensure_installed = {
     "bash",
-    "css",
     "dockerfile",
     "gitignore",
     "graphql",
@@ -35,7 +34,7 @@ treesitter_configs.setup({
     "vim",
     "yaml",
   },
-  auto_install = true,
+  auto_install = false,
   incremental_selection = {
     enable = true,
     keymaps = {

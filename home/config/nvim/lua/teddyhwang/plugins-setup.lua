@@ -49,14 +49,6 @@ lazy.setup({
     priority = 1000,
   },
 
-  {
-    "APZelos/blamer.nvim",
-    init = function()
-      vim.g.blamer_enabled = true
-      vim.g.blamer_delay = 200
-    end,
-  },
-
   -- -- panes
   {
     "lewis6991/gitsigns.nvim",
@@ -239,6 +231,7 @@ lazy.setup({
   -- -- git
   "ruanyl/vim-gh-line",
   "tpope/vim-fugitive",
+  "f-person/git-blame.nvim",
 
   -- -- data
   "kristijanhusak/vim-dadbod-completion",

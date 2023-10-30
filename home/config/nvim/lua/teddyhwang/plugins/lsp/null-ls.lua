@@ -3,10 +3,15 @@ if not setup then
   return
 end
 
+local lsp_format_status, lsp_format = pcall(require, "lsp-format")
+if not lsp_format_status then
+  return
+end
+
+lsp_format.setup({})
+
 local formatting = null_ls.builtins.formatting
 local diagnostics = null_ls.builtins.diagnostics
-
-local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 null_ls.setup({
   sources = {
@@ -30,27 +35,9 @@ null_ls.setup({
     }),
     diagnostics.eslint_d.with({
       condition = function(utils)
-        return utils.root_has_file(".eslintrc.js") -- change file extension if you use something else
+        return utils.root_has_file(".eslintrc.js")
       end,
     }),
   },
-  -- configure format on save
-  on_attach = function(current_client, bufnr)
-    if current_client.supports_method("textDocument/formatting") then
-      vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-      vim.api.nvim_create_autocmd("BufWritePre", {
-        group = augroup,
-        buffer = bufnr,
-        callback = function()
-          vim.lsp.buf.format({
-            filter = function(client)
-              return client.name == "null-ls"
-            end,
-            bufnr = bufnr,
-            timeout_ms = 5000,
-          })
-        end,
-      })
-    end
-  end,
+  on_attach = lsp_format.on_attach,
 })

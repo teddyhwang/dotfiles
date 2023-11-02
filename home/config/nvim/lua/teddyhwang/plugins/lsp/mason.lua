@@ -22,6 +22,7 @@ mason_lspconfig.setup({
     "emmet_ls",
     "graphql",
     "html",
+    "jsonls",
     "lua_ls",
     "stylelint_lsp",
     "tailwindcss",
@@ -34,9 +35,11 @@ mason_null_ls.setup({
   ensure_installed = {
     "eslint_d",
     "eslint-lsp",
+    "fixjson",
     "prettier",
     "prettierd",
     "stylua",
+    "stylelint",
   },
   automatic_installation = true,
 })

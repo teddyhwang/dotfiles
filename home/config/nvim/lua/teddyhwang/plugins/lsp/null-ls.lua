@@ -15,7 +15,20 @@ local diagnostics = null_ls.builtins.diagnostics
 
 null_ls.setup({
   sources = {
-    formatting.prettierd,
+    formatting.eslint_d,
+    formatting.fixjson,
+    formatting.prettierd.with({
+      filetypes = {
+        "css",
+        "scss",
+        "less",
+        "html",
+        "json",
+        "yaml",
+        "markdown",
+        "graphql",
+      },
+    }),
     formatting.stylua,
     formatting.stylelint,
     formatting.rubocop.with({
@@ -33,11 +46,7 @@ null_ls.setup({
         return vim.fn.executable("rubocop") == 1
       end,
     }),
-    diagnostics.eslint_d.with({
-      condition = function(utils)
-        return utils.root_has_file(".eslintrc.js")
-      end,
-    }),
+    diagnostics.eslint_d,
   },
   on_attach = lsp_format.on_attach,
 })

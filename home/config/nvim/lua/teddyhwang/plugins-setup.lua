@@ -60,6 +60,8 @@ lazy.setup({
     },
   },
 
+  { "seblj/nvim-tabline", config = true },
+
   -- -- panes
   {
     "lewis6991/gitsigns.nvim",

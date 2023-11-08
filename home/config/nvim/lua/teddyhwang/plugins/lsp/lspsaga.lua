@@ -15,6 +15,10 @@ else
 end
 
 saga.setup({
+  symbol_in_winbar = {
+    enable = false,
+    delay = 0,
+  },
   finder = {
     keys = {
       toggle_or_open = "<cr>",

@@ -3,11 +3,18 @@ if not status then
   return
 end
 
-local base16 = require("lualine.themes.base16")
+local base16_status, base16 = pcall(require, "base16-colorscheme")
+if not base16_status then
+  return
+end
+
+local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
+
+local lualine_theme_base16 = require("lualine.themes.base16")
 
 lualine.setup({
   options = {
-    theme = base16,
+    theme = lualine_theme_base16,
     disabled_filetypes = {
       "packer",
     },
@@ -33,7 +40,7 @@ lualine.setup({
       {
         "filename",
         path = 1,
-        color = { bg = "#000", fg = "#fff" },
+        color = { bg = colors.base00, fg = colors.base07 },
         shorting_target = 0,
       },
     },

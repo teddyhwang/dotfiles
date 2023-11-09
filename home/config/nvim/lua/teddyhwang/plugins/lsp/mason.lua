@@ -27,6 +27,7 @@ mason_lspconfig.setup({
     "stylelint_lsp",
     "tailwindcss",
     "tsserver",
+    "yamlls",
   },
   automatic_installation = true,
 })
@@ -40,6 +41,8 @@ mason_null_ls.setup({
     "prettierd",
     "stylua",
     "stylelint",
+    "yamlfmt",
+    "yamllint",
   },
   automatic_installation = true,
 })

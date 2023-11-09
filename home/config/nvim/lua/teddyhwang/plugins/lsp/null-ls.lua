@@ -38,6 +38,7 @@ null_ls.setup({
         return vim.fn.executable("rubocop") == 1
       end,
     }),
+    formatting.yamlfmt,
     diagnostics.stylelint,
     diagnostics.rubocop.with({
       extra_args = { "--server" },
@@ -47,6 +48,7 @@ null_ls.setup({
       end,
     }),
     diagnostics.eslint_d,
+    diagnostics.yamllint,
   },
   on_attach = lsp_format.on_attach,
 })

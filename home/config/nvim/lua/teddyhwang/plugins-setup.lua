@@ -243,7 +243,10 @@ lazy.setup({
   },
 
   -- -- git
-  "ruanyl/vim-gh-line",
+  {
+    "linrongbin16/gitlinker.nvim",
+    config = true,
+  },
   "tpope/vim-fugitive",
   "f-person/git-blame.nvim",
 

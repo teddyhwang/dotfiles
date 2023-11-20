@@ -1,7 +1,0 @@
-#!zsh
-
-if [[ $OSTYPE == 'darwin'* ]]; then
-  nc localhost 2225
-else
-  netcat localhost 2225
-fi

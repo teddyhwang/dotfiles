@@ -34,7 +34,7 @@ lazy.setup({
       "whatyouhide/vim-tmux-syntax",
       {
         "levouh/tint.nvim",
-        config = {
+        opts = {
           tint = -25,
         },
       },

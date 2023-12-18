@@ -227,6 +227,7 @@ lazy.setup({
       },
     },
   },
+  "ludovicchabant/vim-gutentags",
 
   -- -- formatting & linting
   "tpope/vim-sleuth",

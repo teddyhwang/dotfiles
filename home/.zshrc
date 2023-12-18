@@ -284,14 +284,6 @@ function upstream() {
   fi
 }
 
-function solargraph_bundle() {
-  bundle config set --local with 'solargraph'
-}
-
-function gpg() {
-  gpgconf --launch gpg-agent
-}
-
 if [ -f /opt/dev/dev.sh ]; then
 [[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
 fi

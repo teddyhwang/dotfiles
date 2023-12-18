@@ -26,3 +26,11 @@ if ! [ -d /usr/local/bin ]; then
 else
   echo -e "${C_LIGHTGRAY}/usr/local/bin/ exists$C_DEFAULT"
 fi
+
+if ! [ -d ~/Library/Application\ Support/lazygit ]; then
+  echo -e "${C_GREEN}Adding directory ~/Library/Application\ Support/lazygit...$C_DEFAULT"
+  sudo mkdir ~/Library/Application\ Support/lazygit
+else
+  echo -e "${C_LIGHTGRAY}~/Library/Application\ Support/lazygit exists$C_DEFAULT"
+fi
+

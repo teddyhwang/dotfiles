@@ -34,7 +34,7 @@ fi
 
 if ! [ -f ~/Library/Application\ Support/lazygit/config.yml ]; then
   echo -e "${C_GREEN}Copying lazygit config file...$C_DEFAULT"
-  cp -rf ./app_configs/lazygit.config.yml ~/Library/Application\ Support/lazygit/config.yml
+  sudo cp -rf ./app_configs/lazygit.config.yml ~/Library/Application\ Support/lazygit/config.yml
 else
   echo -e "${C_LIGHTGRAY}lazygit config file is copied$C_DEFAULT"
 fi

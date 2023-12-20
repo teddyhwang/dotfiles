@@ -53,3 +53,8 @@ vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGai
   pattern = { "*" },
   command = "if mode() != 'c' | checktime | endif",
 })
+
+vim.cmd("autocmd FileType ruby,eruby let g:gutentags_ctags_executable_ruby = 'ripper-tags'")
+vim.cmd(
+  "autocmd FileType ruby,eruby let g:gutentags_ctags_extra_args = ['--ignore-unsupported-options', '--recursive']"
+)

@@ -14,5 +14,5 @@ else
   echo -e "${C_LIGHTGRAY}Brew bundled$C_DEFAULT"
 fi
 sudo apt-get install -y xdg-utils highlight fd-find
-
 pip install neovim mycli
+gem install gem-ripper-tags

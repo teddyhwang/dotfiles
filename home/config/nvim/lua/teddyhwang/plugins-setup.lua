@@ -230,13 +230,13 @@ lazy.setup({
   {
     "ludovicchabant/vim-gutentags",
     init = function()
-      vim.cmd("autocmd FileType ruby,eruby let g:gutentags_ctags_executable_ruby = 'ripper-tags'")
-      vim.cmd(
-        "autocmd FileType ruby,eruby let g:gutentags_ctags_extra_args = ['--ignore-unsupported-options', '--recursive']"
-      )
-      vim.cmd("let g:gitgutter_override_sign_column_highlight = 0")
-      vim.cmd("let g:gutentags_define_advanced_commands = 1")
-      vim.cmd("let g:gutentags_exclude_filetypes = ['gitcommit', 'gitconfig', 'gitrebase', 'gitsendemail', 'git']")
+      vim.cmd([[
+        autocmd FileType ruby,eruby let g:gutentags_ctags_executable_ruby = 'ripper-tags'
+        autocmd FileType ruby,eruby let g:gutentags_ctags_extra_args = ['--ignore-unsupported-options', '--recursive']
+        let g:gitgutter_override_sign_column_highlight = 0
+        let g:gutentags_define_advanced_commands = 1
+        let g:gutentags_exclude_filetypes = ['gitcommit', 'gitconfig', 'gitrebase', 'gitsendemail', 'git']
+      ]])
     end,
   },
 

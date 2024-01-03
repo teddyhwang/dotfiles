@@ -125,18 +125,25 @@ lspconfig["lua_ls"].setup({
   },
 })
 
-if vim.fn.executable("srb") == 1 then
-  lspconfig["sorbet"].setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-  })
-elseif vim.fn.executable("solargraph") == 1 then
+lspconfig["sorbet"].setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  root_dir = lspconfig.util.root_pattern("sorbet/config"),
+})
+
+if vim.fn.executable("solargraph") == 1 then
   lspconfig["solargraph"].setup({
     capabilities = capabilities,
     on_attach = on_attach,
     solargraph = {
       max_files = 0,
     },
+  })
+else
+  lspconfig["ruby_ls"].setup({
+    capabilities = capabilities,
+    on_attach = on_attach,
+    root_dir = lspconfig.util.root_pattern(".git"),
   })
 end
 

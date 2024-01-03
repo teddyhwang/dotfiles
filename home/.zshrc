@@ -17,6 +17,7 @@ if [ $SPIN ]; then
   export PATH="/opt/rubies/ruby-2.7.6/lib/ruby/gems/2.7.0/gems/tmuxinator-3.0.2/bin:$PATH"
   export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
   alias token='bundle config --global PKGS__SHOPIFY__IO "token:$(gsutil cat gs://dev-tokens/cloudsmith/shopify/gems/latest)"'
+  alias mycli='mycli -u root -P $MYSQL_PORT'
 fi
 
 alias brighter='set_theme "synth-midnight-dark"'

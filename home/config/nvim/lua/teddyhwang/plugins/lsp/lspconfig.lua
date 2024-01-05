@@ -50,6 +50,10 @@ local on_attach = function(client, bufnr)
     vim.keymap.set("n", "<leader>oi", ":TypescriptOrganizeImports<cr>") -- organize imports
     vim.keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<cr>") -- remove unused variables
   end
+
+  if client.name == "ruby_ls" then
+    client.server_capabilities.semanticTokensProvider = nil
+  end
 end
 
 -- used to enable autocompletion (assign to every lsp server config)

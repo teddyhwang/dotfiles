@@ -55,3 +55,12 @@ else
   echo -e "${C_GREEN}Setting pinentry-mac...$C_DEFAULT"
   echo "pinentry-mac $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
 fi
+
+if [ -d ~/.scrypted ]; then
+  echo -e "${C_LIGHTGRAY}Scrypted is installed...$C_DEFAULT"
+else
+  echo -e "${C_GREEN}Installing scrypted...$C_DEFAULT"
+  mkdir -p ~/.scrypted
+  curl -s https://raw.githubusercontent.com/koush/scrypted/main/install/local/install-scrypted-dependencies-mac.sh > ~/.scrypted/install-scrypted-dependencies-mac.sh 
+  bash ~/.scrypted/install-scrypted-dependencies-mac.sh
+fi

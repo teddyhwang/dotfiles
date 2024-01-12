@@ -33,6 +33,7 @@ treesitter_configs.setup({
     "typescript",
     "vim",
     "yaml",
+    "xml",
   },
   auto_install = false,
   incremental_selection = {

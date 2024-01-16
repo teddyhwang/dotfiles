@@ -150,13 +150,6 @@ bindkey '^k' history-substring-search-up
 bindkey -M vicmd "j" down-line-or-beginning-search
 bindkey -M vicmd "k" up-line-or-beginning-search
 
-if command -v gh &> /dev/null; then
-  eval "$(gh completion -s zsh)"
-fi
-if command -v atuin &> /dev/null; then
-  eval "$(atuin init zsh --disable-up-arrow)"
-fi
-
 function upgrade_custom_oh_my_zsh() {
   example='example'
   custom_type=$1
@@ -301,3 +294,11 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+if command -v gh &> /dev/null; then
+  eval "$(gh completion -s zsh)"
+fi
+if command -v atuin &> /dev/null; then
+  eval "$(atuin init zsh --disable-up-arrow)"
+fi
+

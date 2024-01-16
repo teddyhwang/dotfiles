@@ -153,6 +153,9 @@ bindkey -M vicmd "k" up-line-or-beginning-search
 if command -v gh &> /dev/null; then
   eval "$(gh completion -s zsh)"
 fi
+if command -v atuin &> /dev/null; then
+  eval "$(atuin init zsh --disable-up-arrow)"
+fi
 
 function upgrade_custom_oh_my_zsh() {
   example='example'

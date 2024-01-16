@@ -20,4 +20,9 @@ if ! [ $SSH_CLIENT ]; then
   timeout 2m nvim --headless "+Lazy! sync" +qa || true
 fi
 
+if [ -f /etc/spin/secrets/copilot_hosts.json ]; then
+  mkdir -p "${HOME}/.config/github-copilot"
+  cp /etc/spin/secrets/copilot_hosts.json "${HOME}/.config/github-copilot/hosts.json"
+fi
+
 echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189))

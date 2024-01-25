@@ -1,0 +1,6 @@
+#!/bin/bash
+
+osascript -e 'quit app "Elgato Wave Link"' 2>/dev/null
+sleep 2
+open -a "Elgato Wave Link"
+osascript -e 'tell application "Elgato Wave Link" to activate' -e 'delay 1' -e 'tell application "System Events" to keystroke "w" using command down'

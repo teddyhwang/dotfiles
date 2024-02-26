@@ -18,6 +18,13 @@ if not neodev_setup then
   return
 end
 
+local lsp_format_status, lsp_format = pcall(require, "lsp-format")
+if not lsp_format_status then
+  return
+end
+
+lsp_format.setup({})
+
 neodev.setup({})
 
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
@@ -54,6 +61,14 @@ local on_attach = function(client, bufnr)
   if client.name == "ruby_ls" then
     client.server_capabilities.semanticTokensProvider = nil
   end
+
+  if client.name == "eslint" then
+    vim.api.nvim_create_autocmd("BufWritePre", {
+      buffer = bufnr,
+      command = "EslintFixAll",
+    })
+  end
+  lsp_format.on_attach(client, bufnr)
 end
 
 -- used to enable autocompletion (assign to every lsp server config)
@@ -84,6 +99,11 @@ lspconfig["cssls"].setup({
 })
 
 lspconfig["tailwindcss"].setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
+
+lspconfig["eslint"].setup({
   capabilities = capabilities,
   on_attach = on_attach,
 })

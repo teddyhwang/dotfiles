@@ -15,15 +15,12 @@ local diagnostics = null_ls.builtins.diagnostics
 
 null_ls.setup({
   sources = {
-    formatting.eslint_d,
-    formatting.fixjson,
     formatting.prettierd.with({
       filetypes = {
         "css",
         "scss",
         "less",
         "html",
-        "json",
         "markdown",
         "graphql",
       },
@@ -46,7 +43,6 @@ null_ls.setup({
         return vim.fn.executable("rubocop") == 1
       end,
     }),
-    diagnostics.eslint_d,
     diagnostics.yamllint,
   },
   on_attach = lsp_format.on_attach,

@@ -34,9 +34,7 @@ mason_lspconfig.setup({
 
 mason_null_ls.setup({
   ensure_installed = {
-    "eslint_d",
     "eslint-lsp",
-    "fixjson",
     "prettier",
     "prettierd",
     "stylua",

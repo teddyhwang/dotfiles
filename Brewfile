@@ -124,7 +124,7 @@ brew "wget"
 brew "yarn"
 brew "z"
 brew "zsh"
-brew "universal-ctags/universal-ctags/universal-ctags", args: ["HEAD", "with-jansson"]
+brew "universal-ctags"
 cask "1password"
 cask "1password-cli"
 cask "amethyst"

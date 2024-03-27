@@ -53,5 +53,6 @@ if cat ~/.gnupg/gpg-agent.conf | grep -q pinentry-mac; then
   echo -e "${C_LIGHTGRAY}pinentry-mac is already set$C_DEFAULT"
 else
   echo -e "${C_GREEN}Setting pinentry-mac...$C_DEFAULT"
-  echo "pinentry-mac $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
+  touch ~/.gnupg/gpg-agent.conf
+  echo "pinentry-program $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
 fi

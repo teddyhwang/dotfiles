@@ -58,7 +58,7 @@ local on_attach = function(client, bufnr)
     vim.keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<cr>") -- remove unused variables
   end
 
-  if client.name == "ruby_ls" then
+  if client.name == "ruby_lsp" then
     client.server_capabilities.semanticTokensProvider = nil
   end
 
@@ -164,7 +164,7 @@ if vim.fn.executable("solargraph") == 1 then
     },
   })
 else
-  lspconfig["ruby_ls"].setup({
+  lspconfig["ruby_lsp"].setup({
     capabilities = capabilities,
     on_attach = on_attach,
     root_dir = lspconfig.util.root_pattern(".git"),

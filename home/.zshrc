@@ -101,7 +101,6 @@ plugins=(
   node
   npm
   rake-fast
-  ripgrep
   ruby
   vi-mode
   z

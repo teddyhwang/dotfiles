@@ -140,6 +140,7 @@ lazy.setup({
     "junegunn/fzf.vim",
     dependencies = {
       "junegunn/fzf",
+      { "echasnovski/mini.nvim", version = false },
     },
     init = function()
       vim.g.fzf_layout = {

@@ -26,7 +26,7 @@ mason_lspconfig.setup({
     "lua_ls",
     "stylelint_lsp",
     "tailwindcss",
-    "tsserver",
+    "ts_ls",
     "yamlls",
   },
   automatic_installation = true,

@@ -8,11 +8,6 @@ if not cmp_nvim_lsp_status then
   return
 end
 
-local typescript_setup, typescript = pcall(require, "typescript")
-if not typescript_setup then
-  return
-end
-
 local neodev_setup, neodev = pcall(require, "neodev")
 if not neodev_setup then
   return
@@ -86,7 +81,7 @@ lspconfig["html"].setup({
   on_attach = on_attach,
 })
 
-typescript.setup({
+lspconfig["ts_ls"].setup({
   server = {
     capabilities = capabilities,
     on_attach = on_attach,

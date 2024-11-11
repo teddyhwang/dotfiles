@@ -53,9 +53,9 @@ local on_attach = function(client, bufnr)
     vim.keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<cr>") -- remove unused variables
   end
 
-  if client.name == "ruby_lsp" then
-    client.server_capabilities.semanticTokensProvider = nil
-  end
+  -- if client.name == "ruby_lsp" then
+  --   client.server_capabilities.semanticTokensProvider = nil
+  -- end
 
   if client.name == "eslint" then
     vim.api.nvim_create_autocmd("BufWritePre", {

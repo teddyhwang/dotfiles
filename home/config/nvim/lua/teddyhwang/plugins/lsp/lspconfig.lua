@@ -8,11 +8,6 @@ if not cmp_nvim_lsp_status then
   return
 end
 
-local typescript_setup, typescript = pcall(require, "typescript")
-if not typescript_setup then
-  return
-end
-
 local neodev_setup, neodev = pcall(require, "neodev")
 if not neodev_setup then
   return
@@ -52,15 +47,15 @@ local on_attach = function(client, bufnr)
   vim.keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<cr>", opts) -- see outline on right hand side
 
   -- typescript specific keymaps (e.g. rename file and update imports)
-  if client.name == "tsserver" then
+  if client.name == "ts_ls" then
     vim.keymap.set("n", "<leader>rf", ":TypescriptRenameFile<cr>") -- rename file and update imports
     vim.keymap.set("n", "<leader>oi", ":TypescriptOrganizeImports<cr>") -- organize imports
     vim.keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<cr>") -- remove unused variables
   end
 
-  if client.name == "ruby_lsp" then
-    client.server_capabilities.semanticTokensProvider = nil
-  end
+  -- if client.name == "ruby_lsp" then
+  --   client.server_capabilities.semanticTokensProvider = nil
+  -- end
 
   if client.name == "eslint" then
     vim.api.nvim_create_autocmd("BufWritePre", {
@@ -86,7 +81,7 @@ lspconfig["html"].setup({
   on_attach = on_attach,
 })
 
-typescript.setup({
+lspconfig["ts_ls"].setup({
   server = {
     capabilities = capabilities,
     on_attach = on_attach,

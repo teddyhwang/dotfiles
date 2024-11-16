@@ -207,7 +207,6 @@ lazy.setup({
       "folke/neodev.nvim",
       "gfanto/fzf-lsp.nvim",
       "jayp0521/mason-null-ls.nvim",
-      "jose-elias-alvarez/typescript.nvim",
       "lukas-reineke/lsp-format.nvim",
       "nvimtools/none-ls.nvim",
       "onsails/lspkind.nvim",

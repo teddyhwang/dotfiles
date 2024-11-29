@@ -33,22 +33,18 @@ lazy.setup({
       "tpope/vim-rails",
       "whatyouhide/vim-tmux-syntax",
       {
-        "levouh/tint.nvim",
-        opts = {
-          tint = -25,
-        },
-      },
-      {
         "RRethy/nvim-base16",
-        lazy = false,
-      },
-      {
-        "omnisyle/nvim-hidesig",
-        lazy = false,
       },
     },
     build = ":TSUpdate",
     priority = 1000,
+  },
+
+  {
+    "sle-c/nvim-hidesig",
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+    },
   },
 
   {

@@ -239,7 +239,7 @@ function killport() {
 }
 
 function branch() {
-  if [ -d .git ]; then
+  if git rev-parse --git-dir > /dev/null 2>&1; then
     branch=$(git for-each-ref --color --sort=-committerdate \
       refs/heads/ \
       --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' | \
@@ -257,7 +257,7 @@ function branch() {
 }
 
 function cob() {
-  if [ -d .git ]; then
+  if git rev-parse --git-dir > /dev/null 2>&1; then
     branch=$(git branch --color --sort=-committerdate \
       --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' -r | \
       fzf --ansi | \

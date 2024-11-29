@@ -10,10 +10,8 @@ if [ -n "$BREW_PREFIX" ]; then
   DEFAULT_PATH=$(cat /etc/paths | xargs | tr " " :)
   USER_PATH=$(echo $PATH | sed "s/${DEFAULT_PATH//\//\\/}//" | sed "s/^:\(.*\)/\1/")
 
-  PATH="$BREW_PACKAGE_PREFIX/curl/bin:$PATH"
-  PATH="$BREW_PACKAGE_PREFIX/openssl/bin:$PATH"
-  PATH="$BREW_PACKAGE_PREFIX/ruby/bin:$PATH"
-  PATH="$BREW_PREFIX/lib/ruby/gems/3.2.0/bin:$PATH"
+  PATH="$BREW_PACKAGE_PREFIX/*/bin:$PATH"
+  PATH="$BREW_PREFIX/lib/ruby/gems/*/bin:$PATH"
 fi
 
 PATH="$HOME/.bin:$PATH"

@@ -94,7 +94,7 @@ treesitter_configs.setup({
   hidesig = {
     enable = true,
     opacity = 0.5,
-    delay = 500,
+    delay = 0,
   },
 })
 

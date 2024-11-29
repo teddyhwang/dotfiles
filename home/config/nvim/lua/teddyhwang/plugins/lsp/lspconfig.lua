@@ -25,7 +25,7 @@ neodev.setup({})
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 
 local on_attach = function(client, bufnr)
-  -- client.server_capabilities.semanticTokensProvider = nil
+  client.server_capabilities.semanticTokensProvider = nil
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   vim.keymap.set("n", "gr", "<cmd>Lspsaga finder<cr>", opts) -- show definition, references
@@ -52,10 +52,6 @@ local on_attach = function(client, bufnr)
     vim.keymap.set("n", "<leader>oi", ":TypescriptOrganizeImports<cr>") -- organize imports
     vim.keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<cr>") -- remove unused variables
   end
-
-  -- if client.name == "ruby_lsp" then
-  --   client.server_capabilities.semanticTokensProvider = nil
-  -- end
 
   if client.name == "eslint" then
     vim.api.nvim_create_autocmd("BufWritePre", {

@@ -18,7 +18,7 @@ local highlights = {
   TabLineSel = { bg = colors.base02, fg = colors.base06 },
   LineNr = { fg = colors.base03 },
   VertSplit = { link = "LineNr" },
-  WinSeparator = { fg = colors.base01 },
+  WinSeparator = { fg = colors.base03 },
   TelescopePromptNormal = { bg = colors.base01 },
   TelescopePromptPrefix = { bg = colors.base01 },
   TelescopePromptBorder = { link = "LineNr" },

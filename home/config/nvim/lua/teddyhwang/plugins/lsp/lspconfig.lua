@@ -150,9 +150,6 @@ if vim.fn.executable("solargraph") == 1 then
   lspconfig["solargraph"].setup({
     capabilities = capabilities,
     on_attach = on_attach,
-    solargraph = {
-      max_files = 0,
-    },
   })
 else
   lspconfig["ruby_lsp"].setup({

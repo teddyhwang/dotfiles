@@ -19,6 +19,8 @@ telescope.setup({
         ["<esc>"] = actions.close,
       },
     },
+    prompt_prefix = " ❯ ",
+    selection_caret = "❯ ",
   },
 })
 

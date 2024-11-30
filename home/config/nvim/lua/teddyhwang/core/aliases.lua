@@ -1,22 +1,27 @@
-vim.cmd("command! WQ wq")
-vim.cmd("command! Wq wq")
-vim.cmd("command! Wa wa")
-vim.cmd("command! W w")
-vim.cmd("command! Q q")
-vim.cmd("command! Qa qa")
-vim.cmd("command! Ex Oil %:p:h")
-vim.cmd("command! Vs vs")
-vim.cmd("command! Vex vs | Oil %:p:h")
-vim.cmd("command! VEx vs | Oil %:p:h")
-vim.cmd("command! Se sp | Oil %:p:h")
-vim.cmd("command! Sex sp | Oil %:p:h")
-vim.cmd("command! SEx sp | Oil %:p:h")
-vim.cmd("command! Tabe tabe")
+local command_aliases = {
+  WQ = "wq",
+  Wq = "wq",
+  Wa = "wa",
+  W = "w",
+  Q = "q",
+  Qa = "qa",
+  Ex = "Oil %:p:h",
+  Vs = "vs",
+  Vex = "vs | Oil %:p:h",
+  VEx = "vs | Oil %:p:h",
+  Se = "sp | Oil %:p:h",
+  Sex = "sp | Oil %:p:h",
+  SEx = "sp | Oil %:p:h",
+  Tabe = "tabe",
+  Fzf = "FloatermNew fzf",
+  Irb = "FloatermNew irb",
+  Lazygit = "FloatermNew lazygit",
+  Node = "FloatermNew node",
+  Python = "FloatermNew python",
+  Ranger = "FloatermNew ranger",
+  Terminal = "FloatermNew",
+}
 
-vim.cmd("command! Fzf FloatermNew fzf")
-vim.cmd("command! Irb FloatermNew irb")
-vim.cmd("command! Lazygit FloatermNew lazygit")
-vim.cmd("command! Node FloatermNew node")
-vim.cmd("command! Python FloatermNew python")
-vim.cmd("command! Ranger FloatermNew ranger")
-vim.cmd("command! Terminal FloatermNew")
+for alias, cmd in pairs(command_aliases) do
+  vim.api.nvim_create_user_command(alias, cmd, {})
+end

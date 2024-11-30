@@ -88,4 +88,5 @@ whichkey.add({
   { "<C-k>", "<cmd>lua require'luasnip'.jump(-1)<CR>", desc = "Luasnip scroll up", mode = "i" },
   { "<C-j>", "<cmd>lua require'luasnip'.jump(1)<CR>", desc = "Luasnip scroll down", mode = "s" },
   { "<C-k>", "<cmd>lua require'luasnip'.jump(-1)<CR>", desc = "Luasnip scroll up", mode = "s" },
+  { '"', "<cmd>Telescope registers<CR>", desc = "Show registers" },
 })

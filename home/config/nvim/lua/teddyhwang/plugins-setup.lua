@@ -226,13 +226,27 @@ lazy.setup({
   {
     "ludovicchabant/vim-gutentags",
     init = function()
-      vim.cmd([[
-        autocmd FileType ruby,eruby let g:gutentags_ctags_executable_ruby = 'ripper-tags'
-        autocmd FileType ruby,eruby let g:gutentags_ctags_extra_args = ['--ignore-unsupported-options', '--recursive']
-        let g:gitgutter_override_sign_column_highlight = 0
-        let g:gutentags_define_advanced_commands = 1
-        let g:gutentags_exclude_filetypes = ['gitcommit', 'gitconfig', 'gitrebase', 'gitsendemail', 'git']
-      ]])
+      if vim.fn.executable('ripper-tags') == 1 then
+        vim.api.nvim_create_autocmd("FileType", {
+          pattern = { "ruby", "eruby" },
+          callback = function()
+            vim.g.gutentags_ctags_executable_ruby = 'ripper-tags'
+            vim.g.gutentags_ctags_extra_args = { '--ignore-unsupported-options', '--recursive' }
+          end,
+        })
+      else
+        vim.g.gutentags_exclude_filetypes = vim.list_extend(
+          vim.g.gutentags_exclude_filetypes or {},
+          { 'ruby', 'eruby' }
+        )
+      end
+
+      vim.g.gitgutter_override_sign_column_highlight = 0
+      vim.g.gutentags_define_advanced_commands = 1
+      vim.g.gutentags_exclude_filetypes = vim.list_extend(
+        vim.g.gutentags_exclude_filetypes or {},
+        { 'gitcommit', 'gitconfig', 'gitrebase', 'gitsendemail', 'git' }
+      )
     end,
   },
 

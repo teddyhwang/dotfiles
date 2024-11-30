@@ -34,7 +34,6 @@ null_ls.setup({
         return vim.fn.executable("rubocop") == 1
       end,
     }),
-    -- formatting.yamlfmt,
     diagnostics.stylelint,
     diagnostics.rubocop.with({
       extra_args = { "--server" },

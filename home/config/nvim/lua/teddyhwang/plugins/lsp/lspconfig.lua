@@ -25,7 +25,10 @@ neodev.setup({})
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 
 local on_attach = function(client, bufnr)
-  client.server_capabilities.semanticTokensProvider = nil
+  if client.server_capabilities then
+    client.server_capabilities.semanticTokensProvider = nil
+  end
+
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   vim.keymap.set("n", "gr", "<cmd>Lspsaga finder<cr>", opts) -- show definition, references
@@ -52,6 +55,13 @@ local on_attach = function(client, bufnr)
     vim.keymap.set("n", "<leader>oi", ":TypescriptOrganizeImports<cr>") -- organize imports
     vim.keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<cr>") -- remove unused variables
   end
+
+  vim.api.nvim_create_autocmd("BufWritePre", {
+    buffer = bufnr,
+    callback = function()
+      vim.lsp.buf.format({ async = false })
+    end,
+  })
 
   if client.name == "eslint" then
     vim.api.nvim_create_autocmd("BufWritePre", {
@@ -144,18 +154,13 @@ lspconfig["sorbet"].setup({
   root_dir = lspconfig.util.root_pattern("sorbet/config"),
 })
 
-if vim.fn.executable("solargraph") == 1 then
-  lspconfig["solargraph"].setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-  })
-else
-  lspconfig["ruby_lsp"].setup({
-    capabilities = capabilities,
-    on_attach = on_attach,
-    root_dir = lspconfig.util.root_pattern(".git"),
-  })
-end
+lspconfig["ruby_lsp"].setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  init_options = {
+    formatter = "rubocop",
+  },
+})
 
 lspconfig["bashls"].setup({
   capabilities = capabilities,

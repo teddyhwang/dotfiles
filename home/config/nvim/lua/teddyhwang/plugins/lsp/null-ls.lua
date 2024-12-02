@@ -27,21 +27,7 @@ null_ls.setup({
     }),
     formatting.stylua,
     formatting.stylelint,
-    formatting.rubocop.with({
-      extra_args = { "--server" },
-      ignore_stderr = true,
-      condition = function()
-        return vim.fn.executable("rubocop") == 1
-      end,
-    }),
     diagnostics.stylelint,
-    diagnostics.rubocop.with({
-      extra_args = { "--server" },
-      ignore_stderr = true,
-      condition = function()
-        return vim.fn.executable("rubocop") == 1
-      end,
-    }),
     diagnostics.yamllint,
   },
   on_attach = lsp_format.on_attach,

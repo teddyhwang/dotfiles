@@ -4,7 +4,6 @@ vim.opt.autoindent = true
 vim.opt.autoread = true
 vim.opt.background = "dark"
 vim.opt.backspace = "indent,eol,start"
----@diagnostic disable-next-line: undefined-field
 vim.opt.clipboard:append("unnamedplus")
 vim.opt.colorcolumn = "80,120"
 vim.opt.cursorline = true
@@ -16,7 +15,6 @@ vim.opt.foldmethod = "expr"
 vim.opt.foldnestmax = 10
 vim.opt.ignorecase = false
 vim.opt.inccommand = "split"
----@diagnostic disable-next-line: undefined-field
 vim.opt.iskeyword:append("-")
 vim.opt.list = true
 vim.opt.mouse = "a"
@@ -39,6 +37,7 @@ vim.opt.timeout = true
 vim.opt.timeoutlen = 300
 vim.opt.ttyfast = true
 vim.opt.tw = 120
+vim.opt.updatetime = 100
 vim.opt.wrap = false
 vim.opt.wrap = false
 
@@ -50,6 +49,10 @@ vim.cmd("autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx")
 vim.cmd("autocmd BufNewFile,BufRead *.plist set filetype=xml")
 vim.cmd("autocmd BufNewFile,BufRead *.ejson set filetype=json")
 vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
-  pattern = { "*" },
-  command = "if mode() != 'c' | checktime | endif",
+  pattern = "*",
+  callback = function()
+    if vim.fn.mode() ~= "c" then
+      vim.cmd('checktime')
+    end
+  end,
 })

@@ -192,8 +192,14 @@ lazy.setup({
   },
   {
     "gelguy/wilder.nvim",
-    dependencies = { "romgrk/fzy-lua-native" },
-    build = ":UpdateRemotePlugins",
+    dependencies = {
+      "romgrk/fzy-lua-native",
+      "nvim-tree/nvim-web-devicons",
+    },
+    build = function()
+      vim.cmd([[python3 -m pip install --user --upgrade pynvim]])
+      vim.cmd([[UpdateRemotePlugins]])
+    end,
   },
 
   -- -- configuring lsp servers

@@ -39,22 +39,11 @@ local on_attach = function(client, bufnr)
   vim.keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>")
   -- vim.keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<cr>", opts) -- see definition and make edits in window
   vim.keymap.set("n", "gD", "<cmd>Lspsaga peek_definition<cr>", opts) -- see definition and make edits in window
-  vim.keymap.set("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<cr>", opts) -- go to implementation
   vim.keymap.set("n", "<leader>ca", "<cmd>Lspsaga code_action<cr>", opts) -- see available code actions
   vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<cr>", opts) -- smart rename
-  vim.keymap.set("n", "<leader>D", "<cmd>Lspsaga show_line_diagnostics<cr>", opts) -- show  diagnostics for line
-  vim.keymap.set("n", "<leader>d", "<cmd>Lspsaga show_cursor_diagnostics<cr>", opts) -- show diagnostics for cursor
   vim.keymap.set("n", "[d", "<cmd>Lspsaga diagnostic_jump_prev<cr>", opts) -- jump to previous diagnostic in buffer
   vim.keymap.set("n", "]d", "<cmd>Lspsaga diagnostic_jump_next<cr>", opts) -- jump to next diagnostic in buffer
   vim.keymap.set("n", "K", "<cmd>Lspsaga hover_doc<cr>", opts) -- show documentation for what is under cursor
-  vim.keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<cr>", opts) -- see outline on right hand side
-
-  -- typescript specific keymaps (e.g. rename file and update imports)
-  if client.name == "ts_ls" then
-    vim.keymap.set("n", "<leader>rf", ":TypescriptRenameFile<cr>") -- rename file and update imports
-    vim.keymap.set("n", "<leader>oi", ":TypescriptOrganizeImports<cr>") -- organize imports
-    vim.keymap.set("n", "<leader>ru", ":TypescriptRemoveUnused<cr>") -- remove unused variables
-  end
 
   vim.api.nvim_create_autocmd("BufWritePre", {
     buffer = bufnr,

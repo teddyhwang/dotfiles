@@ -4,6 +4,7 @@ import = ["~/.config/alacritty/colors.toml"]
 [window]
 decorations = "None"
 padding.x = 5
+option_as_alt = "OnlyLeft"
 
 [font]
 normal.family = "MesloLGL Nerd Font"

@@ -150,13 +150,9 @@ lazy.setup({
     end,
   },
   "nvim-tree/nvim-tree.lua",
-  { "nvim-telescope/telescope.nvim", version = "*", dependencies = { "nvim-lua/plenary.nvim" } },
   {
-    "nvim-telescope/telescope-fzf-native.nvim",
-    build = "make",
-    cond = function()
-      return vim.fn.executable("make") == 1
-    end,
+    "ibhagwan/fzf-lua",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
   },
   {
     "stevearc/oil.nvim",
@@ -183,6 +179,7 @@ lazy.setup({
       "L3MON4D3/LuaSnip",
       "rafamadriz/friendly-snippets",
       "saadparwaiz1/cmp_luasnip",
+      "nvim-lua/plenary.nvim",
     },
   },
   "windwp/nvim-autopairs",
@@ -293,3 +290,4 @@ lazy.setup({
     end,
   },
 })
+

@@ -19,7 +19,6 @@ else
   require("teddyhwang.plugins.nvim-cmp")
   require("teddyhwang.plugins.nvim-tree")
   require("teddyhwang.plugins.remote")
-  require("teddyhwang.plugins.telescope")
   require("teddyhwang.plugins.treesitter")
   require("teddyhwang.plugins.which-key")
   require("teddyhwang.plugins.wilder")

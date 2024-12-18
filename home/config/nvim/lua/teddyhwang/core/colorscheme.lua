@@ -1,16 +1,9 @@
-local set_theme_path = "$HOME/.config/tinted-theming/set_theme.lua"
-local is_set_theme_file_readable = vim.fn.filereadable(vim.fn.expand(set_theme_path)) == 1 and true or false
 local base16_status, base16 = pcall(require, "base16-colorscheme")
 if not base16_status then
   return
 end
 
 local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
-
-if is_set_theme_file_readable then
-  vim.cmd("let base16colorspace=256")
-  vim.cmd("source " .. set_theme_path)
-end
 
 local highlights = {
   HighlightedyankRegion = { link = "MatchParen" },
@@ -19,21 +12,43 @@ local highlights = {
   LineNr = { fg = colors.base03 },
   VertSplit = { link = "LineNr" },
   WinSeparator = { fg = colors.base03 },
-  TelescopePromptNormal = { bg = colors.base01 },
-  TelescopePromptPrefix = { bg = colors.base01 },
-  TelescopePromptBorder = { link = "LineNr" },
-  TelescopeNormal = { bg = colors.base00 },
-  TelescopeBorder = { bg = colors.base00, fg = colors.base01 },
-  TelescopeResultsNormal = { bg = colors.base00 },
-  TelescopeResultsBorder = { bg = colors.base00, fg = colors.base01 },
-  TelescopePreviewNormal = { bg = colors.base00 },
-  TelescopePreviewBorder = { bg = colors.base00, fg = colors.base01 },
-  TelescopeTitle = { fg = colors.base04 },
-  TelescopePromptTitle = { link = "TelescopeTitle" },
-  TelescopeResultsTitle = { link = "TelescopeTitle" },
-  TelescopePreviewTitle = { link = "TelescopeTitle" },
 }
 
 for k, v in pairs(highlights) do
   vim.api.nvim_set_hl(0, k, v)
 end
+
+local default_theme = "base16-seti"
+
+local function get_tinty_theme()
+  local theme_name = vim.fn.system("tinty current &> /dev/null && tinty current")
+
+  if vim.v.shell_error ~= 0 then
+    return default_theme
+  else
+    return vim.trim(theme_name)
+  end
+end
+
+local function handle_focus_gained()
+  local new_theme_name = get_tinty_theme()
+  local current_theme_name = vim.g.colors_name
+
+  if current_theme_name ~= new_theme_name then
+    vim.cmd("colorscheme " .. new_theme_name)
+  end
+end
+
+local function main()
+  vim.o.termguicolors = true
+  vim.g.tinted_colorspace = 256
+  local current_theme_name = get_tinty_theme()
+
+  vim.cmd("colorscheme " .. current_theme_name)
+
+  vim.api.nvim_create_autocmd("FocusGained", {
+    callback = handle_focus_gained,
+  })
+end
+
+main()

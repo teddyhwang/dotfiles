@@ -1,0 +1,22 @@
+shell = "zsh -c '{}'"
+default-scheme = "base16-seti"
+hooks = ["tmux run 2> /dev/null && tmux source-file ~/.tmux.conf"]
+
+[[items]]
+name = "tinted-shell"
+path = "https://github.com/tinted-theming/tinted-shell"
+hook = ". %f"
+supported-systems = ["base16"]
+themes-dir = "scripts"
+
+[[items]]
+name = "tinted-alacritty"
+path = "https://github.com/tinted-theming/tinted-alacritty"
+themes-dir = "colors-256"
+hook = "mkdir -p ~/.config/alacritty && cp -f %f ~/.config/alacritty/colors.toml && touch ~/.config/alacritty/alacritty.toml"
+
+[[items]]
+name = "tinted-fzf"
+path = "https://github.com/tinted-theming/tinted-fzf"
+hook = ". %f"
+themes-dir = "sh"

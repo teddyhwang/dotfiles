@@ -1,0 +1,11 @@
+[general]
+import = ["~/.config/alacritty/colors.toml"]
+
+[window]
+decorations = "None"
+padding.x = 5
+
+[font]
+normal.family = "MesloLGL Nerd Font"
+size = 12.0
+offset.y = 2

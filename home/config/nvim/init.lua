@@ -10,6 +10,7 @@ else
   require("teddyhwang.core.options")
   require("teddyhwang.core.colorscheme")
   require("teddyhwang.plugins.autopairs")
+  require("teddyhwang.plugins.fzf-lua")
   require("teddyhwang.plugins.indent-blankline")
   require("teddyhwang.plugins.lsp.lspconfig")
   require("teddyhwang.plugins.lsp.lspsaga")

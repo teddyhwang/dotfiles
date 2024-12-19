@@ -63,7 +63,6 @@ whichkey.add({
   { "<leader>tp", ":tabp<cr>", desc = "Go to previous tab" },
   { "<leader>tx", ":tabclose<cr>", desc = "Close current tab" },
   { "<leader>v", ":e ~/.config/nvim/init.lua<cr>", desc = "Edit init.luar" },
-  -- { ",ff", ":Rg <C-R><C-W><cr>", desc = "Search current text" },
   { ",ff", ":FzfLua grep_cword<cr>", desc = "Search current text" },
   { "<", "<C-w>20h", desc = "Focus far left pane" },
   { "<BS>", ":noh<cr>:echo ''<CR>", desc = "Clear search and messages" },
@@ -83,11 +82,17 @@ whichkey.add({
     desc = "Search",
   },
   { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
-  { "<C-t>", ":Files<cr>", desc = "Files" },
   { ">", "<C-w>20l", desc = "Focus far right pane" },
   { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "i" },
   { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "i" },
   { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "s" },
   { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "s" },
   { '"', ":FzfLua registers<cr>", desc = "Show registers" },
+  {
+    "<C-t>",
+    function()
+      require("teddyhwang.plugins.fzf-lua").switch_windows()
+    end,
+    desc = "Switch between windows",
+  },
 })

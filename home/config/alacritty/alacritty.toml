@@ -4,9 +4,24 @@ import = ["~/.config/alacritty/colors.toml"]
 [window]
 decorations = "None"
 padding.x = 5
+padding.y = 3
 option_as_alt = "OnlyLeft"
 
 [font]
 normal.family = "MesloLGL Nerd Font"
 size = 12.0
-offset.y = 2
+offset.y = 1
+
+[keyboard]
+bindings = [
+  { key = "Enter", mods = "Command", action = "ToggleSimpleFullscreen" },
+]
+
+[[hints.enabled]]
+command = "open"
+hyperlinks = true
+post_processing = true
+persist = false
+mouse.enabled = true
+binding = { key = "O", mods = "Control|Shift" }
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`]+"

@@ -25,24 +25,20 @@ neodev.setup({})
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 
 local on_attach = function(client, bufnr)
-  if client.server_capabilities then
-    client.server_capabilities.semanticTokensProvider = nil
-  end
-
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
-  vim.keymap.set("n", "gr", "<cmd>Lspsaga finder<cr>", opts) -- show definition, references
-  -- vim.keymap.set("n", "gr", "<cmd>lua vim.lsp.buf.references()<cr>", opts) -- see definition and make edits in window
-  vim.keymap.set("n", "gR", "<cmd>References<cr>", opts) -- show references
-  -- vim.keymap.set("n", "gd", "<cmd>Definitions<cr>", opts) -- see definition and make edits in window
+  vim.keymap.set("n", "gr", "<cmd>Lspsaga finder<cr>", opts)
+  -- vim.keymap.set("n", "gr", "<cmd>lua vim.lsp.buf.references()<cr>", opts)
+  vim.keymap.set("n", "gR", "<cmd>References<cr>", opts)
+  -- vim.keymap.set("n", "gd", "<cmd>Definitions<cr>", opts)
   vim.keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>")
-  -- vim.keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<cr>", opts) -- see definition and make edits in window
-  vim.keymap.set("n", "gD", "<cmd>Lspsaga peek_definition<cr>", opts) -- see definition and make edits in window
-  vim.keymap.set("n", "<leader>ca", "<cmd>Lspsaga code_action<cr>", opts) -- see available code actions
-  vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<cr>", opts) -- smart rename
-  vim.keymap.set("n", "[d", "<cmd>Lspsaga diagnostic_jump_prev<cr>", opts) -- jump to previous diagnostic in buffer
-  vim.keymap.set("n", "]d", "<cmd>Lspsaga diagnostic_jump_next<cr>", opts) -- jump to next diagnostic in buffer
-  vim.keymap.set("n", "K", "<cmd>Lspsaga hover_doc<cr>", opts) -- show documentation for what is under cursor
+  -- vim.keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<cr>", opts)
+  vim.keymap.set("n", "gD", "<cmd>Lspsaga peek_definition<cr>", opts)
+  vim.keymap.set("n", "<leader>ca", "<cmd>Lspsaga code_action<cr>", opts)
+  vim.keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<cr>", opts)
+  vim.keymap.set("n", "[d", "<cmd>Lspsaga diagnostic_jump_prev<cr>", opts)
+  vim.keymap.set("n", "]d", "<cmd>Lspsaga diagnostic_jump_next<cr>", opts)
+  vim.keymap.set("n", "K", "<cmd>Lspsaga hover_doc<cr>", opts)
 
   vim.api.nvim_create_autocmd("BufWritePre", {
     buffer = bufnr,
@@ -60,15 +56,7 @@ local on_attach = function(client, bufnr)
   lsp_format.on_attach(client, bufnr)
 end
 
-local custom_capabilities = {
-  textDocument = {
-    semanticTokens = {
-      dynamicRegistration = false,
-    },
-  },
-}
-
-local capabilities = vim.tbl_deep_extend("force", cmp_nvim_lsp.default_capabilities(), custom_capabilities)
+local capabilities = cmp_nvim_lsp.default_capabilities()
 
 local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
 for type, icon in pairs(signs) do

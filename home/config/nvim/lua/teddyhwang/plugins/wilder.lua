@@ -1,15 +1,8 @@
 local status, wilder = pcall(require, "wilder")
-local base16_status, base16 = pcall(require, "base16-colorscheme")
 
 if not status then
   return
 end
-
-if not base16_status then
-  return
-end
-
-local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
 
 wilder.setup({
   modes = { ":", "/", "?" },
@@ -51,7 +44,8 @@ local popupmenu_renderer = wilder.popupmenu_renderer(wilder.popupmenu_border_the
     wilder.lua_fzy_highlighter(),
   },
   highlights = {
-    accent = wilder.make_hl("WilderAccent", "Pmenu", { { a = 1 }, { a = 1 }, { foreground = colors.base0E } }),
+    accent = "WilderAccent",
+    border = "WilderBorder",
   },
   left = {
     " ",

@@ -31,9 +31,7 @@ lazy.setup({
       "tpope/vim-liquid",
       "tpope/vim-rails",
       "whatyouhide/vim-tmux-syntax",
-      {
-        "RRethy/nvim-base16",
-      },
+      "RRethy/nvim-base16",
     },
     build = ":TSUpdate",
     priority = 1000,

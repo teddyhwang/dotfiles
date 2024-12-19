@@ -51,7 +51,7 @@ vim.cmd("autocmd BufNewFile,BufRead *.ejson set filetype=json")
 vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
   pattern = "*",
   callback = function()
-    if vim.fn.mode() ~= "c" then
+    if vim.fn.mode() ~= "c" and vim.bo.buftype ~= "nofile" then
       vim.cmd('checktime')
     end
   end,

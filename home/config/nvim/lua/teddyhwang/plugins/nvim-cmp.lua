@@ -18,6 +18,11 @@ if not copilot_cmp_status then
   return
 end
 
+local dev_icons_status, dev_icons = pcall(require, "nvim-web-devicons")
+if not dev_icons_status then
+  return
+end
+
 require("luasnip/loaders/from_vscode").lazy_load()
 
 luasnip.filetype_extend("javascript", { "html" })
@@ -42,8 +47,12 @@ cmp.setup({
     ghost_text = true,
   },
   window = {
-    -- completion = cmp.config.window.bordered(),
-    -- documentation = cmp.config.window.bordered(),
+    completion = cmp.config.window.bordered({
+      winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None",
+    }),
+    documentation = cmp.config.window.bordered({
+      winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None",
+    }),
   },
   snippet = {
     expand = function(args)
@@ -88,10 +97,7 @@ cmp.setup({
     comparators = {
       copilot_cmp_comparators.prioritize,
       copilot_cmp_comparators.score,
-
-      -- Below is the default comparitor list and order for nvim-cmp
       cmp.config.compare.offset,
-      -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
       cmp.config.compare.exact,
       cmp.config.compare.score,
       cmp.config.compare.recently_used,
@@ -104,23 +110,48 @@ cmp.setup({
   },
   sources = cmp.config.sources({
     { name = "copilot" },
-    { name = "nvim_lsp" }, -- lsp
-    { name = "buffer" }, -- text within current buffer
-    { name = "path" }, -- file system paths
-    { name = "luasnip" }, -- snippets
+    { name = "nvim_lsp" },
+    { name = "buffer" },
+    { name = "path" },
+    { name = "luasnip" },
   }),
-  -- configure lspkind for vs-code like icons
   formatting = {
-    format = lspkind.cmp_format({
-      mode = "symbol",
-      maxwidth = 150,
-      ellipsis_char = "...",
-      symbol_map = { Copilot = "" },
-    }),
+    format = function(entry, vim_item)
+      if vim.tbl_contains({ "path" }, entry.source.name) then
+        local icon, hl_group = dev_icons.get_icon(entry:get_completion_item().label)
+        if icon then
+          vim_item.kind = icon
+          vim_item.kind_hl_group = hl_group
+          return vim_item
+        end
+      end
+      return lspkind.cmp_format({
+        mode = "symbol_text",
+        maxwidth = 150,
+        ellipsis_char = "...",
+        symbol_map = { Copilot = "" },
+        before = function(entry, vim_item)
+          local kind_hl_group = "CmpItemKind" .. vim_item.kind
+          vim_item.kind_hl_group = kind_hl_group
+          vim_item.dup = ({
+            buffer = 1,
+            path = 1,
+            nvim_lsp = 0,
+          })[entry.source.name] or 0
+
+          local strings = vim.split(vim_item.abbr, " ", { trimempty = true })
+          if strings[1] then
+            vim_item.abbr_hl_group = kind_hl_group
+          end
+
+          return vim_item
+        end,
+      })(entry, vim_item)
+    end,
   },
 })
 
-cmp.setup.filetype({ "sql" }, {
+cmp.setup.filetype({ "sql", "mysql" }, {
   sources = {
     { name = "vim-dadbod-completion" },
     { name = "buffer" },

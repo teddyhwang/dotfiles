@@ -129,7 +129,7 @@ lazy.setup({
   {
     "airblade/vim-rooter",
     init = function()
-      vim.g.rooter_patterns = { '.git', '.git/', 'Gemfile', 'package.json' }
+      vim.g.rooter_patterns = { ".git", ".git/", "Gemfile", "package.json", "CHANGELOG.md" }
     end,
   },
   "folke/which-key.nvim",
@@ -252,9 +252,16 @@ lazy.setup({
   "f-person/git-blame.nvim",
 
   -- -- data
-  "kristijanhusak/vim-dadbod-completion",
-  "kristijanhusak/vim-dadbod-ui",
-  "tpope/vim-dadbod",
+  {
+    "kristijanhusak/vim-dadbod-ui",
+    dependencies = {
+      { "tpope/vim-dadbod", lazy = true },
+      { "kristijanhusak/vim-dadbod-completion", ft = { "sql", "mysql", "plsql" }, lazy = true },
+    },
+    init = function()
+      vim.g.db_ui_use_nerd_fonts = 1
+    end,
+  },
 
   -- -- editing
   {
@@ -267,7 +274,7 @@ lazy.setup({
         opts = {
           suggestion = { enabled = false, auto_trigger = true },
           panel = { enabled = false },
-          copilot_node_command = "node",
+          copilot_node_command = "/opt/homebrew/bin/node",
         },
       },
     },

@@ -6,12 +6,9 @@ end
 
 local function smart_swap(direction)
   local current_win = vim.api.nvim_get_current_win()
-  local initial_win_count = #vim.api.nvim_list_wins()
-
-  local initial_pos = vim.api.nvim_win_get_position(current_win)
   local buf = vim.api.nvim_win_get_buf(current_win)
 
-  vim.cmd('wincmd ' .. direction)
+  vim.cmd("wincmd " .. direction)
   local target_win = vim.api.nvim_get_current_win()
 
   if current_win ~= target_win then
@@ -22,14 +19,16 @@ local function smart_swap(direction)
     vim.api.nvim_win_set_buf(target_win, current_buf)
   else
     vim.api.nvim_set_current_win(current_win)
-    vim.cmd('close')
+    vim.cmd("close")
 
-    if direction == 'h' then
-      vim.cmd('topleft vsplit')
-    elseif direction == 'l' then
-      vim.cmd('botright vsplit')
+    if direction == "h" then
+      vim.cmd("topleft vsplit")
+    elseif direction == "l" then
+      vim.cmd("botright vsplit")
+    elseif direction == "k" then
+      vim.cmd("topleft split")
     else
-      vim.cmd('botright split')
+      vim.cmd("botright split")
     end
 
     vim.api.nvim_win_set_buf(vim.api.nvim_get_current_win(), buf)
@@ -41,7 +40,7 @@ local function search_prompt()
     prompt = "Search: ",
   }, function(input)
     if input then
-      vim.cmd(string.format(":Rg %s", input))
+      vim.cmd(string.format(":FzfLua grep search=%s", input))
     else
       vim.cmd("echo ''")
     end
@@ -106,20 +105,65 @@ whichkey.add({
   { "<leader>tp", ":tabp<cr>", desc = "Go to previous tab" },
   { "<leader>tx", ":tabclose<cr>", desc = "Close current tab" },
   { "<leader>v", ":e ~/.config/nvim/init.lua<cr>", desc = "Edit init.luar" },
+  { "q:", ":FzfLua command_history<cr>", desc = "Command history window", mode="n" },
   { ",ff", ":FzfLua grep_cword<cr>", desc = "Search current text" },
   { "<", "<C-w>20h", desc = "Focus far left pane" },
   { ">", "<C-w>20l", desc = "Focus far right pane" },
   { "<BS>", ":noh<cr>:echo ''<CR>", desc = "Clear search and messages" },
   { "<C-f>", search_prompt, desc = "Search" },
-  { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
-  { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "i" },
-  { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "i" },
-  { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "s" },
-  { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "s" },
   { '"', ":FzfLua registers<cr>", desc = "Show registers" },
-  { "<C-t>", require("teddyhwang.plugins.fzf-lua").switch_windows, desc = "Switch between windows", },
-  { "<C-w>H", function() smart_swap('h') end, desc = "Swap window left" },
-  { "<C-w>J", function() smart_swap('j') end, desc = "Swap window down" },
-  { "<C-w>K", function() smart_swap('k') end, desc = "Swap window up" },
-  { "<C-w>L", function() smart_swap('l') end, desc = "Swap window right" },
+  { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
+  { "<C-t>", require("teddyhwang.plugins.fzf-lua").switch_windows, desc = "Switch between windows" },
+  {
+    "<C-j>",
+    ":lua require'luasnip'.jump(1)<cr>",
+    desc = "Luasnip scroll down",
+    mode = "i",
+  },
+  {
+    "<C-k>",
+    ":lua require'luasnip'.jump(-1)<cr>",
+    desc = "Luasnip scroll up",
+    mode = "i",
+  },
+  {
+    "<C-j>",
+    ":lua require'luasnip'.jump(1)<cr>",
+    desc = "Luasnip scroll down",
+    mode = "s",
+  },
+  {
+    "<C-k>",
+    ":lua require'luasnip'.jump(-1)<cr>",
+    desc = "Luasnip scroll up",
+    mode = "s",
+  },
+  {
+    "<C-w>H",
+    function()
+      smart_swap("h")
+    end,
+    desc = "Swap window left",
+  },
+  {
+    "<C-w>J",
+    function()
+      smart_swap("j")
+    end,
+    desc = "Swap window down",
+  },
+  {
+    "<C-w>K",
+    function()
+      smart_swap("k")
+    end,
+    desc = "Swap window up",
+  },
+  {
+    "<C-w>L",
+    function()
+      smart_swap("l")
+    end,
+    desc = "Swap window right",
+  },
 })

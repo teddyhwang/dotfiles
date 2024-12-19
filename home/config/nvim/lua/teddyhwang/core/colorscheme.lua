@@ -15,36 +15,85 @@ local function get_tinty_theme()
   end
 end
 
+-- base08 for red
+-- base09 for orange
+-- base0A for yellow
+-- base0B for green
+-- base0C for cyan
+-- base0D for blue
+-- base0E for purple
+-- base0F for brown
+-- base00: darkest black (default background)
+-- base01: darker gray
+-- base02: dark gray
+-- base03: gray
+-- base04: light gray
+-- base05: lighter gray
+-- base06: very light gray
+-- base07: white
+
 local function handle_custom_highlights()
   local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
   local highlights = {
-    WilderAccent = { fg = colors.base0E },
-    IblIndent = { fg = colors.base01, blend = 50 },
-    IblScope = { fg = colors.base03, blend = 10 },
-    HighlightedyankRegion = { link = "MatchParen" },
-    Tabline = { bg = colors.base01, fg = colors.base05 },
-    TabLineFill = { bg = colors.base00 },
-    TabLineSel = { bg = colors.base02, fg = colors.base06 },
-    TabLineSeparatorSel = { fg = colors.base03, bg = colors.base02 },
-    TabLineSeparator = { fg = colors.base02, bg = colors.base01 },
-    TabLineIconSel = { fg = colors.base06, bg = colors.base02 },
-    TabLineIcon = { fg = colors.base04, bg = colors.base01 },
-    TabLineModifiedSel = { fg = colors.base0B, bg = colors.base02 },
-    TabLineModified = { fg = colors.base0B, bg = colors.base01 },
-    TabLineCloseSel = { fg = colors.base06, bg = colors.base02 },
-    TabLineClose = { fg = colors.base04, bg = colors.base01 },
+    ["@symbol"] = { fg = colors.base09 },
+    ["@variable"] = { fg = colors.base08 },
+    ["@variable.member"] = { fg = colors.base08 },
+    ["@function"] = { fg = colors.base08 },
+    ["@keyword"] = { fg = colors.base0E },
+    ["@property"] = { fg = colors.base08 },
+    ["@parameter"] = { fg = colors.base08 },
+    TSType = { fg = colors.base0A },
+    TSNamespace = { fg = colors.base0A },
+    Identifier = { fg = colors.base08 },
     LineNr = { fg = colors.base03 },
-    VertSplit = { link = "LineNr" },
-    WinSeparator = { fg = colors.base03 },
     Pmenu = { bg = colors.base00, fg = colors.base05 },
-    PmenuSel = { link = "TabLineSel" },
-    PmenuThumb = { bg = colors.base0E, fg = colors.base02 },
-    PmenuSbar = { bg = colors.base03 },
-    WilderBorder = { link = "VertSplit" },
-    LualineWinbar = { bg = colors.base00, fg = colors.base07 },
+    PmenuSbar = { bg = colors.base03, fg = colors.base03 },
+    PmenuSel = { bg = colors.base02, fg = colors.base06 },
+    PmenuThumb = { bg = colors.base02, fg = colors.base02 },
+    VertSplit = { link = "LineNr" },
+
+    CmpItemAbbr = { fg = colors.base05 },
+    CmpItemAbbrMatch = { fg = colors.base0D, bold = true },
+    CmpItemAbbrMatchFuzzy = { link = "CmpItemAbbrMatch" },
+    CmpItemKind = { link = "@text" },
+    CmpItemKindClass = { link = "@type" },
+    CmpItemKindConstant = { link = "@constant" },
+    CmpItemKindEnum = { link = "@type" },
+    CmpItemKindFile = { link = "Directory" },
+    CmpItemKindFolder = { link = "Directory" },
+    CmpItemKindFunction = { link = "@function" },
+    CmpItemKindInterface = { link = "@interface" },
+    CmpItemKindKeyword = { link = "@keyword" },
+    CmpItemKindMethod = { link = "@method" },
+    CmpItemKindModule = { link = "@namespace" },
+    CmpItemKindProperty = { link = "@property" },
+    CmpItemKindSnippet = { link = "@text" },
+    CmpItemKindText = { link = "@text" },
+    CmpItemKindUnit = { link = "@constant" },
+    CmpItemKindValue = { link = "@constant" },
+    CmpItemKindVariable = { link = "@variable" },
+    FloatBorder = { link = "VertSplit" },
     FzfLuaBackdrop = { bg = colors.base00 },
     FzfLuaBorder = { link = "VertSplit" },
     FzfLuaScrollBorderFull = { link = "PmenuThumb" },
+    HighlightedyankRegion = { link = "MatchParen" },
+    IblIndent = { fg = colors.base01, blend = 50 },
+    IblScope = { fg = colors.base03, blend = 10 },
+    LualineWinbar = { bg = colors.base00, fg = colors.base07 },
+    TabLineClose = { fg = colors.base04, bg = colors.base01 },
+    TabLineCloseSel = { fg = colors.base06, bg = colors.base02 },
+    TabLineFill = { bg = colors.base00 },
+    TabLineIcon = { fg = colors.base04, bg = colors.base01 },
+    TabLineIconSel = { fg = colors.base06, bg = colors.base02 },
+    TabLineModified = { fg = colors.base0B, bg = colors.base01 },
+    TabLineModifiedSel = { fg = colors.base0B, bg = colors.base02 },
+    TabLineSel = { link = "PmenuSel" },
+    TabLineSeparator = { fg = colors.base02, bg = colors.base01 },
+    TabLineSeparatorSel = { fg = colors.base03, bg = colors.base02 },
+    Tabline = { bg = colors.base01, fg = colors.base05 },
+    WilderAccent = { fg = colors.base0E },
+    WilderBorder = { link = "VertSplit" },
+    WinSeparator = { fg = colors.base03 },
   }
 
   for k, v in pairs(highlights) do

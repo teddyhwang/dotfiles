@@ -44,7 +44,8 @@ local popupmenu_renderer = wilder.popupmenu_renderer(wilder.popupmenu_border_the
     wilder.lua_fzy_highlighter(),
   },
   highlights = {
-    accent = "WilderAccent"
+    accent = "WilderAccent",
+    border = "WilderBorder",
   },
   left = {
     " ",

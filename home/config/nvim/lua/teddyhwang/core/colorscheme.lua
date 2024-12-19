@@ -40,7 +40,11 @@ local function handle_custom_highlights()
     PmenuSel = { link = "TabLineSel" },
     PmenuThumb = { bg = colors.base0E, fg = colors.base02 },
     PmenuSbar = { bg = colors.base03 },
+    WilderBorder = { link = "VertSplit" },
     LualineWinbar = { bg = colors.base00, fg = colors.base07 },
+    FzfLuaBackdrop = { bg = colors.base00 },
+    FzfLuaBorder = { link = "VertSplit" },
+    FzfLuaScrollBorderFull = { link = "PmenuThumb" },
   }
 
   for k, v in pairs(highlights) do

@@ -122,7 +122,7 @@ whichkey.add({
       fzf.fzf_exec(
         vim.tbl_map(function(w) return w.name end, windows),
         {
-          prompt = prompt_path .. ' ❯ ',
+          prompt = prompt_path .. '/',
           title = 'Switch Windows',
           previewer = 'builtin',
           preview = {

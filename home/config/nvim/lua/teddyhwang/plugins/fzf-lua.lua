@@ -53,6 +53,14 @@ function M.switch_windows()
     end
   end
 
+  local function switch_to_files()
+    local last_query = require("fzf-lua").get_last_query()
+    fzf.files({
+      prompt = prompt_path .. "/",
+      query = last_query,
+    })
+  end
+
   fzf.fzf_exec(
     vim.tbl_map(function(w)
       return w.name
@@ -60,18 +68,25 @@ function M.switch_windows()
     {
       prompt = prompt_path .. "/",
       title = "Switch Windows",
-      previewer = IconStripPreviewer,
-      preview = {
-        title = "File Preview",
-        border = "rounded",
-      },
+      header = ":: <ctrl-f> to switch to all files",
       actions = {
         ["default"] = function(selected)
+          if #selected == 0 then
+            switch_to_files()
+            return
+          end
+
           local win = vim.tbl_filter(function(w)
             return w.name == selected[1]
           end, windows)[1]
           vim.api.nvim_set_current_win(win.win_id)
         end,
+        ["ctrl-f"] = switch_to_files,
+      },
+      previewer = IconStripPreviewer,
+      preview = {
+        title = "File Preview",
+        border = "rounded",
       },
     }
   )

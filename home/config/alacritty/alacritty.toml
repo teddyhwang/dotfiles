@@ -12,6 +12,11 @@ normal.family = "MesloLGL Nerd Font"
 size = 12.0
 offset.y = 2
 
+[keyboard]
+bindings = [
+  { key = "Enter", mods = "Command", action = "ToggleSimpleFullscreen" },
+]
+
 [[hints.enabled]]
 command = "open"
 hyperlinks = true

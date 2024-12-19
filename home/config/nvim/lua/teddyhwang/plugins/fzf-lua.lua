@@ -1,3 +1,4 @@
+require("fzf-lua").setup({ fzf_colors = true })
 local M = {}
 
 function M.switch_windows()

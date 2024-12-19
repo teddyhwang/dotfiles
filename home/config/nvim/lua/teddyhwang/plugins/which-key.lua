@@ -63,7 +63,6 @@ whichkey.add({
   { "<leader>tp", ":tabp<cr>", desc = "Go to previous tab" },
   { "<leader>tx", ":tabclose<cr>", desc = "Close current tab" },
   { "<leader>v", ":e ~/.config/nvim/init.lua<cr>", desc = "Edit init.luar" },
-  -- { ",ff", ":Rg <C-R><C-W><cr>", desc = "Search current text" },
   { ",ff", ":FzfLua grep_cword<cr>", desc = "Search current text" },
   { "<", "<C-w>20h", desc = "Focus far left pane" },
   { "<BS>", ":noh<cr>:echo ''<CR>", desc = "Clear search and messages" },
@@ -92,7 +91,7 @@ whichkey.add({
   {
     "<C-t>",
     function()
-      require('teddyhwang.plugins.fzf-lua').switch_windows()
+      require("teddyhwang.plugins.fzf-lua").switch_windows()
     end,
     desc = "Switch between windows",
   },

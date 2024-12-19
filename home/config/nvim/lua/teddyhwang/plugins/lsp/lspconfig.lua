@@ -25,9 +25,9 @@ neodev.setup({})
 vim.keymap.set("n", "<leader>R", ":LspRestart<cr>")
 
 local on_attach = function(client, bufnr)
-  if client.server_capabilities then
-    client.server_capabilities.semanticTokensProvider = nil
-  end
+  -- if client.server_capabilities then
+  --   client.server_capabilities.semanticTokensProvider = nil
+  -- end
 
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
@@ -61,11 +61,11 @@ local on_attach = function(client, bufnr)
 end
 
 local custom_capabilities = {
-  textDocument = {
-    semanticTokens = {
-      dynamicRegistration = false,
-    },
-  },
+  -- textDocument = {
+  --   semanticTokens = {
+  --     dynamicRegistration = true,
+  --   },
+  -- },
 }
 
 local capabilities = vim.tbl_deep_extend("force", cmp_nvim_lsp.default_capabilities(), custom_capabilities)

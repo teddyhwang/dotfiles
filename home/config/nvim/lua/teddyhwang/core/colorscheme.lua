@@ -54,7 +54,6 @@ local function handle_focus_gained()
 
   if current_theme_name ~= new_theme_name then
     vim.cmd("colorscheme " .. new_theme_name)
-    local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
     handle_custom_highlights()
     require("ibl").setup()
     require("teddyhwang.plugins.lualine").refresh()

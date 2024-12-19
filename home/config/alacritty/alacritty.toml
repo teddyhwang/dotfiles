@@ -10,7 +10,7 @@ option_as_alt = "OnlyLeft"
 [font]
 normal.family = "MesloLGL Nerd Font"
 size = 12.0
-offset.y = 2
+offset.y = 1
 
 [keyboard]
 bindings = [

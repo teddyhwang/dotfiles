@@ -126,7 +126,12 @@ lazy.setup({
   "vim-scripts/Tabmerge",
 
   -- -- navigation
-  "airblade/vim-rooter",
+  {
+    "airblade/vim-rooter",
+    init = function()
+      vim.g.rooter_patterns = { '.git', '.git/', 'Gemfile', 'package.json' }
+    end,
+  },
   "folke/which-key.nvim",
   {
     "junegunn/fzf.vim",

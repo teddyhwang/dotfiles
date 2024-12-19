@@ -23,7 +23,7 @@ function M.switch_windows()
     }
   end
 
-  local root = fzf.path.git_root() or vim.fn.getcwd()
+  local root = vim.fn.getcwd()
 
   local prompt_path = root
   local home = os.getenv("HOME")

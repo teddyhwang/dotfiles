@@ -25,6 +25,10 @@ local function handle_custom_highlights()
     LineNr = { fg = colors.base03 },
     VertSplit = { link = "LineNr" },
     WinSeparator = { fg = colors.base03 },
+    Pmenu = { bg = colors.base00, fg = colors.base05 },
+    PmenuSel = { link = "TabLineSel" },
+    PmenuThumb = { bg = colors.base0E, fg = colors.base02 },
+    PmenuSbar = { bg = colors.base03 },
   }
 
   for k, v in pairs(highlights) do

@@ -83,11 +83,63 @@ whichkey.add({
     desc = "Search",
   },
   { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
-  { "<C-t>", ":Files<cr>", desc = "Files" },
   { ">", "<C-w>20l", desc = "Focus far right pane" },
   { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "i" },
   { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "i" },
   { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "s" },
   { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "s" },
   { '"', ":FzfLua registers<cr>", desc = "Show registers" },
+  {
+    "<C-t>",
+    function()
+      local fzf = require('fzf-lua')
+      local windows = {}
+
+      local root = fzf.path.git_root() or vim.fn.getcwd()
+
+      local prompt_path = root
+      local home = os.getenv("HOME")
+      if vim.startswith(prompt_path, home) then
+        prompt_path = "~" .. prompt_path:sub(#home + 1)
+      end
+
+      for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local buf = vim.api.nvim_win_get_buf(win)
+        local full_path = vim.api.nvim_buf_get_name(buf)
+        if full_path ~= "" then
+          local relative_path = full_path
+          if vim.startswith(full_path, root) then
+            relative_path = full_path:sub(#root + 2)
+          end
+
+          table.insert(windows, {
+            name = relative_path,
+            win_id = win,
+          })
+        end
+      end
+
+      fzf.fzf_exec(
+        vim.tbl_map(function(w) return w.name end, windows),
+        {
+          prompt = prompt_path .. ' ❯ ',
+          title = 'Switch Windows',
+          previewer = 'builtin',
+          preview = {
+            title = 'File Preview',
+            border = 'rounded',
+          },
+          actions = {
+            ['default'] = function(selected)
+              local win = vim.tbl_filter(function(w)
+                return w.name == selected[1]
+              end, windows)[1]
+              vim.api.nvim_set_current_win(win.win_id)
+            end
+          }
+        }
+      )
+    end,
+    desc = "Switch between windows"
+  },
 })

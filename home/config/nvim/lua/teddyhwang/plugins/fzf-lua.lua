@@ -1,11 +1,10 @@
 local M = {}
 
 function M.switch_windows()
-  local fzf = require('fzf-lua')
+  local fzf = require("fzf-lua")
   local builtin = require("fzf-lua.previewer.builtin")
   local windows = {}
 
-  -- Create custom previewer that strips devicons
   local IconStripPreviewer = builtin.buffer_or_file:extend()
 
   function IconStripPreviewer:new(o, opts, fzf_win)
@@ -15,7 +14,6 @@ function M.switch_windows()
   end
 
   function IconStripPreviewer:parse_entry(entry_str)
-    -- Strip the devicon (assumes format "icon path")
     local path = entry_str:match("[^ ]+ (.*)")
     return {
       path = path,
@@ -41,10 +39,9 @@ function M.switch_windows()
         relative_path = full_path:sub(#root + 2)
       end
 
-      -- Add devicons
-      local icon, icon_hl = require('nvim-web-devicons').get_icon(
+      local icon = require("nvim-web-devicons").get_icon(
         relative_path,
-        vim.fn.fnamemodify(relative_path, ':e'),
+        vim.fn.fnamemodify(relative_path, ":e"),
         { default = true }
       )
 
@@ -56,23 +53,25 @@ function M.switch_windows()
   end
 
   fzf.fzf_exec(
-    vim.tbl_map(function(w) return w.name end, windows),
+    vim.tbl_map(function(w)
+      return w.name
+    end, windows),
     {
-      prompt = prompt_path .. '/',
-      title = 'Switch Windows',
+      prompt = prompt_path .. "/",
+      title = "Switch Windows",
       previewer = IconStripPreviewer,
       preview = {
-        title = 'File Preview',
-        border = 'rounded',
+        title = "File Preview",
+        border = "rounded",
       },
       actions = {
-        ['default'] = function(selected)
+        ["default"] = function(selected)
           local win = vim.tbl_filter(function(w)
             return w.name == selected[1]
           end, windows)[1]
           vim.api.nvim_set_current_win(win.win_id)
-        end
-      }
+        end,
+      },
     }
   )
 end

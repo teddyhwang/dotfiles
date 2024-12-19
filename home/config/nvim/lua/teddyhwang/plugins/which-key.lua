@@ -4,6 +4,62 @@ if not whichkey_status then
   return
 end
 
+local function smart_swap(direction)
+  local current_win = vim.api.nvim_get_current_win()
+  local initial_win_count = #vim.api.nvim_list_wins()
+
+  local initial_pos = vim.api.nvim_win_get_position(current_win)
+  local buf = vim.api.nvim_win_get_buf(current_win)
+
+  vim.cmd('wincmd ' .. direction)
+  local target_win = vim.api.nvim_get_current_win()
+
+  if current_win ~= target_win then
+    local current_buf = vim.api.nvim_win_get_buf(current_win)
+    local target_buf = vim.api.nvim_win_get_buf(target_win)
+
+    vim.api.nvim_win_set_buf(current_win, target_buf)
+    vim.api.nvim_win_set_buf(target_win, current_buf)
+  else
+    vim.api.nvim_set_current_win(current_win)
+    vim.cmd('close')
+
+    if direction == 'h' then
+      vim.cmd('topleft vsplit')
+    elseif direction == 'l' then
+      vim.cmd('botright vsplit')
+    else
+      vim.cmd('botright split')
+    end
+
+    vim.api.nvim_win_set_buf(vim.api.nvim_get_current_win(), buf)
+  end
+end
+
+local function search_prompt()
+  vim.ui.input({
+    prompt = "Search: ",
+  }, function(input)
+    if input then
+      vim.cmd(string.format(":Rg %s", input))
+    else
+      vim.cmd("echo ''")
+    end
+  end)
+end
+
+local function run_tmux_command()
+  vim.ui.input({
+    prompt = "Command: ",
+  }, function(input)
+    if input then
+      vim.cmd(string.format(":VimuxRunCommand '%s'", input))
+    else
+      vim.cmd("echo ''")
+    end
+  end)
+end
+
 whichkey.setup({
   defer = function(ctx)
     if vim.list_contains({ "d", "y" }, ctx.operator) then
@@ -12,22 +68,9 @@ whichkey.setup({
     return vim.list_contains({ "<C-V>", "V", "v" }, ctx.mode)
   end,
 })
+
 whichkey.add({
-  {
-    "<leader>!",
-    function()
-      vim.ui.input({
-        prompt = "Command: ",
-      }, function(input)
-        if input then
-          vim.cmd(string.format(":VimuxRunCommand '%s'", input))
-        else
-          vim.cmd("echo ''")
-        end
-      end)
-    end,
-    desc = "Run split command in tmux terminal",
-  },
+  { "<leader>!", run_tmux_command, desc = "Run split command in tmux terminal" },
   { "<leader>+", "<C-a>", desc = "Increment number" },
   { "<leader>-", "<C-x>", desc = "Decrement number" },
   { "<leader>E", ":NvimTreeFindFile<cr>", desc = "Find current file in nvim tree" },
@@ -65,34 +108,18 @@ whichkey.add({
   { "<leader>v", ":e ~/.config/nvim/init.lua<cr>", desc = "Edit init.luar" },
   { ",ff", ":FzfLua grep_cword<cr>", desc = "Search current text" },
   { "<", "<C-w>20h", desc = "Focus far left pane" },
-  { "<BS>", ":noh<cr>:echo ''<CR>", desc = "Clear search and messages" },
-  {
-    "<C-f>",
-    function()
-      vim.ui.input({
-        prompt = "Search: ",
-      }, function(input)
-        if input then
-          vim.cmd(string.format(":Rg %s", input))
-        else
-          vim.cmd("echo ''")
-        end
-      end)
-    end,
-    desc = "Search",
-  },
-  { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
   { ">", "<C-w>20l", desc = "Focus far right pane" },
+  { "<BS>", ":noh<cr>:echo ''<CR>", desc = "Clear search and messages" },
+  { "<C-f>", search_prompt, desc = "Search" },
+  { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
   { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "i" },
   { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "i" },
   { "<C-j>", ":lua require'luasnip'.jump(1)<cr>", desc = "Luasnip scroll down", mode = "s" },
   { "<C-k>", ":lua require'luasnip'.jump(-1)<cr>", desc = "Luasnip scroll up", mode = "s" },
   { '"', ":FzfLua registers<cr>", desc = "Show registers" },
-  {
-    "<C-t>",
-    function()
-      require("teddyhwang.plugins.fzf-lua").switch_windows()
-    end,
-    desc = "Switch between windows",
-  },
+  { "<C-t>", require("teddyhwang.plugins.fzf-lua").switch_windows, desc = "Switch between windows", },
+  { "<C-w>H", function() smart_swap('h') end, desc = "Swap window left" },
+  { "<C-w>J", function() smart_swap('j') end, desc = "Swap window down" },
+  { "<C-w>K", function() smart_swap('k') end, desc = "Swap window up" },
+  { "<C-w>L", function() smart_swap('l') end, desc = "Swap window right" },
 })

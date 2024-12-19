@@ -9,7 +9,6 @@ if not vim.loop.fs_stat(lazypath) then
     lazypath,
   })
 end
----@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
 local status, lazy = pcall(require, "lazy")
@@ -99,7 +98,6 @@ lazy.setup({
     end,
   },
   "tmux-plugins/vim-tmux",
-  "tpope/vim-rhubarb",
   "vim-test/vim-test",
   {
     "voldikss/vim-floaterm",
@@ -247,6 +245,7 @@ lazy.setup({
     config = true,
   },
   "tpope/vim-fugitive",
+  "tpope/vim-rhubarb",
   "f-person/git-blame.nvim",
 
   -- -- data
@@ -290,4 +289,3 @@ lazy.setup({
     end,
   },
 })
-

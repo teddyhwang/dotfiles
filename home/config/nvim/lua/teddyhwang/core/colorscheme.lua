@@ -5,19 +5,6 @@ end
 
 local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
 
-local highlights = {
-  HighlightedyankRegion = { link = "MatchParen" },
-  Tabline = { bg = colors.base00, fg = colors.base05 },
-  TabLineSel = { bg = colors.base02, fg = colors.base06 },
-  LineNr = { fg = colors.base03 },
-  VertSplit = { link = "LineNr" },
-  WinSeparator = { fg = colors.base03 },
-}
-
-for k, v in pairs(highlights) do
-  vim.api.nvim_set_hl(0, k, v)
-end
-
 local default_theme = "base16-seti"
 
 local function get_tinty_theme()
@@ -30,6 +17,21 @@ local function get_tinty_theme()
   end
 end
 
+local function handle_custom_highlights()
+  local highlights = {
+    HighlightedyankRegion = { link = "MatchParen" },
+    Tabline = { bg = colors.base00, fg = colors.base05 },
+    TabLineSel = { bg = colors.base02, fg = colors.base06 },
+    LineNr = { fg = colors.base03 },
+    VertSplit = { link = "LineNr" },
+    WinSeparator = { fg = colors.base03 },
+  }
+
+  for k, v in pairs(highlights) do
+    vim.api.nvim_set_hl(0, k, v)
+  end
+end
+
 local function handle_focus_gained()
   local new_theme_name = get_tinty_theme()
   local current_theme_name = vim.g.colors_name
@@ -37,6 +39,8 @@ local function handle_focus_gained()
   if current_theme_name ~= new_theme_name then
     vim.cmd("colorscheme " .. new_theme_name)
   end
+
+  handle_custom_highlights()
 end
 
 local function main()
@@ -49,6 +53,8 @@ local function main()
   vim.api.nvim_create_autocmd("FocusGained", {
     callback = handle_focus_gained,
   })
+
+  handle_custom_highlights()
 end
 
 main()

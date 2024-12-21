@@ -18,6 +18,7 @@ PATH="$HOME/.bin:$PATH"
 PATH="$HOME/.local/bin:$PATH"
 PATH="$HOME/go/bin:$PATH"
 PATH="$HOME/.cargo/bin:$PATH"
+PATH="$HOME/.local/share/nvim/mason/bin:$PATH"
 if ! [ -z $USER_PATH ]; then 
   PATH="$USER_PATH:$PATH"
 fi

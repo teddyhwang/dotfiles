@@ -195,8 +195,8 @@ function ssh() {
     mini)
       command ssh teddys-mac-mini.local
       ;;
-    m1)
-      command ssh teddys-m1-macbook-pro.local
+    work)
+      command ssh teddys-shopify-macBook-pro.local
       ;;
     mbp)
       command ssh teddys-macbook-pro.local

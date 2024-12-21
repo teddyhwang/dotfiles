@@ -1,13 +1,8 @@
-local status, lualine = pcall(require, "lualine")
-if not status then
-  return
-end
-
-local function get_config()
-  package.loaded['lualine.themes.base16'] = nil
+return function(lualine)
+  package.loaded["lualine.themes.base16"] = nil
   local lualine_theme_base16 = require("lualine.themes.base16")
 
-  return {
+  lualine.setup({
     options = {
       theme = lualine_theme_base16,
       disabled_filetypes = {
@@ -78,13 +73,5 @@ local function get_config()
       "quickfix",
       "man",
     },
-  }
+  })
 end
-
-lualine.setup(get_config())
-
-return {
-  refresh = function()
-    lualine.setup(get_config())
-  end
-}

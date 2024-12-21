@@ -48,14 +48,6 @@ for filepath in home/.[^.]*; do
   validate_and_symlink $file $source $target
 done
 
-for filepath in home/vim/*; do
-  file=$filepath:t
-  source="$(pwd)/$filepath"
-  target="$HOME/.vim/$file"
-
-  validate_and_symlink $file $source $target
-done
-
 for filepath in home/config/*; do
   file=$filepath:t
   source="$(pwd)/$filepath"

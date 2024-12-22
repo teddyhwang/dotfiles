@@ -61,16 +61,8 @@ zstyle ':completion:*' cache-path ~/.zsh/cache
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*:directory-stack' list-colors '=(#b) #([0-9]#)*( *)==95=38;5;12'
 
-if [[ -n "$TMUX" ]]; then
-  bindkey '^A' beginning-of-line
-  bindkey '^E' end-of-line
-fi
 bindkey '^[[Z' autosuggest-accept
 bindkey '^f' fzf-cd-widget
-bindkey '^j' history-substring-search-down
-bindkey '^k' history-substring-search-up
-bindkey -M vicmd "j" down-line-or-beginning-search
-bindkey -M vicmd "k" up-line-or-beginning-search
 
 alias brighter='tinty apply base16-synth-midnight-dark'
 alias dark='tinty apply base16-seti'

@@ -18,10 +18,3 @@ if ! [ -f /usr/local/bin/cht.sh ]; then
 else
   echo -e "${C_LIGHTGRAY}cht.sh exists$C_DEFAULT"
 fi
-
-if ! command -v tree-sitter &> /dev/null; then
-  echo -e "${C_GREEN}Installing tree-sitter-cli...$C_DEFAULT"
-  npm install -g tree-sitter-cli || sudo npm install -g tree-sitter-cli
-else
-  echo -e "${C_LIGHTGRAY}tree-sitter-cli is installed$C_DEFAULT"
-fi

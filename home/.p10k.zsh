@@ -43,4 +43,3 @@ POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
   ram
   vi_mode
 )
-

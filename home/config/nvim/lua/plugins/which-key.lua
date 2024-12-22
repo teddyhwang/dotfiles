@@ -120,7 +120,7 @@ return function(whichkey)
     { "<C-f>", search_prompt, desc = "Search" },
     { '"', ":FzfLua registers<cr>", desc = "Show registers" },
     { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
-    { "<C-t>", require("teddyhwang.plugins.fzf-lua").switch_windows, desc = "Switch between windows" },
+    { "<C-t>", require("plugins.fzf-lua").switch_windows, desc = "Switch between windows" },
     {
       "q:",
       ":FzfLua command_history<cr>",

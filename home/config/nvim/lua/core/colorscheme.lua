@@ -107,7 +107,7 @@ return function(base16)
       handle_custom_highlights()
       require("ibl").setup()
       local lualine = require("lualine")
-      local setup_lualine = require("teddyhwang.plugins.lualine")
+      local setup_lualine = require("plugins.lualine")
       setup_lualine(lualine)
     end
   end

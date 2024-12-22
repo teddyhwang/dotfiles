@@ -130,6 +130,7 @@ brew "stylua"
 brew "svgo"
 brew "telnet"
 brew "the_silver_searcher"
+brew "tmuxinator"
 brew "transmission-cli"
 brew "tree"
 brew "universal-ctags", args: ["HEAD"]

@@ -16,8 +16,6 @@ function add_directory_in_home {
 
 add_directory_in_home '.config'
 add_directory_in_home '.ssh'
-add_directory_in_home '.vim'
-add_directory_in_home '.vim_swap'
 add_directory_in_home '.bin'
 
 if ! [ -d /usr/local/bin ]; then

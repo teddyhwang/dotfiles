@@ -86,7 +86,7 @@ return function(whichkey)
     { "<leader>fh", ":FzfLua help_tags<cr>", desc = "FzfLua help tags" },
     { "<leader>fn", ":Node<cr>", desc = "node" },
     { "<leader>fp", ":Python<cr>", desc = "python" },
-    { "<leader>fr", ":Ranger<cr>", desc = "ranger" },
+    { "<leader>fr", ":Yazi<cr>", desc = "yazi" },
     { "<leader>fs", ":FzfLua live_grep<cr>", desc = "FzfLua live grep" },
     { "<leader>ft", ":Terminal<cr>", desc = "terminal" },
     { "<leader>gB", ":GitLink! blame<cr>", desc = "Open git blame link in browser" },

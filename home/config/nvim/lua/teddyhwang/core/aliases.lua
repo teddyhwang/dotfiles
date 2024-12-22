@@ -18,7 +18,7 @@ local command_aliases = {
   Lazygit = "FloatermNew lazygit",
   Node = "FloatermNew node",
   Python = "FloatermNew python",
-  Ranger = "FloatermNew ranger",
+  Yazi = "FloatermNew yazi",
   Terminal = "FloatermNew",
 }
 

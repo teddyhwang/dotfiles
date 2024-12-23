@@ -48,7 +48,6 @@ return function(base16)
       PmenuSel = { bg = colors.base02, fg = colors.base06 },
       PmenuThumb = { bg = colors.base02, fg = colors.base02 },
       VertSplit = { link = "LineNr" },
-
       CmpItemAbbr = { fg = colors.base05 },
       CmpItemAbbrMatch = { fg = colors.base0D, bold = true },
       CmpItemAbbrMatchFuzzy = { link = "CmpItemAbbrMatch" },

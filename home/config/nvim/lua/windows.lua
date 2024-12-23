@@ -26,7 +26,7 @@ function M.switch()
 
   local prompt_path = root
   local home = os.getenv("HOME")
-  if vim.startswith(prompt_path, home) then
+  if prompt_path and home and vim.startswith(prompt_path, home) then
     prompt_path = "~" .. prompt_path:sub(#home + 1)
   end
 

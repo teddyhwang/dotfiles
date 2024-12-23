@@ -105,10 +105,9 @@ return function(base16)
     if current_theme_name ~= new_theme_name then
       vim.cmd("colorscheme " .. new_theme_name)
       handle_custom_highlights()
-      require("ibl").setup()
-      local lualine = require("lualine")
-      local setup_lualine = require("plugins.lualine")
-      setup_lualine(lualine)
+      local restart = require("restart")
+      restart.ibl()
+      restart.lualine()
     end
   end
 
@@ -118,7 +117,7 @@ return function(base16)
 
   vim.cmd("colorscheme " .. current_theme_name)
 
-  vim.api.nvim_create_autocmd("FocusGained", {
+  vim.api.nvim_create_autocmd({"FocusGained", "VimResume"}, {
     callback = handle_focus_gained,
   })
 

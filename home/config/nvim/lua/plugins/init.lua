@@ -1,21 +1,6 @@
 return {
   "tpope/vim-sensible",
   {
-    "nvim-lualine/lualine.nvim",
-    dependencies = {
-      "nvim-tree/nvim-web-devicons",
-      "RRethy/nvim-base16",
-    },
-    init = function()
-      local base16 = require("base16-colorscheme")
-      local lualine = require("lualine")
-      local setup_colors = require("config.colorscheme")
-      local setup_lualine = require("lualine_init")
-      setup_colors(base16)
-      setup_lualine(lualine)
-    end,
-  },
-  {
     "stevearc/dressing.nvim",
     opts = {
       input = {

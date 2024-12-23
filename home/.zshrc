@@ -82,6 +82,7 @@ alias main='git checkout main'
 alias mux="tmuxinator"
 alias ng="npm list -g --depth=0 2>/dev/null"
 alias nl="npm list --depth=0 2>/dev/null"
+alias nvs="nvim -S Session.vim"
 alias ping='prettyping --nolegend'
 alias please='sudo $(fc -ln -1)'
 alias rake="noglob rake"

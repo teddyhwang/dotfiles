@@ -254,7 +254,6 @@ return {
         "html",
         "jsonls",
         "lua_ls",
-        "ruby_lsp",
         "stylelint_lsp",
         "tailwindcss",
         "ts_ls",

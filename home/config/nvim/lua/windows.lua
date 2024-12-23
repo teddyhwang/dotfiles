@@ -35,7 +35,7 @@ function M.switch()
     local full_path = vim.api.nvim_buf_get_name(buf)
     if full_path ~= "" then
       local relative_path = full_path
-      if vim.startswith(full_path, root) then
+      if full_path and root and vim.startswith(full_path, root) then
         relative_path = full_path:sub(#root + 2)
       end
 

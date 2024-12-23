@@ -18,7 +18,7 @@
 return function(base16)
   local default_theme = "base16-seti"
 
-  local function get_tinty_theme()
+  local get_tinty_theme = function()
     local theme_name = vim.fn.system("tinty current &> /dev/null && tinty current")
 
     if vim.v.shell_error ~= 0 then
@@ -28,7 +28,7 @@ return function(base16)
     end
   end
 
-  local function handle_custom_highlights()
+  local handle_custom_highlights = function()
     local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
     local highlights = {
       ["@symbol"] = { fg = colors.base09 },
@@ -98,7 +98,7 @@ return function(base16)
     end
   end
 
-  local function handle_focus_gained()
+  local handle_focus_gained = function()
     local new_theme_name = get_tinty_theme()
     local current_theme_name = vim.g.colors_name
 
@@ -117,7 +117,7 @@ return function(base16)
 
   vim.cmd("colorscheme " .. current_theme_name)
 
-  vim.api.nvim_create_autocmd({"FocusGained", "VimResume"}, {
+  vim.api.nvim_create_autocmd({ "FocusGained", "VimResume" }, {
     callback = handle_focus_gained,
   })
 

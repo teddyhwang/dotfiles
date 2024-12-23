@@ -52,7 +52,7 @@ function M.switch()
     end
   end
 
-  local function switch_to_files()
+  local switch_to_files = function()
     local last_query = require("fzf-lua").get_last_query()
     fzf.files({
       prompt = prompt_path .. "/",

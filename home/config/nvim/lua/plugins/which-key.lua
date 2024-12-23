@@ -3,7 +3,7 @@ return {
   init = function()
     local whichkey = require("which-key")
 
-    local function smart_swap(direction)
+    local smart_swap = function(direction)
       local current_win = vim.api.nvim_get_current_win()
       local buf = vim.api.nvim_win_get_buf(current_win)
 
@@ -34,7 +34,7 @@ return {
       end
     end
 
-    local function search_prompt()
+    local search_prompt = function()
       vim.ui.input({
         prompt = "Search: ",
       }, function(input)
@@ -46,7 +46,7 @@ return {
       end)
     end
 
-    local function run_tmux_command()
+    local run_tmux_command = function()
       vim.ui.input({
         prompt = "Command: ",
       }, function(input)
@@ -56,6 +56,24 @@ return {
           vim.cmd("echo ''")
         end
       end)
+    end
+
+    local propagate_paste_buffer_to_osx = function()
+      local clipboard_content = vim.fn.getreg("*")
+      vim.fn.system("pbcopy-remote", clipboard_content)
+      vim.api.nvim_echo({ {
+        "clipboard sent",
+        "Normal",
+      } }, false, {})
+    end
+
+    local populate_paste_buffer_from_osx = function()
+      local remote_content = vim.fn.system("pbpaste-remote")
+      vim.fn.setreg("+", remote_content)
+      vim.api.nvim_echo({ {
+        "clipboard received",
+        "Normal",
+      } }, false, {})
     end
 
     whichkey.setup({
@@ -185,5 +203,21 @@ return {
         desc = "Swap window right",
       },
     })
+    local ssh_client = os.getenv("SSH_CLIENT")
+
+    if ssh_client then
+      whichkey.add({
+        {
+          "<leader>p",
+          populate_paste_buffer_from_osx,
+          desc = "Paste from host to client",
+        },
+        {
+          "<leader>p",
+          propagate_paste_buffer_to_osx,
+          desc = "Paste from client to host",
+        },
+      })
+    end
   end,
 }

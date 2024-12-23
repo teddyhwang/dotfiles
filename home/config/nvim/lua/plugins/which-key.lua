@@ -2,6 +2,7 @@ return {
   "folke/which-key.nvim",
   init = function()
     local whichkey = require("which-key")
+
     local function smart_swap(direction)
       local current_win = vim.api.nvim_get_current_win()
       local buf = vim.api.nvim_win_get_buf(current_win)
@@ -76,12 +77,12 @@ return {
       { "<leader>-", "<C-x>", desc = "Decrement number" },
       { "<leader>E", ":NvimTreeFindFile<cr>", desc = "Find current file in nvim tree" },
       { "<leader>O", ":! open %:h<cr>", desc = "Open file in Finder (Mac)" },
-      { "<leader>R", ":LspRestart<cr>", desc = "Restart LSP" },
       { "<leader>T", ":VimuxRunCommand 'dev test '.@%<cr>", desc = "Test current file" },
       { "<leader>V", "ggVG<cr>", desc = "Visually select current buffer" },
       { "<leader>Y", ":%y+<cr>", desc = "Yank current file" },
       { "<leader>b", ":FzfLua git_branches<cr>", desc = "FzfLua git branches" },
       { "<leader>e", ":NvimTreeFindFileToggle<cr>", desc = "Toggle nvim tree" },
+      { "<leader>Lr", ":LspRestart<cr>", desc = "Restart LSP" },
       { "<leader>fR", ":Irb<cr>", desc = "irb" },
       { "<leader>fb", ":FzfLua buffers<cr>", desc = "FzfLua buffersj" },
       { "<leader>fc", ":FzfLua grep_cWORD<cr>", desc = "FzfLua grep string" },

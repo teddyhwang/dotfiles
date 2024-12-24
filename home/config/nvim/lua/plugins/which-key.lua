@@ -2,37 +2,7 @@ return {
   "folke/which-key.nvim",
   init = function()
     local whichkey = require("which-key")
-
-    local smart_swap = function(direction)
-      local current_win = vim.api.nvim_get_current_win()
-      local buf = vim.api.nvim_win_get_buf(current_win)
-
-      vim.cmd("wincmd " .. direction)
-      local target_win = vim.api.nvim_get_current_win()
-
-      if current_win ~= target_win then
-        local current_buf = vim.api.nvim_win_get_buf(current_win)
-        local target_buf = vim.api.nvim_win_get_buf(target_win)
-
-        vim.api.nvim_win_set_buf(current_win, target_buf)
-        vim.api.nvim_win_set_buf(target_win, current_buf)
-      else
-        vim.api.nvim_set_current_win(current_win)
-        vim.cmd("close")
-
-        if direction == "h" then
-          vim.cmd("topleft vsplit")
-        elseif direction == "l" then
-          vim.cmd("botright vsplit")
-        elseif direction == "k" then
-          vim.cmd("topleft split")
-        else
-          vim.cmd("botright split")
-        end
-
-        vim.api.nvim_win_set_buf(vim.api.nvim_get_current_win(), buf)
-      end
-    end
+    local windows = require("windows")
 
     local search_prompt = function()
       vim.ui.input({
@@ -143,7 +113,7 @@ return {
       { "<C-f>", search_prompt, desc = "Search" },
       { '"', ":FzfLua registers<cr>", desc = "Show registers" },
       { "<C-p>", ":FzfLua files<cr>", desc = "Find files" },
-      { "<C-t>", require("windows").switch, desc = "Switch between windows" },
+      { "<C-t>", require("windows").fzf_switch, desc = "Switch between windows" },
       {
         "q:",
         ":FzfLua command_history<cr>",
@@ -177,28 +147,28 @@ return {
       {
         "<C-w>H",
         function()
-          smart_swap("h")
+          windows.smart_swap("h")
         end,
         desc = "Swap window left",
       },
       {
         "<C-w>J",
         function()
-          smart_swap("j")
+          windows.smart_swap("j")
         end,
         desc = "Swap window down",
       },
       {
         "<C-w>K",
         function()
-          smart_swap("k")
+          windows.smart_swap("k")
         end,
         desc = "Swap window up",
       },
       {
         "<C-w>L",
         function()
-          smart_swap("l")
+          windows.smart_swap("l")
         end,
         desc = "Swap window right",
       },

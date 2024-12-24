@@ -28,7 +28,7 @@ return {
     vim.opt.completeopt = "menu,menuone,noselect"
 
     local has_words_before = function()
-      if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then
+      if vim.api.nvim_get_option_value("buftype", { buf = 0 }) == "prompt" then
         return false
       end
       local line, col = unpack(vim.api.nvim_win_get_cursor(0))
@@ -66,7 +66,7 @@ return {
           behavior = cmp.ConfirmBehavior.Replace,
           select = false,
         }),
-        ["<Tab>"] = vim.schedule_wrap(function(fallback)
+        ["<Tab>"] = cmp.mapping(vim.schedule_wrap(function(fallback)
           if cmp.visible() and has_words_before() then
             cmp.confirm({
               behavior = cmp.ConfirmBehavior.Replace,
@@ -77,7 +77,7 @@ return {
           else
             fallback()
           end
-        end, { "i", "s" }),
+        end), { "i", "s" }),
         ["<S-Tab>"] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })

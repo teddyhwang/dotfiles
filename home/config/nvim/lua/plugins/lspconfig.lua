@@ -1,5 +1,6 @@
 return {
   "neovim/nvim-lspconfig",
+  event = { "BufReadPre", "BufNewFile" },
   dependencies = {
     "gfanto/fzf-lsp.nvim",
     "lukas-reineke/lsp-format.nvim",

@@ -7,7 +7,10 @@ return {
     "tpope/vim-liquid",
     "tpope/vim-rails",
     "whatyouhide/vim-tmux-syntax",
-    "windwp/nvim-ts-autotag",
+    {
+      "windwp/nvim-ts-autotag",
+      config = true,
+    },
   },
   build = ":TSUpdate",
   init = function()
@@ -18,9 +21,9 @@ return {
         enable = true,
       },
       indent = {
-        enable = false,
+        enable = true,
+        disable = { "ruby", "python", "lua" },
       },
-      autotag = { enable = true },
       matchup = { enable = true },
       ensure_installed = {
         "bash",

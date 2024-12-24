@@ -1,32 +1,40 @@
 return {
   "windwp/nvim-autopairs",
-  dependencies = {
-    "hrsh7th/nvim-cmp",
-  },
+  dependencies = { "hrsh7th/nvim-cmp" },
   config = {
     check_ts = true,
+    enable_check_bracket_line = true,
+    ignored_next_char = "[%w%.]",
   },
   init = function()
     local autopairs = require("nvim-autopairs")
     local Rule = require("nvim-autopairs.rule")
     local cmp_autopairs = require("nvim-autopairs.completion.cmp")
     local cmp = require("cmp")
-    local brackets = { { "(", ")" }, { "[", "]" }, { "{", "}" } }
+
+    local paired_brackets = {
+      round = { "(", ")" },
+      square = { "[", "]" },
+      curly = { "{", "}" },
+    }
+
+    local function get_bracket_pairs()
+      return vim.tbl_map(function(v)
+        return v[1] .. v[2]
+      end, paired_brackets)
+    end
 
     autopairs.add_rules({
       Rule(" ", " "):with_pair(function(opts)
         local pair = opts.line:sub(opts.col - 1, opts.col)
-        return vim.tbl_contains({
-          brackets[1][1] .. brackets[1][2],
-          brackets[2][1] .. brackets[2][2],
-          brackets[3][1] .. brackets[3][2],
-        }, pair)
+        return vim.tbl_contains(get_bracket_pairs(), pair)
       end),
       Rule("%(.*%)%s*%=>$", " {  }", { "typescript", "typescriptreact", "javascript" })
         :use_regex(true)
         :set_end_pair_length(2),
     })
-    for _, bracket in pairs(brackets) do
+
+    for _, bracket in pairs(paired_brackets) do
       autopairs.add_rules({
         Rule(bracket[1] .. " ", " " .. bracket[2])
           :with_pair(function()

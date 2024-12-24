@@ -8,6 +8,10 @@ return {
     "nvim-tree/nvim-web-devicons",
     "onsails/lspkind.nvim",
     "zbirenbaum/copilot-cmp",
+    {
+      "L3MON4D3/LuaSnip",
+      build = "make install_jsregexp",
+    },
   },
   init = function()
     local cmp = require("cmp")

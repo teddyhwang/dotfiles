@@ -40,6 +40,24 @@ function validate_and_symlink {
   fi
 }
 
+function check_broken_symlinks {
+  local dotfiles_path=$(realpath $(pwd))
+  echo -e "${C_ORANGE}Checking for broken symlinks pointing to dotfiles...$C_DEFAULT"
+
+  find $HOME/\.[^.]* $HOME/.config $HOME/.bin -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
+    target=$(readlink "$link")
+    if [[ "$target" == "$dotfiles_path"* ]]; then
+      if [[ ! -e "$link" ]]; then
+        echo -e "${C_RED}Found broken symlink: $link -> $target$C_DEFAULT"
+        echo -e "${C_ORANGE}Removing broken symlink...$C_DEFAULT"
+        rm "$link"
+      fi
+    fi
+  done
+}
+
+check_broken_symlinks
+
 for filepath in home/.[^.]*; do
   file=$filepath:t
   source="$(pwd)/$filepath"

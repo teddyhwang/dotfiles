@@ -10,6 +10,19 @@ return {
   end,
   init = function()
     local wilder = require("wilder")
+    vim.api.nvim_set_keymap(
+      "c",
+      "<Tab>",
+      [[wilder#in_context() ? wilder#next() : '<Tab>']],
+      { noremap = true, expr = true }
+    )
+    vim.api.nvim_set_keymap(
+      "c",
+      "<S-Tab>",
+      [[wilder#in_context() ? wilder#previous() : '<S-Tab>']],
+      { noremap = true, expr = true }
+    )
+
     wilder.setup({
       modes = { ":", "/", "?" },
       next_key = "<C-j>",

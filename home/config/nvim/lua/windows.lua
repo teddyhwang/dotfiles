@@ -39,14 +39,27 @@ function M.switch()
         relative_path = full_path:sub(#root + 2)
       end
 
-      local icon = require("nvim-web-devicons").get_icon(
+      local icon, highlight_group = require("nvim-web-devicons").get_icon(
         relative_path,
         vim.fn.fnamemodify(relative_path, ":e"),
         { default = true }
       )
 
+      local icon_color = nil
+      if highlight_group then
+        local hl = vim.api.nvim_get_hl(0, { name = highlight_group })
+        if hl.fg then
+          icon_color = string.format("#%06x", hl.fg)
+        end
+      end
+
       table.insert(windows, {
-        name = string.format("%s %s", icon, relative_path),
+        name = "  " .. (icon_color and string.format("\x1b[38;2;%d;%d;%dm%s\x1b[0m",
+          tonumber(icon_color:sub(2,3), 16),
+          tonumber(icon_color:sub(4,5), 16),
+          tonumber(icon_color:sub(6,7), 16),
+          icon) .. " " .. relative_path
+          or icon .. " " .. relative_path),
         win_id = win,
       })
     end
@@ -67,7 +80,7 @@ function M.switch()
     {
       prompt = prompt_path .. "/",
       title = "Switch Windows",
-      header = ":: <ctrl-f> to switch to all files",
+      header = ":: <ctrl-f> to \x1b[34mswitch to all files\x1b[0m",
       actions = {
         ["default"] = function(selected)
           if #selected == 0 then

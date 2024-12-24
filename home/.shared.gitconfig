@@ -1,39 +1,52 @@
 [color]
-    ui = auto
+  ui = auto
 
 [init]
-    defaultBranch = main
+  defaultBranch = main
 
 [core]
-    excludesfile = ~/.gitignore
-    autocrlf = false
-    pager = delta --dark
-    editor = nvim
+  excludesfile = ~/.gitignore
+  autocrlf = false
+  pager = delta --dark
+  editor = nvim
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  navigate = true
+  dark = true
+  line-numbers = true
+  side-by-side = true
+
+[merge]
+  conflictstyle = zdiff3
+
 
 [alias]
-    llog = log --date=local
-    st = status
-    ci = commit
-    rm = clean -fd
+  llog = log --date=local
+  st = status
+  ci = commit
+  rm = clean -fd
 
 [svn]
-    rmdir = true
+  rmdir = true
 
 [push]
-    default = matching
+  default = matching
 
 [format]
-    pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset
+  pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset
 
 [filter "lfs"]
-    clean = git-lfs clean %f
-    smudge = git-lfs smudge %f
-    required = true
+  clean = git-lfs clean %f
+  smudge = git-lfs smudge %f
+  required = true
 [commit]
-    gpgsign = true
+  gpgsign = true
 
 [gpg]
-    program = gpg
+  program = gpg
 
 [pull]
-    rebase = false
+  rebase = false

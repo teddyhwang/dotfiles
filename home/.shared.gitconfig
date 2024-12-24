@@ -22,7 +22,6 @@
 [merge]
   conflictstyle = zdiff3
 
-
 [alias]
   llog = log --date=local
   st = status

@@ -69,13 +69,48 @@ vim.opt.updatetime = 100
 vim.opt.wrap = false
 vim.opt.wrap = false
 
-vim.cmd("autocmd VimResized * wincmd =")
-vim.cmd("autocmd TermOpen term://* startinsert")
-vim.cmd("autocmd BufNewFile,BufRead *.rbi set filetype=ruby")
-vim.cmd("autocmd BufNewFile,BufRead *.graphql set filetype=graphql")
-vim.cmd("autocmd BufNewFile,BufRead *.jsx set filetype=javascript.jsx")
-vim.cmd("autocmd BufNewFile,BufRead *.plist set filetype=xml")
-vim.cmd("autocmd BufNewFile,BufRead *.ejson set filetype=json")
+vim.api.nvim_create_autocmd("VimResized", {
+  pattern = "*",
+  callback = function()
+    vim.cmd("wincmd =")
+  end,
+})
+
+vim.api.nvim_create_autocmd("TermOpen", {
+  pattern = "term://*",
+  command = "startinsert",
+})
+
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = { "*.rbi" },
+  command = "set filetype=ruby",
+})
+
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = { "*.graphql" },
+  command = "set filetype=graphql",
+})
+
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = { "*.jsx" },
+  command = "set filetype=javascript.jsx",
+})
+
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = { "*.plist" },
+  command = "set filetype=xml",
+})
+
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = { "*.ejson" },
+  command = "set filetype=json",
+})
+
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = { "*.shared.gitconfig" },
+  command = "set filetype=gitconfig",
+})
+
 vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
   pattern = "*",
   callback = function()

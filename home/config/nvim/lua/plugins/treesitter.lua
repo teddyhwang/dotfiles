@@ -22,7 +22,7 @@ return {
       },
       indent = {
         enable = true,
-        disable = { "ruby", "python", "lua" },
+        disable = { "ruby" },
       },
       matchup = { enable = true },
       ensure_installed = {

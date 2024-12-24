@@ -81,34 +81,17 @@ vim.api.nvim_create_autocmd("TermOpen", {
   command = "startinsert",
 })
 
-vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.rbi" },
-  command = "set filetype=ruby",
-})
-
-vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.graphql" },
-  command = "set filetype=graphql",
-})
-
-vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.jsx" },
-  command = "set filetype=javascript.jsx",
-})
-
-vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.plist" },
-  command = "set filetype=xml",
-})
-
-vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.ejson" },
-  command = "set filetype=json",
-})
-
-vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.shared.gitconfig" },
-  command = "set filetype=gitconfig",
+vim.filetype.add({
+  extension = {
+    rbi = 'ruby',
+    graphql = 'graphql',
+    jsx = 'javascript.jsx',
+    plist = 'xml',
+    ejson = 'json',
+  },
+  pattern = {
+    ['.*%.shared%.gitconfig'] = 'gitconfig',
+  },
 })
 
 vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {

@@ -1,6 +1,7 @@
 return {
   "windwp/nvim-autopairs",
   dependencies = { "hrsh7th/nvim-cmp" },
+  event = "InsertEnter",
   config = {
     check_ts = true,
     enable_check_bracket_line = true,

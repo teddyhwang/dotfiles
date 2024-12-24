@@ -261,6 +261,11 @@ return {
       },
     },
   },
+  {
+    "3MON4D3/LuaSnip",
+    build = "make install_jsregexp",
+  },
+  "rafamadriz/friendly-snippets",
   "AndrewRadev/splitjoin.vim",
   "f-person/git-blame.nvim",
   "inkarkat/vim-ReplaceWithRegister",

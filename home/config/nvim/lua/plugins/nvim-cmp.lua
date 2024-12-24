@@ -1,16 +1,12 @@
 return {
   "hrsh7th/nvim-cmp",
-  event = { "InsertEnter", "CmdlineEnter" },
   dependencies = {
-    "L3MON4D3/LuaSnip",
     "hrsh7th/cmp-buffer",
     "hrsh7th/cmp-nvim-lsp",
     "hrsh7th/cmp-path",
     "nvim-lua/plenary.nvim",
     "nvim-tree/nvim-web-devicons",
     "onsails/lspkind.nvim",
-    "rafamadriz/friendly-snippets",
-    "saadparwaiz1/cmp_luasnip",
     "zbirenbaum/copilot-cmp",
   },
   init = function()
@@ -67,18 +63,21 @@ return {
           behavior = cmp.ConfirmBehavior.Replace,
           select = false,
         }),
-        ["<Tab>"] = cmp.mapping(vim.schedule_wrap(function(fallback)
-          if cmp.visible() and has_words_before() then
-            cmp.confirm({
-              behavior = cmp.ConfirmBehavior.Replace,
-              select = false,
-            })
-          elseif luasnip.expand_or_jumpable() then
-            luasnip.expand_or_jump()
-          else
-            fallback()
-          end
-        end), { "i", "s" }),
+        ["<Tab>"] = cmp.mapping(
+          vim.schedule_wrap(function(fallback)
+            if cmp.visible() and has_words_before() then
+              cmp.confirm({
+                behavior = cmp.ConfirmBehavior.Replace,
+                select = false,
+              })
+            elseif luasnip.expand_or_jumpable() then
+              luasnip.expand_or_jump()
+            else
+              fallback()
+            end
+          end),
+          { "i", "s" }
+        ),
         ["<S-Tab>"] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })

@@ -47,6 +47,8 @@ return {
         "yaml",
         "xml",
       },
+      sync_install = false,
+      ignore_install = {},
       auto_install = false,
       incremental_selection = {
         enable = true,

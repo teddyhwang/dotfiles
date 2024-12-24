@@ -2,13 +2,15 @@ return {
   "windwp/nvim-autopairs",
   dependencies = { "hrsh7th/nvim-cmp" },
   event = "InsertEnter",
-  config = {
+  opts = {
     check_ts = true,
     enable_check_bracket_line = true,
     ignored_next_char = "[%w%.]",
   },
-  init = function()
+  config = function(_, opts)
     local autopairs = require("nvim-autopairs")
+    autopairs.setup(opts)
+
     local Rule = require("nvim-autopairs.rule")
     local cmp_autopairs = require("nvim-autopairs.completion.cmp")
     local cmp = require("cmp")

@@ -227,40 +227,6 @@ return {
       })
     end,
   },
-  {
-    "jay-babu/mason-null-ls.nvim",
-    config = {
-      automatic_installation = true,
-      ensure_installed = {
-        "eslint-lsp",
-        "prettier",
-        "prettierd",
-        "stylua",
-        "stylelint",
-        "yamlfmt",
-        "yamllint",
-      },
-    },
-  },
-  {
-    "williamboman/mason-lspconfig.nvim",
-    config = {
-      automatic_installation = true,
-      ensure_installed = {
-        "bashls",
-        "cssls",
-        "emmet_ls",
-        "graphql",
-        "html",
-        "jsonls",
-        "lua_ls",
-        "stylelint_lsp",
-        "tailwindcss",
-        "ts_ls",
-        "yamlls",
-      },
-    },
-  },
   "rafamadriz/friendly-snippets",
   "AndrewRadev/splitjoin.vim",
   "f-person/git-blame.nvim",

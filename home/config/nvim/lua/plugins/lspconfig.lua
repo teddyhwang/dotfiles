@@ -6,6 +6,40 @@ return {
     "lukas-reineke/lsp-format.nvim",
     { "williamboman/mason.nvim", config = true },
     {
+      "williamboman/mason-lspconfig.nvim",
+      config = {
+        automatic_installation = true,
+        ensure_installed = {
+          "bashls",
+          "cssls",
+          "emmet_ls",
+          "graphql",
+          "html",
+          "jsonls",
+          "lua_ls",
+          "stylelint_lsp",
+          "tailwindcss",
+          "ts_ls",
+          "yamlls",
+        },
+      },
+    },
+    {
+      "jay-babu/mason-null-ls.nvim",
+      config = {
+        automatic_installation = true,
+        ensure_installed = {
+          "eslint-lsp",
+          "prettier",
+          "prettierd",
+          "stylua",
+          "stylelint",
+          "yamlfmt",
+          "yamllint",
+        },
+      },
+    },
+    {
       "j-hui/fidget.nvim",
       tag = "legacy",
       config = true,

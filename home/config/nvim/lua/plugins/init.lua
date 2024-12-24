@@ -8,12 +8,12 @@ return {
       },
     },
   },
-  { "seblj/nvim-tabline", config = true },
+  { "seblj/nvim-tabline",      config = true },
   { "lewis6991/gitsigns.nvim", config = true },
   {
     "lukas-reineke/indent-blankline.nvim",
     main = "ibl",
-    config = {
+    opts = {
       indent = {
         char = "│",
         highlight = "IblIndent",
@@ -100,7 +100,7 @@ return {
   },
   {
     "nvim-tree/nvim-tree.lua",
-    config = {
+    opts = {
       hijack_directories = {
         enable = false,
         auto_open = false,
@@ -122,7 +122,7 @@ return {
   {
     "ibhagwan/fzf-lua",
     dependencies = { "nvim-tree/nvim-web-devicons" },
-    config = {
+    opts = {
       fzf_colors = true,
     },
   },
@@ -237,7 +237,7 @@ return {
   "tpope/vim-rhubarb",
   "tpope/vim-sleuth",
   "tpope/vim-surround",
-  { "numToStr/Comment.nvim", config = true },
+  { "numToStr/Comment.nvim",       config = true },
   { "linrongbin16/gitlinker.nvim", config = true },
   {
     "kristijanhusak/vim-dadbod-ui",

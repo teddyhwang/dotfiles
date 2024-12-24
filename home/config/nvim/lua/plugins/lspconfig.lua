@@ -7,7 +7,7 @@ return {
     { "williamboman/mason.nvim", config = true },
     {
       "williamboman/mason-lspconfig.nvim",
-      config = {
+      opts = {
         automatic_installation = false,
         ensure_installed = {
           "bashls",
@@ -26,7 +26,7 @@ return {
     },
     {
       "jay-babu/mason-null-ls.nvim",
-      config = {
+      opts = {
         automatic_installation = true,
         ensure_installed = {
           "eslint-lsp",

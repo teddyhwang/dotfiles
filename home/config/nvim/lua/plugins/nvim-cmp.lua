@@ -13,7 +13,7 @@ return {
       build = "make install_jsregexp",
     },
   },
-  init = function()
+  config = function()
     local cmp = require("cmp")
     local luasnip = require("luasnip")
     local lspkind = require("lspkind")

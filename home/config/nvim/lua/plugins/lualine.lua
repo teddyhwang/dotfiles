@@ -4,7 +4,7 @@ return {
     "nvim-tree/nvim-web-devicons",
     "RRethy/nvim-base16",
   },
-  init = function()
+  config = function()
     local base16 = require("base16-colorscheme")
     local setup_colors = require("config.colorscheme")
     local lualine = require("lualine")

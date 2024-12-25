@@ -45,7 +45,7 @@ return {
       config = true,
     },
   },
-  init = function()
+  config = function()
     local lspconfig = require("lspconfig")
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
     local lsp_format = require("lsp-format")

@@ -8,7 +8,7 @@ return {
     vim.cmd([[python3 -m pip install --user --upgrade pynvim]])
     vim.cmd([[UpdateRemotePlugins]])
   end,
-  init = function()
+  config = function()
     local wilder = require("wilder")
     vim.api.nvim_set_keymap(
       "c",

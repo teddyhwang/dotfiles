@@ -13,7 +13,7 @@ return {
     },
   },
   build = ":TSUpdate",
-  init = function()
+  config = function()
     local treesitter_configs = require("nvim-treesitter.configs")
     local treesitter_parsers = require("nvim-treesitter.parsers")
     treesitter_configs.setup({
@@ -48,7 +48,6 @@ return {
         "xml",
       },
       sync_install = false,
-      ignore_install = {},
       auto_install = false,
       incremental_selection = {
         enable = true,

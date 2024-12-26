@@ -13,12 +13,10 @@ return {
         ensure_installed = {
           "bashls",
           "cssls",
-          "emmet_ls",
           "graphql",
           "html",
           "jsonls",
           "lua_ls",
-          "stylelint_lsp",
           "tailwindcss",
           "ts_ls",
           "yamlls",
@@ -90,17 +88,12 @@ return {
 
     local servers = {
       html = {
-        filetypes = { "html", "templ", "eruby" },
+        filetypes = { "html", "eruby" },
       },
-      ts_ls = {
-        server = default_config,
-      },
+      ts_ls = {},
       cssls = {},
       tailwindcss = {},
       eslint = {},
-      emmet_ls = {
-        filetypes = { "html", "typescriptreact", "javascriptreact", "css", "sass", "scss", "less", "svelte" },
-      },
       graphql = {},
       jsonls = {},
       lua_ls = {

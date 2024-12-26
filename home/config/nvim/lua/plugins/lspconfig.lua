@@ -51,9 +51,6 @@ return {
 
     lsp_format.setup({})
 
-    local on_attach = function(client, bufnr)
-      lsp_format.on_attach(client, bufnr)
-    end
     null_ls.setup({
       sources = {
         formatting.prettierd.with({
@@ -70,7 +67,7 @@ return {
         diagnostics.stylelint,
         diagnostics.yamllint,
       },
-      on_attach = on_attach,
+      on_attach = lsp_format.on_attach,
     })
 
     local capabilities = cmp_nvim_lsp.default_capabilities()
@@ -83,7 +80,7 @@ return {
 
     local default_config = {
       capabilities = capabilities,
-      on_attach = on_attach,
+      on_attach = lsp_format.on_attach,
     }
 
     local servers = {

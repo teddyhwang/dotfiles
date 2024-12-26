@@ -87,26 +87,29 @@ return {
       graphql = {},
       jsonls = {},
       lua_ls = {
-        settings = {
-          Lua = {
-            completion = {
-              callSnippet = "Replace",
-            },
+        on_init = function(client)
+          if client.workspace_folders then
+            local path = client.workspace_folders[1].name
+            if vim.fn.filereadable(path .. '/.luarc.json') == 1 or vim.fn.filereadable(path .. '/.luarc.jsonc') == 1 then
+              return
+            end
+          end
+
+          client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
             runtime = {
-              version = "LuaJIT",
-            },
-            diagnostics = {
-              globals = { "vim" },
+              version = 'LuaJIT'
             },
             workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
               checkThirdParty = false,
-            },
-            telemetry = {
-              enable = false,
-            },
-          },
-        },
+              library = {
+                vim.env.VIMRUNTIME
+              }
+            }
+          })
+        end,
+        settings = {
+          Lua = {}
+        }
       },
       sorbet = {
         root_dir = lspconfig.util.root_pattern("sorbet/config"),

@@ -148,9 +148,4 @@ return {
       lspconfig[server].setup(vim.tbl_deep_extend("force", default_config, config))
     end
   end,
-  init = function()
-    vim.cmd([[
-      cabbrev wq execute "Format sync" <bar> wq
-    ]])
-  end,
 }

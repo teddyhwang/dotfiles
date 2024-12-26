@@ -22,7 +22,7 @@ return {
       },
       indent = {
         enable = true,
-        disable = { "ruby" },
+        disable = { "ruby", "html" },
       },
       matchup = { enable = true },
       ensure_installed = {

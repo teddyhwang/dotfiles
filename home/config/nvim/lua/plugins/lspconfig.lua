@@ -35,11 +35,6 @@ return {
         },
       },
     },
-    {
-      "j-hui/fidget.nvim",
-      tag = "legacy",
-      config = true,
-    },
   },
   config = function()
     local lspconfig = require("lspconfig")
@@ -70,8 +65,6 @@ return {
       on_attach = lsp_format.on_attach,
     })
 
-    local capabilities = cmp_nvim_lsp.default_capabilities()
-
     local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
     for type, icon in pairs(signs) do
       local hl = "DiagnosticSign" .. type
@@ -79,7 +72,7 @@ return {
     end
 
     local default_config = {
-      capabilities = capabilities,
+      capabilities = cmp_nvim_lsp.default_capabilities(),
       on_attach = lsp_format.on_attach,
     }
 
@@ -122,7 +115,7 @@ return {
         init_options = {
           formatter = "rubocop",
         },
-        capabilities = vim.tbl_deep_extend("force", capabilities, {
+        capabilities = vim.tbl_deep_extend("force", default_config.capabilities, {
           textDocument = {
             references = true,
             definition = true,

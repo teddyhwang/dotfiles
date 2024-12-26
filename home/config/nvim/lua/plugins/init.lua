@@ -13,6 +13,10 @@ return {
   "jeffkreeftmeijer/vim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
   {
+    "j-hui/fidget.nvim",
+    config = true,
+  },
+  {
     "machakann/vim-highlightedyank",
     init = function()
       vim.g["highlightedyank_highlight_duration"] = 100

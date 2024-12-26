@@ -10,19 +10,6 @@ return {
   },
   { "seblj/nvim-tabline",      config = true },
   { "lewis6991/gitsigns.nvim", config = true },
-  {
-    "lukas-reineke/indent-blankline.nvim",
-    main = "ibl",
-    opts = {
-      indent = {
-        char = "│",
-        highlight = "IblIndent",
-      },
-      scope = {
-        highlight = "IblScope",
-      },
-    },
-  },
   "jeffkreeftmeijer/vim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
   {
@@ -151,47 +138,18 @@ return {
       panel = { enabled = false },
       copilot_node_command = "/opt/homebrew/bin/node",
     },
-    dependencies = "zbirenbaum/copilot-cmp",
-    config = function()
-      require("copilot_cmp").setup({
-        formatters = {
-          insert_text = require("copilot_cmp.format").format_existing_text,
-        },
-      })
-    end,
-  },
-  {
-    "nvimtools/none-ls.nvim",
     dependencies = {
-      "lukas-reineke/lsp-format.nvim",
-    },
-    config = function()
-      local lsp_format = require("lsp-format")
-      local null_ls = require("null-ls")
-      lsp_format.setup({})
-
-      local formatting = null_ls.builtins.formatting
-      local diagnostics = null_ls.builtins.diagnostics
-      null_ls.setup({
-        sources = {
-          formatting.prettierd.with({
-            filetypes = {
-              "css",
-              "graphql",
-              "html",
-              "less",
-              "markdown",
-              "scss",
+      {
+        "zbirenbaum/copilot-cmp",
+        config = function()
+          require("copilot_cmp").setup({
+            formatters = {
+              insert_text = require("copilot_cmp.format").format_existing_text,
             },
-          }),
-          formatting.stylua,
-          formatting.stylelint,
-          diagnostics.stylelint,
-          diagnostics.yamllint,
-        },
-        on_attach = lsp_format.on_attach,
-      })
-    end,
+          })
+        end,
+      },
+    },
   },
   {
     "glepnir/lspsaga.nvim",
@@ -227,7 +185,6 @@ return {
       })
     end,
   },
-  "rafamadriz/friendly-snippets",
   "AndrewRadev/splitjoin.vim",
   "f-person/git-blame.nvim",
   "inkarkat/vim-ReplaceWithRegister",

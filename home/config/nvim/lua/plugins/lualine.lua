@@ -3,13 +3,28 @@ return {
   dependencies = {
     "nvim-tree/nvim-web-devicons",
     "RRethy/nvim-base16",
+    {
+      "lukas-reineke/indent-blankline.nvim",
+      main = "ibl",
+      opts = {
+        indent = {
+          char = "│",
+          highlight = "IblIndent",
+        },
+        scope = {
+          highlight = "IblScope",
+        },
+      },
+      init = function()
+        local base16 = require("base16-colorscheme")
+        local setup_colors = require("config.colorscheme")
+        setup_colors(base16)
+      end
+    },
   },
   config = function()
-    local base16 = require("base16-colorscheme")
-    local setup_colors = require("config.colorscheme")
     local lualine = require("lualine")
     local lualine_theme_base16 = require("lualine.themes.base16")
-    setup_colors(base16)
 
     lualine.setup({
       options = {

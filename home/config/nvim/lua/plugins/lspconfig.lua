@@ -3,6 +3,7 @@ return {
   event = { "BufReadPre", "BufNewFile" },
   dependencies = {
     "gfanto/fzf-lsp.nvim",
+    "nvimtools/none-ls.nvim",
     "lukas-reineke/lsp-format.nvim",
     { "williamboman/mason.nvim", config = true },
     {
@@ -30,11 +31,8 @@ return {
         automatic_installation = true,
         ensure_installed = {
           "eslint-lsp",
-          "prettier",
           "prettierd",
-          "stylua",
           "stylelint",
-          "yamlfmt",
           "yamllint",
         },
       },
@@ -49,25 +47,33 @@ return {
     local lspconfig = require("lspconfig")
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
     local lsp_format = require("lsp-format")
+    local null_ls = require("null-ls")
+    local formatting = null_ls.builtins.formatting
+    local diagnostics = null_ls.builtins.diagnostics
 
     lsp_format.setup({})
 
     local on_attach = function(client, bufnr)
-      vim.api.nvim_create_autocmd("BufWritePre", {
-        buffer = bufnr,
-        callback = function()
-          vim.lsp.buf.format({ async = false })
-        end,
-      })
-
-      if client.name == "eslint" then
-        vim.api.nvim_create_autocmd("BufWritePre", {
-          buffer = bufnr,
-          command = "EslintFixAll",
-        })
-      end
       lsp_format.on_attach(client, bufnr)
     end
+    null_ls.setup({
+      sources = {
+        formatting.prettierd.with({
+          filetypes = {
+            "css",
+            "graphql",
+            "html",
+            "less",
+            "markdown",
+            "scss",
+          },
+        }),
+        formatting.stylelint,
+        diagnostics.stylelint,
+        diagnostics.yamllint,
+      },
+      on_attach = on_attach,
+    })
 
     local capabilities = cmp_nvim_lsp.default_capabilities()
 
@@ -141,5 +147,10 @@ return {
     for server, config in pairs(servers) do
       lspconfig[server].setup(vim.tbl_deep_extend("force", default_config, config))
     end
+  end,
+  init = function()
+    vim.cmd([[
+      cabbrev wq execute "Format sync" <bar> wq
+    ]])
   end,
 }

@@ -44,37 +44,38 @@ return {
     local formatting = null_ls.builtins.formatting
     local diagnostics = null_ls.builtins.diagnostics
 
-    lsp_format.setup({})
-
-    null_ls.setup({
-      sources = {
-        formatting.prettierd.with({
-          filetypes = {
-            "css",
-            "graphql",
-            "html",
-            "less",
-            "markdown",
-            "scss",
-          },
-        }),
-        formatting.stylelint,
-        diagnostics.stylelint,
-        diagnostics.yamllint,
-      },
-      on_attach = lsp_format.on_attach,
-    })
-
     local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
     for type, icon in pairs(signs) do
       local hl = "DiagnosticSign" .. type
       vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
     end
 
+    lsp_format.setup({})
+
+    local prettier_filetypes = {
+      "css",
+      "graphql",
+      "html",
+      "less",
+      "markdown",
+      "scss",
+    }
+
+    local server_filetypes = {
+      html = { "html" },
+      cssls = { "css", "scss", "less" },
+      graphql = { "graphql" },
+    }
+
     local default_config = {
       capabilities = cmp_nvim_lsp.default_capabilities(),
       on_attach = lsp_format.on_attach,
     }
+
+    local function disable_formatting(client, bufnr)
+      client.server_capabilities.documentFormattingProvider = false
+      lsp_format.on_attach(client, bufnr)
+    end
 
     local servers = {
       html = {
@@ -129,6 +130,30 @@ return {
       bashls = {},
       yamlls = {},
     }
+
+    for server, filetypes in pairs(server_filetypes) do
+      for _, filetype in ipairs(filetypes) do
+        if vim.tbl_contains(prettier_filetypes, filetype) then
+          servers[server] = vim.tbl_deep_extend("force",
+            servers[server] or {},
+            { on_attach = disable_formatting }
+          )
+          break
+        end
+      end
+    end
+
+    null_ls.setup({
+      sources = {
+        formatting.prettierd.with({
+          filetypes = prettier_filetypes,
+        }),
+        formatting.stylelint,
+        diagnostics.stylelint,
+        diagnostics.yamllint,
+      },
+      on_attach = lsp_format.on_attach,
+    })
 
     for server, config in pairs(servers) do
       lspconfig[server].setup(vim.tbl_deep_extend("force", default_config, config))

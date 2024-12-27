@@ -30,7 +30,6 @@ return {
         ensure_installed = {
           "eslint-lsp",
           "prettierd",
-          "stylelint",
           "yamllint",
         },
       },
@@ -56,6 +55,7 @@ return {
       "css",
       "graphql",
       "html",
+      "json",
       "less",
       "markdown",
       "scss",
@@ -65,6 +65,7 @@ return {
       html = { "html" },
       cssls = { "css", "scss", "less" },
       graphql = { "graphql" },
+      jsonls = { "json" },
     }
 
     local default_config = {
@@ -148,8 +149,6 @@ return {
         formatting.prettierd.with({
           filetypes = prettier_filetypes,
         }),
-        formatting.stylelint,
-        diagnostics.stylelint,
         diagnostics.yamllint,
       },
       on_attach = lsp_format.on_attach,

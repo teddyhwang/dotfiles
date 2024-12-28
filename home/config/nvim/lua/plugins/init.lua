@@ -65,6 +65,22 @@ return {
     end,
   },
   "tpope/vim-obsession",
+  {
+    "rcarriga/nvim-dap-ui",
+    dependencies = {
+      {
+        "mfussenegger/nvim-dap",
+        dependencies = {
+          {
+            "suketa/nvim-dap-ruby",
+            config = true
+          }
+        }
+      },
+      "nvim-neotest/nvim-nio"
+    },
+    config = true,
+  },
   "vim-scripts/Tabmerge",
   {
     "airblade/vim-rooter",

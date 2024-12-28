@@ -89,7 +89,7 @@ alias rake="noglob rake"
 alias vi='nvim'
 alias weather='curl wttr.in'
 
-upgrade_custom_oh_my_zsh() {
+update_custom_oh_my_zsh() {
   example='example'
   custom_type=$1
   for custom_plugin_or_theme in $ZSH/custom/$custom_type/*; do
@@ -101,10 +101,11 @@ upgrade_custom_oh_my_zsh() {
   done
 }
 
-upgrade_all_oh_my_zsh() {
-  upgrade_custom_oh_my_zsh 'plugins'
-  upgrade_custom_oh_my_zsh 'themes'
+update() {
+  update_custom_oh_my_zsh 'plugins'
+  update_custom_oh_my_zsh 'themes'
   omz update
+  tinty update
 }
 
 lg() {

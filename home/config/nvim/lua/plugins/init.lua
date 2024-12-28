@@ -73,23 +73,6 @@ return {
     end,
   },
   {
-    "junegunn/fzf.vim",
-    dependencies = {
-      "junegunn/fzf",
-      { "echasnovski/mini.nvim", version = false },
-    },
-    init = function()
-      vim.g["fzf_layout"] = {
-        window = {
-          width = 1,
-          height = 0.4,
-          yoffset = 1,
-          border = "horizontal",
-        },
-      }
-    end,
-  },
-  {
     "nvim-tree/nvim-tree.lua",
     opts = {
       hijack_directories = {

@@ -74,7 +74,7 @@ return {
       { "<leader>fR",  ":Irb<cr>",                            desc = "irb" },
       { "<leader>fb",  ":FzfLua buffers<cr>",                 desc = "FzfLua buffersj" },
       { "<leader>fc",  ":FzfLua grep_cWORD<cr>",              desc = "FzfLua grep string" },
-      { "<leader>ff",  ":Fzf<cr>",                            desc = "fzf" },
+      { "<leader>ff",  ":FzfLua<cr>",                         desc = "fzf" },
       { "<leader>fg",  ":Lazygit<cr>",                        desc = "lazygit" },
       { "<leader>fh",  ":FzfLua help_tags<cr>",               desc = "FzfLua help tags" },
       { "<leader>fn",  ":Node<cr>",                           desc = "node" },

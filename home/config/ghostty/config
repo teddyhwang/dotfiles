@@ -1,8 +1,12 @@
 font-family = MesloLGL Nerd Font
 font-size = 12
-adjust-cell-width = -1
-adjust-cell-height = 1
 font-thicken = true
+adjust-cell-height = 1
+adjust-cell-width = -1
+
+macos-option-as-alt = true
 macos-titlebar-style = hidden
+
 confirm-close-surface = false
+
 theme = Seti

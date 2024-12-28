@@ -31,6 +31,7 @@ return {
         "gitignore",
         "graphql",
         "html",
+        "ini",
         "javascript",
         "json",
         "lua",

@@ -20,19 +20,13 @@ function validate_and_symlink {
   elif [[ -h $target && ($(readlink $target) == $source)]]; then
     echo -e "${C_LIGHTGRAY}$target is symlinked to your dotfiles.$C_DEFAULT"
   elif [[ -a $target ]]; then
-    if [[ $OSTYPE != 'darwin'* ]]; then
-      echo -e "${C_RED}$target exists and differs from your dotfile; replacing file$C_DEFAULT"
+    echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
+    read "response?Do you want to replace it? (y/N) "
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+      echo -e "${C_RED}Replacing existing file...$C_DEFAULT"
       rm -rf $target && symlink $source $target
     else
-      if [[ $file = ".zshrc" || $FORCE_LINK ]]; then
-        echo -e "${C_RED}$target exists and differs from your dotfile; replacing file$C_DEFAULT"
-        rm -rf $target && symlink $source $target
-        if [ $file = ".zshrc" ]; then
-          source $target
-        fi
-      else
-        echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
-      fi
+      echo -e "${C_LIGHTGRAY}Keeping existing file$C_DEFAULT"
     fi
   else
     echo -e "${C_GREEN}$target does not exist. Symlinking to dotfile.$C_DEFAULT"

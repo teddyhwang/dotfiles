@@ -40,11 +40,16 @@ else
 fi
 
 if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
-  echo -e "${C_GREEN}Copying launch agent config files...$C_DEFAULT"
-  cp app_configs/pbcopy.plist ~/Library/LaunchAgents/.
-  cp app_configs/pbpaste.plist ~/Library/LaunchAgents/.
-  launchctl load ~/Library/LaunchAgents/pbcopy.plist
-  launchctl load ~/Library/LaunchAgents/pbpaste.plist
+  read "response?Do you want to setup pbcopy/pbpaste launch agents? (y/N) "
+  if [[ "$response" =~ ^[Yy]$ ]]; then
+    echo -e "${C_GREEN}Copying launch agent config files...$C_DEFAULT"
+    cp app_configs/pbcopy.plist ~/Library/LaunchAgents/.
+    cp app_configs/pbpaste.plist ~/Library/LaunchAgents/.
+    launchctl load ~/Library/LaunchAgents/pbcopy.plist
+    launchctl load ~/Library/LaunchAgents/pbpaste.plist
+  else
+    echo -e "${C_LIGHTGRAY}Skipping launch agent setup$C_DEFAULT"
+  fi
 else
   echo -e "${C_LIGHTGRAY}launch agent config files are copied$C_DEFAULT"
 fi

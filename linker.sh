@@ -21,7 +21,8 @@ function validate_and_symlink {
     echo -e "${C_LIGHTGRAY}$target is symlinked to your dotfiles.$C_DEFAULT"
   elif [[ -a $target ]]; then
     echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
-    read "response?Do you want to replace it? (y/N) "
+    read -r "response?Do you want to replace it? (y/N) "
+    echo -e "\033[1A\033[2K"
     if [[ "$response" =~ ^[Yy]$ ]]; then
       echo -e "${C_RED}Replacing existing file...$C_DEFAULT"
       rm -rf $target && symlink $source $target

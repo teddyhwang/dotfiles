@@ -40,7 +40,8 @@ else
 fi
 
 if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
-  read "response?Do you want to setup pbcopy/pbpaste launch agents? (y/N) "
+  read -r "response?Do you want to setup pbcopy/pbpaste launch agents? (y/N) "
+  echo -e "\033[1A\033[2K"
   if [[ "$response" =~ ^[Yy]$ ]]; then
     echo -e "${C_GREEN}Copying launch agent config files...$C_DEFAULT"
     cp app_configs/pbcopy.plist ~/Library/LaunchAgents/.

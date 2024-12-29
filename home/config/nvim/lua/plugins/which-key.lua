@@ -183,9 +183,9 @@ return {
           desc = "Paste from host to client",
         },
         {
-          "<leader>p",
+          "<leader>y",
           propagate_paste_buffer_to_osx,
-          desc = "Paste from client to host",
+          desc = "Yank from client to host",
         },
       })
     end

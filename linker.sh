@@ -22,7 +22,7 @@ function validate_and_symlink {
   elif [[ -a $target ]]; then
     echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
     read -r "response?Do you want to replace it? (y/N) "
-    echo -e "\033[1A\033[2K\033[1A\033[2K"
+    echo -e "\033[1A\033[2K\033[1A"
     if [[ "$response" =~ ^[Yy]$ ]]; then
       echo -e "${C_RED}Replacing existing file...$C_DEFAULT"
       rm -rf $target && symlink $source $target

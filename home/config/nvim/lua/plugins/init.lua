@@ -9,7 +9,6 @@ return {
     },
   },
   { "seblj/nvim-tabline",      config = true },
-  { "lewis6991/gitsigns.nvim", config = true },
   "sitiom/nvim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
   {
@@ -173,6 +172,7 @@ return {
     end,
   },
   "AndrewRadev/splitjoin.vim",
+  { "lewis6991/gitsigns.nvim", config = true },
   "f-person/git-blame.nvim",
   "inkarkat/vim-ReplaceWithRegister",
   "matze/vim-move",

@@ -10,7 +10,7 @@ return {
   },
   { "seblj/nvim-tabline",      config = true },
   { "lewis6991/gitsigns.nvim", config = true },
-  "jeffkreeftmeijer/vim-numbertoggle",
+  "sitiom/nvim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
   {
     "j-hui/fidget.nvim",

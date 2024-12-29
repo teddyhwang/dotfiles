@@ -75,8 +75,7 @@ function M.fzf_switch()
   for _, win in ipairs(windows) do
     name_to_win[win.name] = win.win_id
 
-    local clean_name = win.name:gsub("\x1b%[%d+;%d+;%d+;%d+m", "")
-                              :gsub("\x1b%[%d+m", "")
+    local clean_name = win.name:gsub("\x1b%[%d+;%d+;%d+;%d+m", ""):gsub("\x1b%[%d+m", "")
     name_to_win[clean_name] = win.win_id
 
     local path_only = clean_name:match("[^ ]+ (.*)")

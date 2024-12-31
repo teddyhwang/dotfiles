@@ -8,22 +8,16 @@ return {
       },
     },
   },
-  { "seblj/nvim-tabline",      config = true },
+  { "seblj/nvim-tabline",        config = true },
+  { "j-hui/fidget.nvim",         config = true, },
+  { "NvChad/nvim-colorizer.lua", config = true, },
   "sitiom/nvim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
-  {
-    "j-hui/fidget.nvim",
-    config = true,
-  },
   {
     "machakann/vim-highlightedyank",
     init = function()
       vim.g["highlightedyank_highlight_duration"] = 100
     end,
-  },
-  {
-    "NvChad/nvim-colorizer.lua",
-    config = true,
   },
   {
     "andymass/vim-matchup",
@@ -172,17 +166,17 @@ return {
     end,
   },
   "AndrewRadev/splitjoin.vim",
-  { "lewis6991/gitsigns.nvim", config = true },
+  { "numToStr/Comment.nvim",       config = true },
+  { "linrongbin16/gitlinker.nvim", config = true },
+  { "lewis6991/gitsigns.nvim",     config = true },
   "f-person/git-blame.nvim",
+  "tpope/vim-fugitive",
+  "tpope/vim-rhubarb",
   "inkarkat/vim-ReplaceWithRegister",
   "matze/vim-move",
   "mg979/vim-visual-multi",
-  "tpope/vim-fugitive",
-  "tpope/vim-rhubarb",
   "tpope/vim-sleuth",
   "tpope/vim-surround",
-  { "numToStr/Comment.nvim",       config = true },
-  { "linrongbin16/gitlinker.nvim", config = true },
   {
     "kristijanhusak/vim-dadbod-ui",
     dependencies = {

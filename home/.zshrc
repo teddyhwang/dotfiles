@@ -10,6 +10,7 @@ export FZF_DEFAULT_COMMAND="rg --files --hidden"
 export FZF_DEFAULT_OPTS='--height 30% --border'
 export FZF_TMUX_OPTS='-d 40%'
 export HIGHLIGHT_STYLE=base16/seti
+export TERM="xterm-256color"
 if [ $SPIN ]; then
   source ~/.spin.zsh
 fi

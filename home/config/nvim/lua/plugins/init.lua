@@ -116,7 +116,7 @@ return {
     opts = {
       suggestion = { enabled = false, auto_trigger = true },
       panel = { enabled = false },
-      copilot_node_command = "/opt/homebrew/bin/node",
+      copilot_node_command = vim.fn.executable("/opt/homebrew/bin/node") == 1 and "/opt/homebrew/bin/node" or "node",
     },
     dependencies = {
       {

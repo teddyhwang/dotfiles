@@ -1,12 +1,11 @@
 #!/bin/zsh
 
-C_DEFAULT="\x1B[39m"
-C_GREEN="\x1B[32m"
-C_LIGHTGRAY="\x1B[90m"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "${SCRIPT_DIR}/print.sh"
 
 if ! command -v brew &> /dev/null; then
-  echo -e "${C_GREEN}Installing Homebrew...$C_DEFAULT"
+  print_success "Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 else
-  echo -e "${C_LIGHTGRAY}Brew is installed$C_DEFAULT"
+  print_info "Brew is installed"
 fi

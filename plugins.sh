@@ -1,8 +1,7 @@
 #!/bin/zsh
 
-C_DEFAULT="\x1B[39m"
-C_GREEN="\x1B[32m"
-C_LIGHTGRAY="\x1B[90m"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "${SCRIPT_DIR}/print.sh"
 
 omz_plugins=(
   'zsh-users/zsh-autosuggestions'
@@ -11,18 +10,18 @@ omz_plugins=(
 )
 
 if [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
-  echo -e "${C_LIGHTGRAY}powerlevel10k is installed$C_DEFAULT"
+  print_info "powerlevel10k is installed"
 else
-  echo -e "${C_GREEN}Installing powerlevel10k...$C_DEFAULT"
+  print_success "Installing powerlevel10k..."
   git clone https://github.com/romkatv/powerlevel10k ~/.oh-my-zsh/custom/themes/powerlevel10k
 fi
 
 for plugin in $omz_plugins; do
   plugin_name=$(echo $plugin | cut -d '/' -f 2)
   if [ -d ~/.oh-my-zsh/custom/plugins/$plugin_name ]; then
-    echo -e "${C_LIGHTGRAY}$plugin_name is installed$C_DEFAULT"
+    print_info "$plugin_name is installed"
   else
-    echo -e "${C_GREEN}Installing $plugin_name...$C_DEFAULT"
+    print_success "Installing $plugin_name..."
     git clone https://github.com/$plugin ~/.oh-my-zsh/custom/plugins/$plugin_name
   fi
 done

@@ -1,18 +1,17 @@
 #!/bin/zsh
 
-C_DEFAULT="\x1B[39m"
-C_GREEN="\x1B[32m"
-C_LIGHTGRAY="\x1B[90m"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "${SCRIPT_DIR}/print.sh"
 
 if ! [ -d ~/.cache/bat ]; then
   bat cache --build
 fi
 
 if git config --get-all include.path | grep -q .shared.gitconfig; then
-  echo -e "${C_LIGHTGRAY}include.path already set with ~/.shared.gitconfig$C_DEFAULT"
+  print_info "include.path already set with ~/.shared.gitconfig"
 else
-  echo -e "${C_GREEN}Adding shared git config include,path...$C_DEFAULT"
+  print_success "Adding shared git config include.path..."
   git config --global include.path ~/.shared.gitconfig
 fi
 
-echo -e "${C_GREEN}Installation complete 🎉$C_DEFAULT"
+print_success "Installation complete 🎉"

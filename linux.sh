@@ -1,9 +1,7 @@
 #!/bin/zsh
 
-C_DEFAULT="\x1B[39m"
-C_GREEN="\x1B[32m"
-C_LIGHTGRAY="\x1B[90m"
-C_YELLOW="\x1B[33m"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "${SCRIPT_DIR}/shared/print.sh"
 
 if command -v apk &> /dev/null; then
   PKG_MANAGER="apk"
@@ -21,13 +19,13 @@ elif command -v pacman &> /dev/null; then
   PKG_MANAGER="pacman"
   PKG_INSTALL="pacman -S --noconfirm"
 else
-  echo "No supported package manager found"
+  print_error "No supported package manager found"
   exit 1
 fi
 
 touch ~/.z
 
-echo -e "${C_GREEN}Installing system packages...$C_DEFAULT"
+print_success "Installing system packages..."
 case $PKG_MANAGER in
   "apk")
     $PKG_INSTALL \
@@ -56,16 +54,16 @@ case $PKG_MANAGER in
       if command -v cargo &> /dev/null; then
         cargo install atuin
       else
-        echo -e "${C_YELLOW}Cargo not found. Please ensure Rust is properly installed.$C_DEFAULT"
+        print_warning "Cargo not found. Please ensure Rust is properly installed."
       fi
     else
-      echo -e "${C_LIGHTGRAY}atuin already installed$C_DEFAULT"
+      print_info "atuin already installed"
     fi
     ;;
 
   *)
     if ! command -v brew &> /dev/null; then
-      echo -e "${C_GREEN}Installing Homebrew...$C_DEFAULT"
+      print_success "Installing Homebrew..."
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
       if [[ $(uname -m) == "x86_64" ]]; then
@@ -74,11 +72,11 @@ case $PKG_MANAGER in
         BREW_BIN="/opt/homebrew/bin/brew"
       fi
 
-      echo -e "${C_GREEN}Installing Brew packages...$C_DEFAULT"
+      print_success "Installing Brew packages..."
       $BREW_BIN install tmux git-delta fzf bat fd ranger universal-ctags gzip atuin
       $($BREW_BIN --prefix)/opt/fzf/install --all
     else
-      echo -e "${C_LIGHTGRAY}Brew already installed$C_DEFAULT"
+      print_info "Brew already installed"
     fi
 
     case $PKG_MANAGER in
@@ -97,19 +95,19 @@ esac
 
 if command -v pip &> /dev/null || command -v pip3 &> /dev/null; then
   PIP_CMD=$(command -v pip3 || command -v pip)
-  echo -e "${C_YELLOW}Installing Python packages globally. Consider using a virtual environment instead.$C_DEFAULT"
+  print_warning "Installing Python packages globally. Consider using a virtual environment instead."
   $PIP_CMD install --break-system-packages neovim mycli || {
-    echo -e "${C_YELLOW}Failed to install globally. Creating a virtual environment...$C_DEFAULT"
+    print_warning "Failed to install globally. Creating a virtual environment..."
     python3 -m venv ~/.local/pipx/venv
     source ~/.local/pipx/venv/bin/activate
     $PIP_CMD install neovim mycli
   }
 else
-  echo "pip not found. Please install Python and pip first."
+  print_error "pip not found. Please install Python and pip first."
 fi
 
 if command -v gem &> /dev/null; then
   gem install gem-ripper-tags
 else
-  echo "gem not found. Please install Ruby first."
+  print_error "gem not found. Please install Ruby first."
 fi

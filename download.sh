@@ -1,20 +1,31 @@
 #!/bin/zsh
 
-C_DEFAULT="\x1B[39m"
-C_GREEN="\x1B[32m"
-C_LIGHTGRAY="\x1B[90m"
+set -e
+set -u
 
-source './brew.sh'
-if [[ $OSTYPE == 'darwin'* ]]; then
-  source './mac.sh'
-else
-  source './linux.sh'
-fi
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "${SCRIPT_DIR}/print.sh"
+
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+case "$OS" in
+  Darwin)
+    source './mac.sh'
+    ;;
+  Linux)
+    source './linux.sh'
+    ;;
+  *)
+    print_error "Unsupported operating system: $OS"
+    exit 1
+    ;;
+esac
 
 if ! [ -f /usr/local/bin/cht.sh ]; then
   echo -e "${C_GREEN}Adding cht.sh...$C_DEFAULT"
   wget -O /usr/local/bin/cht.sh https://cht.sh/:cht.sh || sudo wget -O /usr/local/bin/cht.sh https://cht.sh/:cht.sh
   chmod +x /usr/local/bin/cht.sh || sudo chmod +x /usr/local/bin/cht.sh
 else
-  echo -e "${C_LIGHTGRAY}cht.sh exists$C_DEFAULT"
+  print_info "cht.sh exists"
 fi

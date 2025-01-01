@@ -1,10 +1,7 @@
 #!/bin/zsh
 
-C_DEFAULT="\x1B[39m"
-C_GREEN="\x1B[32m"
-C_RED="\x1B[31m"
-C_LIGHTGRAY="\x1B[90m"
-C_ORANGE="\x1B[33m"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "${SCRIPT_DIR}/print.sh"
 
 function symlink {
   ln -nsf $1 $2
@@ -16,35 +13,35 @@ function validate_and_symlink {
   target=$3
 
   if [ $file = ".DS_Store" ]; then
-    echo -e "${C_LIGHTGRAY}Ignoring system file.$C_DEFAULT"
+    print_info "Ignoring system file."
   elif [[ -h $target && ($(readlink $target) == $source)]]; then
-    echo -e "${C_LIGHTGRAY}$target is symlinked to your dotfiles.$C_DEFAULT"
+    print_info "$target is symlinked to your dotfiles."
   elif [[ -a $target ]]; then
-    echo -e "${C_ORANGE}$target exists and differs from your dotfile.$C_DEFAULT"
+    print_warning "$target exists and differs from your dotfile."
     read -r "response?Do you want to replace it? (y/N) "
     echo -e "\033[1A\033[2K\033[1A"
     if [[ "$response" =~ ^[Yy]$ ]]; then
-      echo -e "${C_RED}Replacing existing file...$C_DEFAULT"
+      print_error "Replacing existing file..."
       rm -rf $target && symlink $source $target
     else
-      echo -e "${C_LIGHTGRAY}Keeping existing file$C_DEFAULT"
+      print_info "Keeping existing file"
     fi
   else
-    echo -e "${C_GREEN}$target does not exist. Symlinking to dotfile.$C_DEFAULT"
+    print_success "$target does not exist. Symlinking to dotfile."
     symlink $source $target
   fi
 }
 
 function check_broken_symlinks {
   local dotfiles_path=$(realpath $(pwd))
-  echo -e "${C_ORANGE}Checking for broken symlinks pointing to dotfiles...$C_DEFAULT"
+  print_warning "Checking for broken symlinks pointing to dotfiles..."
 
   find $HOME/\.[^.]* $HOME/.config $HOME/.bin -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
     target=$(readlink "$link")
     if [[ "$target" == "$dotfiles_path"* ]]; then
       if [[ ! -e "$link" ]]; then
-        echo -e "${C_RED}Found broken symlink: $link -> $target$C_DEFAULT"
-        echo -e "${C_ORANGE}Removing broken symlink...$C_DEFAULT"
+        print_error "Found broken symlink: $link -> $target"
+        print_warning "Removing broken symlink..."
         rm "$link"
       fi
     fi

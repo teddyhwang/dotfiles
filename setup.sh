@@ -1,12 +1,19 @@
 #!/bin/zsh
 
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "${SCRIPT_DIR}/print.sh"
+
+print_progress "Starting installation..."
+
 ./omz.sh
 ./directories.sh
 ./linker.sh
-./download.sh
+./dependencies.sh
 ./plugins.sh
 ./tmux.sh
 if [ $SPIN ]; then
   ./spin.sh
 fi
-./complete.sh
+./git-bat.sh
+
+print_success "Local setup complete 🚀"

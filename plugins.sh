@@ -14,6 +14,7 @@ if [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
 else
   print_progress "Installing powerlevel10k..."
   git clone https://github.com/romkatv/powerlevel10k ~/.oh-my-zsh/custom/themes/powerlevel10k
+  track_change
 fi
 
 for plugin in $omz_plugins; do
@@ -23,7 +24,8 @@ for plugin in $omz_plugins; do
   else
     print_progress "Installing $plugin_name..."
     git clone https://github.com/$plugin ~/.oh-my-zsh/custom/plugins/$plugin_name
+    track_change
   fi
 done
 
-print_success "Plugins installed 🎉"
+print_conditional_success "Plugins"

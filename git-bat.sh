@@ -5,6 +5,7 @@ source "${SCRIPT_DIR}/print.sh"
 
 if ! [ -d ~/.cache/bat ]; then
   bat cache --build
+  track_change
 fi
 
 if git config --get-all include.path | grep -q .shared.gitconfig; then
@@ -12,6 +13,7 @@ if git config --get-all include.path | grep -q .shared.gitconfig; then
 else
   print_progress "Adding shared git config include.path..."
   git config --global include.path ~/.shared.gitconfig
+  track_change
 fi
 
-print_success "Local setup complete 🚀"
+print_conditional_success "git and bat"

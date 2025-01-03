@@ -21,6 +21,7 @@ if [ -d ~/Library/Application\ Support/Amethyst/ ]; then
   if ! [ -f ~/Library/Preferences/com.amethyst.Amethyst.plist ]; then
     print_progress "Copying Amethyst config file..."
     cp -rf ./app_configs/amethyst/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
+    track_change
   else
     print_info "Amethyst config file is copied"
   fi
@@ -28,6 +29,7 @@ if [ -d ~/Library/Application\ Support/Amethyst/ ]; then
   if ! [ -f ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js ]; then
     print_progress "Copying Amethyst custom layout file..."
     cp -rf ./app_configs/amethyst/uniform-columns.js ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js
+    track_change
   else
     print_info "Amethyst custom layout file is copied"
   fi
@@ -38,6 +40,7 @@ fi
 if ! [ -f ~/Library/Application\ Support/lazygit/config.yml ]; then
   print_progress "Copying lazygit config file..."
   sudo cp -rf ./app_configs/lazygit.config.yml ~/Library/Application\ Support/lazygit/config.yml
+  track_change
 else
   print_info "lazygit config file is copied"
 fi
@@ -51,6 +54,7 @@ if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
     cp app_configs/pbpaste.plist ~/Library/LaunchAgents/.
     launchctl load ~/Library/LaunchAgents/pbcopy.plist
     launchctl load ~/Library/LaunchAgents/pbpaste.plist
+    track_change
   else
     print_warning "Skipping launch agent setup"
   fi
@@ -65,9 +69,8 @@ if [ -f ~/.gnupg/gpg-agent.conf ]; then
     print_progress "Setting pinentry-mac..."
     touch ~/.gnupg/gpg-agent.conf
     echo "pinentry-program $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
+    track_change
   fi
 else
   print_warning "gpg-agent not setup"
 fi
-
-print_success "Mac setup complete 🎉"

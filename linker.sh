@@ -23,12 +23,14 @@ function validate_and_symlink {
     if [[ "$response" =~ ^[Yy]$ ]]; then
       print_progress "Replacing existing file..."
       rm -rf $target && symlink $source $target
+      track_change
     else
       print_warning "Keeping existing file"
     fi
   else
     print_progress "$target does not exist. Symlinking to dotfile."
     symlink $source $target
+    track_change
   fi
 }
 
@@ -43,6 +45,7 @@ function check_broken_symlinks {
         print_error "Found broken symlink: $link -> $target"
         print_progress "Removing broken symlink..."
         rm "$link"
+        track_change
       fi
     fi
   done
@@ -74,4 +77,4 @@ for filepath in home/bin/*; do
   validate_and_symlink $file $source $target
 done
 
-print_success "Symlinks created 🎉"
+print_conditional_success "Symlinks"

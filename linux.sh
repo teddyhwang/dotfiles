@@ -75,6 +75,7 @@ case $PKG_MANAGER in
       print_success "Installing Brew packages..."
       $BREW_BIN install tmux git-delta fzf bat fd ranger universal-ctags gzip atuin
       $($BREW_BIN --prefix)/opt/fzf/install --all
+      track_change
     else
       print_info "Brew already installed"
     fi

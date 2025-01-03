@@ -31,3 +31,23 @@ print_status() {
 print_progress() {
   echo -e "${C_CYAN}$1${C_DEFAULT}"
 }
+
+changes_made=0
+
+track_change() {
+  changes_made=1
+}
+
+reset_changes() {
+  changes_made=0
+}
+
+print_conditional_success() {
+  local component=${1:-"Component"}
+  if [ $changes_made -eq 1 ]; then
+    print_success "$component setup complete 🎉\n"
+  else
+    print_info "$component already configured, no changes needed\n"
+  fi
+  reset_changes
+}

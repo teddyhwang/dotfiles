@@ -26,8 +26,9 @@ if ! [ -f /usr/local/bin/cht.sh ]; then
   print_progress "Adding cht.sh..."
   wget -O /usr/local/bin/cht.sh https://cht.sh/:cht.sh || sudo wget -O /usr/local/bin/cht.sh https://cht.sh/:cht.sh
   chmod +x /usr/local/bin/cht.sh || sudo chmod +x /usr/local/bin/cht.sh
+  track_change
 else
   print_info "cht.sh exists"
 fi
 
-print_success "Dependency installation complete 🎉"
+print_conditional_success "Dependencies"

@@ -70,4 +70,4 @@ else
   print_warning "gpg-agent not setup"
 fi
 
-print_success "Mac setup complete üéâ"
+print_success "Mac setup complete 🎉"

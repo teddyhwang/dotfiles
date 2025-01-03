@@ -25,3 +25,5 @@ for plugin in $omz_plugins; do
     git clone https://github.com/$plugin ~/.oh-my-zsh/custom/plugins/$plugin_name
   fi
 done
+
+print_success "Plugins installed 🎉"

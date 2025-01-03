@@ -48,7 +48,7 @@ if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
     launchctl load ~/Library/LaunchAgents/pbcopy.plist
     launchctl load ~/Library/LaunchAgents/pbpaste.plist
   else
-    print_info "Skipping launch agent setup"
+    print_warning "Skipping launch agent setup"
   fi
 else
   print_info "launch agent config files are copied"
@@ -61,3 +61,5 @@ else
   touch ~/.gnupg/gpg-agent.conf
   echo "pinentry-program $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
 fi
+
+print_success "Mac setup complete 🎉"

@@ -24,7 +24,7 @@ function validate_and_symlink {
       print_error "Replacing existing file..."
       rm -rf $target && symlink $source $target
     else
-      print_info "Keeping existing file"
+      print_warning "Keeping existing file"
     fi
   else
     print_success "$target does not exist. Symlinking to dotfile."
@@ -73,3 +73,5 @@ for filepath in home/bin/*; do
 
   validate_and_symlink $file $source $target
 done
+
+print_success "Symlinks created 🎉"

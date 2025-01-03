@@ -18,3 +18,5 @@ if [ ! -d ~/.tmux/plugins/base16-tmux-powerline ]; then
 else
   print_info "tmux plugins installed"
 fi
+
+print_success "tmux setup complete 🎉"

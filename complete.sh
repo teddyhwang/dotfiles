@@ -14,4 +14,4 @@ else
   git config --global include.path ~/.shared.gitconfig
 fi
 
-print_success "Installation complete 🎉"
+print_success "Local setup complete 🚀"

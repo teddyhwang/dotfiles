@@ -31,3 +31,4 @@ else
   print_info "~/Library/Application Support/lazygit exists"
 fi
 
+print_success "Directories created 🎉"

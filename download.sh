@@ -29,3 +29,5 @@ if ! [ -f /usr/local/bin/cht.sh ]; then
 else
   print_info "cht.sh exists"
 fi
+
+print_success "Dependency installation complete 🎉"

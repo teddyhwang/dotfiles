@@ -11,3 +11,5 @@ if ! [ -d ~/.oh-my-zsh ]; then
 else
   print_info "Oh My ZSH is installed"
 fi
+
+print_success "Oh My ZSH installation complete 🎉"

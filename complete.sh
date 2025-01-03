@@ -10,7 +10,7 @@ fi
 if git config --get-all include.path | grep -q .shared.gitconfig; then
   print_info "include.path already set with ~/.shared.gitconfig"
 else
-  print_success "Adding shared git config include.path..."
+  print_progress "Adding shared git config include.path..."
   git config --global include.path ~/.shared.gitconfig
 fi
 

@@ -25,7 +25,7 @@ fi
 
 touch ~/.z
 
-print_success "Installing system packages..."
+print_progress "Installing system packages..."
 case $PKG_MANAGER in
   "apk")
     $PKG_INSTALL \

@@ -11,9 +11,11 @@ ARCH="$(uname -m)"
 
 case "$OS" in
   Darwin)
+    print_progress "Installing Mac dependencies..."
     source './mac.sh'
     ;;
   Linux)
+    print_progress "Installing Linux dependencies..."
     source './linux.sh'
     ;;
   *)

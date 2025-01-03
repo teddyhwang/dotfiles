@@ -34,24 +34,20 @@ function validate_and_symlink {
   fi
 }
 
-function check_broken_symlinks {
-  local dotfiles_path=$(realpath $(pwd))
-  print_progress "Checking for broken symlinks pointing to dotfiles..."
+local dotfiles_path=$(realpath $(pwd))
+print_progress "Checking for broken symlinks pointing to dotfiles..."
 
-  find $HOME/\.[^.]* $HOME/.config $HOME/.bin -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
-    target=$(readlink "$link")
-    if [[ "$target" == "$dotfiles_path"* ]]; then
-      if [[ ! -e "$link" ]]; then
-        print_error "Found broken symlink: $link -> $target"
-        print_progress "Removing broken symlink..."
-        rm "$link"
-        track_change
-      fi
+find $HOME/\.[^.]* $HOME/.config $HOME/.bin -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
+  target=$(readlink "$link")
+  if [[ "$target" == "$dotfiles_path"* ]]; then
+    if [[ ! -e "$link" ]]; then
+      print_error "Found broken symlink: $link -> $target"
+      print_progress "Removing broken symlink..."
+      rm "$link"
+      track_change
     fi
-  done
-}
-
-check_broken_symlinks
+  fi
+done
 
 for filepath in home/.[^.]*; do
   file=$filepath:t
@@ -60,6 +56,8 @@ for filepath in home/.[^.]*; do
 
   validate_and_symlink $file $source $target
 done
+
+print_progress "\nSymlinking..."
 
 for filepath in home/config/*; do
   file=$filepath:t

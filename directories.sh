@@ -14,6 +14,8 @@ function add_directory_in_home {
   fi
 }
 
+print_progress "Creating directories..."
+
 add_directory_in_home '.config'
 add_directory_in_home '.ssh'
 add_directory_in_home '.bin'

@@ -3,7 +3,7 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 source "${SCRIPT_DIR}/print.sh"
 
-print_progress "Starting installation..."
+print_status "Starting installation...\n"
 
 ./omz.sh
 ./directories.sh

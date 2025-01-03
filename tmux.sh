@@ -3,6 +3,8 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 source "${SCRIPT_DIR}/print.sh"
 
+print_progress "Installing tmux plugins..."
+
 if ! [ -d ~/.tmux ]; then
   print_progress "Installing tmux plugin manager..."
   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm

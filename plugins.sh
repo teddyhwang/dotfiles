@@ -9,6 +9,8 @@ omz_plugins=(
   'zsh-users/zsh-syntax-highlighting'
 )
 
+print_progress "Installing custom zsh themes and plugins..."
+
 if [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
   print_info "powerlevel10k is installed"
 else

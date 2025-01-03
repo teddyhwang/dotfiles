@@ -47,7 +47,7 @@ print_conditional_success() {
   if [ $changes_made -eq 1 ]; then
     print_success "$component setup complete 🎉\n"
   else
-    print_info "$component already configured, no changes needed\n"
+    print_status "$component already configured, no changes needed\n"
   fi
   reset_changes
 }

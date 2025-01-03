@@ -3,6 +3,8 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 source "${SCRIPT_DIR}/print.sh"
 
+print_progress "Configuring git and bat..."
+
 if ! [ -d ~/.cache/bat ]; then
   bat cache --build
   track_change

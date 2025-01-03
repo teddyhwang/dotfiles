@@ -17,18 +17,22 @@ else
   print_info "Brew bundled"
 fi
 
-if ! [ -f ~/Library/Preferences/com.amethyst.Amethyst.plist ]; then
-  print_progress "Copying Amethyst config file..."
-  cp -rf ./app_configs/amethyst/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
-else
-  print_info "Amethyst config file is copied"
-fi
+if [ -d ~/Library/Application\ Support/Amethyst/ ]; then
+  if ! [ -f ~/Library/Preferences/com.amethyst.Amethyst.plist ]; then
+    print_progress "Copying Amethyst config file..."
+    cp -rf ./app_configs/amethyst/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
+  else
+    print_info "Amethyst config file is copied"
+  fi
 
-if ! [ -f ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js ]; then
-  print_progress "Copying Amethyst custom layout file..."
-  cp -rf ./app_configs/amethyst/uniform-columns.js ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js
+  if ! [ -f ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js ]; then
+    print_progress "Copying Amethyst custom layout file..."
+    cp -rf ./app_configs/amethyst/uniform-columns.js ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js
+  else
+    print_info "Amethyst custom layout file is copied"
+  fi
 else
-  print_info "Amethyst custom layout file is copied"
+  print_warning "Amethyst not installed"
 fi
 
 if ! [ -f ~/Library/Application\ Support/lazygit/config.yml ]; then
@@ -54,12 +58,16 @@ else
   print_info "launch agent config files are copied"
 fi
 
-if cat ~/.gnupg/gpg-agent.conf | grep -q pinentry-mac; then
-  print_info "pinentry-mac is already set"
+if [ -f ~/.gnupg/gpg-agent.conf ]; then
+  if cat ~/.gnupg/gpg-agent.conf | grep -q pinentry-mac; then
+    print_info "pinentry-mac is already set"
+  else
+    print_progress "Setting pinentry-mac..."
+    touch ~/.gnupg/gpg-agent.conf
+    echo "pinentry-program $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
+  fi
 else
-  print_progress "Setting pinentry-mac..."
-  touch ~/.gnupg/gpg-agent.conf
-  echo "pinentry-program $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
+  print_warning "gpg-agent not setup"
 fi
 
-print_success "Mac setup complete 🎉"
+print_success "Mac setup complete üéâ"

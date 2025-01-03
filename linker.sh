@@ -21,27 +21,27 @@ function validate_and_symlink {
     read -r "response?Do you want to replace it? (y/N) "
     echo -e "\033[1A\033[2K\033[1A"
     if [[ "$response" =~ ^[Yy]$ ]]; then
-      print_error "Replacing existing file..."
+      print_progress "Replacing existing file..."
       rm -rf $target && symlink $source $target
     else
       print_warning "Keeping existing file"
     fi
   else
-    print_success "$target does not exist. Symlinking to dotfile."
+    print_progress "$target does not exist. Symlinking to dotfile."
     symlink $source $target
   fi
 }
 
 function check_broken_symlinks {
   local dotfiles_path=$(realpath $(pwd))
-  print_warning "Checking for broken symlinks pointing to dotfiles..."
+  print_progress "Checking for broken symlinks pointing to dotfiles..."
 
   find $HOME/\.[^.]* $HOME/.config $HOME/.bin -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
     target=$(readlink "$link")
     if [[ "$target" == "$dotfiles_path"* ]]; then
       if [[ ! -e "$link" ]]; then
         print_error "Found broken symlink: $link -> $target"
-        print_warning "Removing broken symlink..."
+        print_progress "Removing broken symlink..."
         rm "$link"
       fi
     fi

@@ -55,10 +55,14 @@ return {
       "css",
       "graphql",
       "html",
+      "javascript",
+      "javascriptreact",
       "json",
       "less",
       "markdown",
       "scss",
+      "typescript",
+      "typescriptreact",
     }
 
     local server_filetypes = {
@@ -82,7 +86,9 @@ return {
       html = {
         filetypes = { "html", "eruby" },
       },
-      ts_ls = {},
+      ts_ls = {
+        on_attach = disable_formatting,
+      },
       cssls = {},
       tailwindcss = {},
       eslint = {},

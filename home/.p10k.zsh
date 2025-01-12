@@ -1,3 +1,16 @@
+function prompt_git_info() {
+  if git rev-parse --git-dir &> /dev/null; then
+    if [[ $(git config --get core.sparsecheckout) == "true" || $(git config --get core.repositoryformatversion) == "1" ]]; then
+      POWERLEVEL9K_DISABLE_GITSTATUS=true
+    else
+      POWERLEVEL9K_DISABLE_GITSTATUS=false
+    fi
+  fi
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd prompt_git_info
+
 POWERLEVEL9K_CHRUBY_SHOW_ENGINE=false
 POWERLEVEL9K_INSTANT_PROMPT="verbose"
 POWERLEVEL9K_MODE='nerdfont-complete'

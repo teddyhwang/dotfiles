@@ -11,9 +11,9 @@ print_status "Starting installation...\n"
 ./dependencies.sh
 ./plugins.sh
 ./tmux.sh
+./git-bat.sh
 if [ $SPIN ]; then
   ./spin.sh
 fi
-./git-bat.sh
 
 print_success "Local setup complete 🚀"

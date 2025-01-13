@@ -3,10 +3,6 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 source "${SCRIPT_DIR}/print.sh"
 
-if ! command -v overmind &> /dev/null; then
-  go install github.com/DarthSim/overmind@latest
-fi
-
 if git config --get-all user.signingkey | grep -q 7C4CBAFEDC5B3117; then
   print_info "Git signing key already configured"
 else

@@ -1,8 +1,7 @@
-# /Users/teddyhwang/.config/tmuxinator/shopify.yml
+# /Users/teddyhwang/.config/tmuxinator/web.yml
 
-name: shopify
-root: ~/src/github.com/Shopify/shopify/areas/core/shopify
-
+name: web
+root: ~/src/github.com/Shopify/web/areas/clients/admin-web
 
 # Optional tmux socket
 # socket_name: foo
@@ -41,7 +40,7 @@ root: ~/src/github.com/Shopify/shopify/areas/core/shopify
 # attach: false
 
 # Runs after everything. Use it to attach to tmux with custom options etc.
-# post: tmux -CC attach -t shopify
+# post: tmux -CC attach -t web
 
 windows:
   - Editor:

@@ -4,7 +4,6 @@ return {
   dependencies = {
     "gfanto/fzf-lsp.nvim",
     "nvimtools/none-ls.nvim",
-    "lukas-reineke/lsp-format.nvim",
     { "williamboman/mason.nvim", config = true },
     {
       "williamboman/mason-lspconfig.nvim",
@@ -38,7 +37,6 @@ return {
   config = function()
     local lspconfig = require("lspconfig")
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
-    local lsp_format = require("lsp-format")
     local null_ls = require("null-ls")
     local formatting = null_ls.builtins.formatting
     local diagnostics = null_ls.builtins.diagnostics
@@ -48,8 +46,6 @@ return {
       local hl = "DiagnosticSign" .. type
       vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
     end
-
-    lsp_format.setup({})
 
     local prettier_filetypes = {
       "css",
@@ -72,15 +68,50 @@ return {
       jsonls = { "json" },
     }
 
+    local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+
+    local function on_attach(client, bufnr)
+      if client.supports_method("textDocument/formatting") then
+        vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+        vim.api.nvim_create_autocmd("BufWritePre", {
+          group = augroup,
+          buffer = bufnr,
+          callback = function()
+            if vim.tbl_contains(prettier_filetypes, vim.bo[bufnr].filetype) then
+              vim.lsp.buf.format({
+                bufnr = bufnr,
+                filter = function(c)
+                  return c.name == "null-ls"
+                end
+              })
+            else
+              vim.lsp.buf.format({ bufnr = bufnr })
+            end
+          end,
+        })
+      end
+    end
+
     local default_config = {
       capabilities = cmp_nvim_lsp.default_capabilities(),
-      on_attach = lsp_format.on_attach,
+      on_attach = on_attach,
     }
 
     local function disable_formatting(client, bufnr)
       client.server_capabilities.documentFormattingProvider = false
-      lsp_format.on_attach(client, bufnr)
+      client.server_capabilities.documentRangeFormattingProvider = false
+      on_attach(client, bufnr)
     end
+
+    null_ls.setup({
+      sources = {
+        formatting.prettierd.with({
+          filetypes = prettier_filetypes,
+        }),
+        diagnostics.yamllint,
+      },
+      on_attach = on_attach,
+    })
 
     local servers = {
       html = {
@@ -149,16 +180,6 @@ return {
         end
       end
     end
-
-    null_ls.setup({
-      sources = {
-        formatting.prettierd.with({
-          filetypes = prettier_filetypes,
-        }),
-        diagnostics.yamllint,
-      },
-      on_attach = lsp_format.on_attach,
-    })
 
     for server, config in pairs(servers) do
       lspconfig[server].setup(vim.tbl_deep_extend("force", default_config, config))

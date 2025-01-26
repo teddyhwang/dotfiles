@@ -16,4 +16,3 @@ function layout() {
     },
   };
 }
-Footer;

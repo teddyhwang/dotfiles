@@ -30,4 +30,13 @@ for plugin in $omz_plugins; do
   fi
 done
 
+if [ -d ~/.oh-my-zsh/custom/completions ]; then
+  print_info "Custom completions added"
+else
+  print_progress "Adding custom completions..."
+  mkdir -p ~/.oh-my-zsh/custom/completions
+  cp ./home/completions/* ~/.oh-my-zsh/custom/completions/.
+  track_change
+fi
+
 print_conditional_success "Plugins"

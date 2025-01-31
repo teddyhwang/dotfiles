@@ -107,6 +107,7 @@ return function(base16)
       local restart = require("restart")
       restart.ibl()
       restart.lualine()
+      restart.bufferline()
     end
   end
 

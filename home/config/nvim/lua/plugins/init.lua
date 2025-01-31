@@ -11,26 +11,9 @@ return {
   {
     'akinsho/bufferline.nvim',
     dependencies = 'nvim-tree/nvim-web-devicons',
-    opts = {
-      options = {
-        mode = "tabs",
-        tab_size = 30,
-        themable = true,
-        diagnostics = "nvim_lsp",
-        diagnostics_indicator = function(count, level)
-          local icon = level:match("error") and " " or " "
-          return " " .. icon .. count
-        end,
-        offsets = {
-          {
-            filetype = "NvimTree",
-            text = "File Explorer",
-            text_align = "left",
-            separator = true
-          }
-        },
-      },
-    },
+    init = function()
+      require("restart").bufferline()
+    end
   },
   { "j-hui/fidget.nvim",         config = true, },
   { "NvChad/nvim-colorizer.lua", config = true, },

@@ -9,9 +9,9 @@ export BASE16_THEME_DEFAULT="seti"
 export EDITOR='nvim'
 export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"
 export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
-export FZF_CTRL_T_OPTS="--preview 'bat --theme=base16-256 --style=numbers --color=always --line-range :500 {}'"
+export FZF_CTRL_T_OPTS="--preview 'bat --theme=base16-seti --style=numbers --color=always --line-range :500 {}'"
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
-export FZF_DEFAULT_OPTS='--height 30% --border'
+export FZF_DEFAULT_OPTS="--border"
 export FZF_TMUX_OPTS='-d 40%'
 export HIGHLIGHT_STYLE=base16/seti
 export TERM="xterm-256color"
@@ -240,10 +240,16 @@ tinty_source_shell_theme() {
   unset subcommand
 }
 
-if [ -n "$(command -v 'tinty')" ]; then
-  tinty_source_shell_theme "init" > /dev/null
+theme () {
+  tinty apply $(tinty list | fzf)
+}
 
+if [ -n "$(command -v 'tinty')" ]; then
+  eval "$(tinty generate-completion zsh)"
   alias tinty=tinty_source_shell_theme
+  compdef tinty_source_shell_theme=tinty
+
+  tinty_source_shell_theme "init" > /dev/null
 fi
 
 if command -v gh &> /dev/null; then

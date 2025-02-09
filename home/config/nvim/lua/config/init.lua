@@ -13,7 +13,6 @@ local command_aliases = {
   Sex = "sp | Oil %:p:h",
   SEx = "sp | Oil %:p:h",
   Tabe = "tabe",
-  Fzf = "FloatermNew fzf",
   Irb = "FloatermNew irb",
   Lazygit = "FloatermNew lazygit",
   Node = "FloatermNew node",

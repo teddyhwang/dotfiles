@@ -241,7 +241,7 @@ tinty_source_shell_theme() {
 }
 
 theme () {
-  tinty apply $(tinty list | fzf)
+  tinty_source_shell_theme apply $(tinty list | fzf)
 }
 
 if [ -n "$(command -v 'tinty')" ]; then

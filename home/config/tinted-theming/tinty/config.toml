@@ -6,17 +6,19 @@ hooks = ["tmux run 2> /dev/null && tmux source-file ~/.tmux.conf"]
 name = "tinted-shell"
 path = "https://github.com/tinted-theming/tinted-shell"
 hook = ". %f"
-supported-systems = ["base16"]
+supported-systems = ["base16", "base24"]
 themes-dir = "scripts"
 
 [[items]]
 name = "tinted-alacritty"
 path = "https://github.com/tinted-theming/tinted-alacritty"
 themes-dir = "colors-256"
+supported-systems = ["base16", "base24"]
 hook = "mkdir -p ~/.config/alacritty && cp -f %f ~/.config/alacritty/colors.toml && touch ~/.config/alacritty/alacritty.toml"
 
 [[items]]
 name = "tinted-fzf"
 path = "https://github.com/tinted-theming/tinted-fzf"
+supported-systems = ["base16", "base24"]
 hook = ". %f"
 themes-dir = "sh"

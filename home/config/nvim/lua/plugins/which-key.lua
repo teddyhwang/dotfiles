@@ -1,6 +1,6 @@
 return {
   "folke/which-key.nvim",
-  config = function()
+  opts = function()
     local whichkey = require("which-key")
     local windows = require("windows")
 
@@ -189,5 +189,9 @@ return {
         },
       })
     end
+
+    return {
+      preset = "helix"
+    }
   end,
 }

@@ -1,4 +1,4 @@
---theme="base16-seti"
+--theme="base16-256"
 
 --map-syntax "*.rbi:Ruby"
 --map-syntax ".eslintrc:JSON"

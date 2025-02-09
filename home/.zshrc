@@ -80,6 +80,7 @@ alias dark='tinty apply base16-seti'
 alias darker='tinty apply base16-3024'
 alias light='tinty apply base16-solarized-light'
 alias lighter='tinty apply base16-one-light'
+alias mocha='tinty apply base16-catppuccin-mocha'
 
 alias gpgstart='gpgconf --launch gpg-agent'
 alias ls='lsd'

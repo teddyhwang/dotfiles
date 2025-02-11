@@ -246,11 +246,13 @@ theme () {
 }
 
 if [ -n "$(command -v 'tinty')" ]; then
-  eval "$(tinty generate-completion zsh)"
-  alias tinty=tinty_source_shell_theme
-  compdef tinty_source_shell_theme=tinty
+  if [[ $- == *i* ]] && [[ -z "$FLOATERM" ]]; then
+    eval "$(tinty generate-completion zsh)"
+    alias tinty=tinty_source_shell_theme
+    compdef tinty_source_shell_theme=tinty
 
-  tinty_source_shell_theme "init" > /dev/null
+    tinty_source_shell_theme "init" > /dev/null
+  fi
 fi
 
 if command -v gh &> /dev/null; then

@@ -18,7 +18,6 @@ end
 function M.bufferline()
   require("bufferline").setup({
     options = {
-      mode = "tabs",
       tab_size = 30,
       themable = true,
       diagnostics = "nvim_lsp",

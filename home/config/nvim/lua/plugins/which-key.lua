@@ -113,7 +113,11 @@ return {
       { "<C-f>",       search_prompt,                         desc = "Search" },
       { '"',           ":FzfLua registers<cr>",               desc = "Show registers" },
       { "<C-p>",       ":FzfLua files<cr>",                   desc = "Find files" },
+      { "<C-o>",       ":FzfLua buffers<cr>",                 desc = "Find buffers" },
       { "<C-t>",       require("windows").fzf_switch,         desc = "Switch between windows" },
+      { "<S-h>",       ":bprevious<cr>",                      desc = "Previous buffer" },
+      { "<S-l>",       ":bnext<cr>",                          desc = "Next buffer" },
+      { "<S-x>",       ":bd<cr>",                             desc = "Delete buffer" },
       {
         "q:",
         ":FzfLua command_history<cr>",

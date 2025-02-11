@@ -1,22 +1,14 @@
 return {
   "tpope/vim-sensible",
   {
-    "stevearc/dressing.nvim",
-    opts = {
-      input = {
-        relative = "editor",
-      },
-    },
-  },
-  {
-    'akinsho/bufferline.nvim',
-    dependencies = 'nvim-tree/nvim-web-devicons',
-    init = function()
+    "akinsho/bufferline.nvim",
+    dependencies = "nvim-tree/nvim-web-devicons",
+    config = function()
       require("restart").bufferline()
-    end
+    end,
   },
-  { "j-hui/fidget.nvim",         config = true, },
-  { "NvChad/nvim-colorizer.lua", config = true, },
+  { "j-hui/fidget.nvim",         config = true },
+  { "NvChad/nvim-colorizer.lua", config = true },
   "sitiom/nvim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
   {
@@ -38,7 +30,6 @@ return {
       vim.g["test#strategy"] = "vimux"
     end,
   },
-  "tmux-plugins/vim-tmux",
   "vim-test/vim-test",
   {
     "voldikss/vim-floaterm",
@@ -72,34 +63,6 @@ return {
     end,
   },
   {
-    "nvim-tree/nvim-tree.lua",
-    opts = {
-      hijack_directories = {
-        enable = false,
-        auto_open = false,
-      },
-      hijack_netrw = false,
-      actions = {
-        open_file = {
-          window_picker = {
-            enable = false,
-          },
-        },
-      },
-    },
-    init = function()
-      vim.g["loaded_netrw"] = 1
-      vim.g["loaded_netrwPlugin"] = 1
-    end,
-  },
-  {
-    "ibhagwan/fzf-lua",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    opts = {
-      fzf_colors = true,
-    },
-  },
-  {
     "stevearc/oil.nvim",
     opts = {
       keymaps = {
@@ -112,8 +75,61 @@ return {
         show_hidden = true,
       },
     },
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    config = true,
+  },
+  {
+    "folke/snacks.nvim",
+    priority = 1000,
+    lazy = false,
+    opts = {
+      bigfile = { enabled = false },
+      dashboard = { enabled = true },
+      dim = { enabled = true },
+      explorer = { enabled = true },
+      image = { force = true },
+      indent = { enabled = true },
+      input = { enabled = true },
+      lazygit = {
+        theme = {
+          activeBorderColor = { fg = "Title", bold = true },
+        },
+      },
+      picker = { enabled = true },
+      notifier = { enabled = true },
+      quickfile = { enabled = true },
+      scope = { enabled = true },
+      scroll = { enabled = true },
+      statuscolumn = { enabled = true },
+      styles = { enabled = true },
+      toggle = { enabled = true },
+      words = { enabled = true },
+      zen = { enabled = true },
+    },
+    init = function()
+      vim.g.snacks_animate = false
+    end,
+  },
+  {
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    opts = {
+      lsp = {
+        override = {
+          ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+          ["vim.lsp.util.stylize_markdown"] = true,
+          ["cmp.entry.get_documentation"] = true,
+        },
+      },
+      presets = {
+        bottom_search = true,
+        command_palette = true,
+        long_message_to_split = true,
+        inc_rename = false,
+        lsp_doc_border = false,
+      },
+    },
+    dependencies = {
+      "MunifTanjim/nui.nvim",
+    },
   },
   {
     "zbirenbaum/copilot.lua",
@@ -176,9 +192,6 @@ return {
   { "linrongbin16/gitlinker.nvim", config = true },
   { "lewis6991/gitsigns.nvim",     config = true },
   "f-person/git-blame.nvim",
-  "tpope/vim-fugitive",
-  "tpope/vim-rhubarb",
-  "inkarkat/vim-ReplaceWithRegister",
   "matze/vim-move",
   "mg979/vim-visual-multi",
   "tpope/vim-sleuth",

@@ -1,19 +1,8 @@
--- base08: red
--- base09: orange
--- base0A: yellow
--- base0B: green
--- base0C: cyan
--- base0D: blue
--- base0E: purple
--- base0F: brown
--- base00: darkest black (default background)
--- base01: darker gray
--- base02: dark gray
--- base03: gray
--- base04: light gray
--- base05: lighter gray
--- base06: very light gray
--- base07: white
+-- Seti
+-- base00 = '#151718', base01 = '#282a2b', base02 = '#3b758c', base03 = '#41535b',
+-- base04 = '#43a5d5', base05 = '#d6d6d6', base06 = '#eeeeee', base07 = '#ffffff',
+-- base08 = '#cd3f45', base09 = '#db7b55', base0A = '#e6cd69', base0B = '#9fca56',
+-- base0C = '#55dbbe', base0D = '#55b5db', base0E = '#a074c4', base0F = '#8a553f'
 
 return function(base16)
   local default_theme = "base16-seti"
@@ -38,6 +27,8 @@ return function(base16)
       ["@keyword"] = { fg = colors.base0E },
       ["@property"] = { fg = colors.base08 },
       ["@parameter"] = { fg = colors.base08 },
+      Title = { fg = colors.base09 },
+      SnacksPickerBorder = { link = "Title" },
       TSFuncMacro = { link = "TSString" },
       TSType = { fg = colors.base0A },
       TSNamespace = { fg = colors.base0A },
@@ -69,27 +60,10 @@ return function(base16)
       CmpItemKindValue = { link = "@constant" },
       CmpItemKindVariable = { link = "@variable" },
       FloatBorder = { link = "VertSplit" },
-      FzfLuaBackdrop = { bg = colors.base00 },
-      FzfLuaBorder = { link = "VertSplit" },
-      FzfLuaScrollBorderFull = { link = "PmenuThumb" },
-      HighlightedyankRegion = { link = "MatchParen" },
-      IblIndent = { fg = colors.base01, blend = 50 },
-      IblScope = { fg = colors.base03, blend = 10 },
+      HighlightedyankRegion = { bg = colors.base03 },
       LualineWinbar = { bg = colors.base00, fg = colors.base07 },
-      TabLineClose = { fg = colors.base04, bg = colors.base01 },
-      TabLineCloseSel = { fg = colors.base06, bg = colors.base02 },
-      TabLineFill = { bg = colors.base00 },
-      TabLineIcon = { fg = colors.base04, bg = colors.base01 },
-      TabLineIconSel = { fg = colors.base06, bg = colors.base02 },
-      TabLineModified = { fg = colors.base0B, bg = colors.base01 },
-      TabLineModifiedSel = { fg = colors.base0B, bg = colors.base02 },
-      TabLineSel = { link = "PmenuSel" },
-      TabLineSeparator = { fg = colors.base02, bg = colors.base01 },
-      TabLineSeparatorSel = { fg = colors.base03, bg = colors.base02 },
-      Tabline = { bg = colors.base01, fg = colors.base05 },
-      WilderAccent = { fg = colors.base0E },
-      WilderBorder = { link = "VertSplit" },
       WinSeparator = { fg = colors.base03 },
+      MatchParen = { bg = colors.base02 },
     }
 
     for k, v in pairs(highlights) do
@@ -105,7 +79,6 @@ return function(base16)
       vim.cmd("colorscheme " .. new_theme_name)
       handle_custom_highlights()
       local restart = require("restart")
-      restart.ibl()
       restart.lualine()
       restart.bufferline()
     end

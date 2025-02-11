@@ -16,7 +16,7 @@ local command_aliases = {
   Irb = "FloatermNew irb",
   Lazygit = "FloatermNew lazygit",
   Node = "FloatermNew node",
-  Python = "FloatermNew python",
+  Python = "FloatermNew python3",
   Yazi = "FloatermNew yazi",
   Terminal = "FloatermNew",
 }
@@ -82,14 +82,14 @@ vim.api.nvim_create_autocmd("TermOpen", {
 
 vim.filetype.add({
   extension = {
-    rbi = 'ruby',
-    graphql = 'graphql',
-    jsx = 'javascript.jsx',
-    plist = 'xml',
-    ejson = 'json',
+    rbi = "ruby",
+    graphql = "graphql",
+    jsx = "javascript.jsx",
+    plist = "xml",
+    ejson = "json",
   },
   pattern = {
-    ['.*%.shared%.gitconfig'] = 'gitconfig',
+    [".*%.shared%.gitconfig"] = "gitconfig",
   },
 })
 

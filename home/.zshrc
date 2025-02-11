@@ -15,6 +15,7 @@ export FZF_DEFAULT_OPTS="--border"
 export FZF_TMUX_OPTS='-d 40%'
 export HIGHLIGHT_STYLE=base16/seti
 export TERM="xterm-256color"
+export XDG_CONFIG_HOME="$HOME/.config"
 if [ $SPIN ]; then
   source ~/.spin.zsh
 fi

@@ -1,9 +1,5 @@
 local M = {}
 
-function M.ibl()
-  require("ibl").setup()
-end
-
 function M.lualine()
   local lualine = require("lualine")
   package.loaded["lualine.themes.base16"] = nil
@@ -16,8 +12,15 @@ function M.lualine()
 end
 
 function M.bufferline()
+  local Snacks = require("snacks")
   require("bufferline").setup({
     options = {
+      close_command = function(n)
+        Snacks.bufdelete(n)
+      end,
+      right_mouse_command = function(n)
+        Snacks.bufdelete(n)
+      end,
       tab_size = 30,
       themable = true,
       diagnostics = "nvim_lsp",
@@ -27,11 +30,8 @@ function M.bufferline()
       end,
       offsets = {
         {
-          filetype = "NvimTree",
-          text = "File Explorer",
-          text_align = "left",
-          separator = true
-        }
+          filetype = "snacks_layout_box",
+        },
       },
     },
   })

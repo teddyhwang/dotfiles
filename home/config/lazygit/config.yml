@@ -1,0 +1,12 @@
+disableStartupPopups: true
+git:
+  paging:
+    colorArg: always
+    pager: delta --dark --paging=never
+keybinding:
+  universal:
+    prevBlock-alt: '<c-k>'
+    nextBlock-alt: '<c-j>'
+  commits:
+    moveUpCommit: '+'
+    moveDownCommit: '-'

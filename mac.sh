@@ -37,14 +37,6 @@ else
   print_warning "Amethyst not installed"
 fi
 
-if ! [ -f ~/Library/Application\ Support/lazygit/config.yml ]; then
-  print_progress "Copying lazygit config file..."
-  sudo cp -rf ./app_configs/lazygit.config.yml ~/Library/Application\ Support/lazygit/config.yml
-  track_change
-else
-  print_info "lazygit config file is copied"
-fi
-
 if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
   read -r "response?Do you want to setup pbcopy/pbpaste launch agents? (y/N) "
   echo -e "\033[1A\033[2K\033[1A"

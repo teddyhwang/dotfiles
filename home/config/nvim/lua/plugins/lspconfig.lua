@@ -82,7 +82,7 @@ return {
                 bufnr = bufnr,
                 filter = function(c)
                   return c.name == "null-ls"
-                end
+                end,
               })
             else
               vim.lsp.buf.format({ bufnr = bufnr })
@@ -108,6 +108,7 @@ return {
         formatting.prettierd.with({
           filetypes = prettier_filetypes,
         }),
+        formatting.stylua,
         diagnostics.yamllint,
       },
       on_attach = on_attach,
@@ -129,26 +130,28 @@ return {
         on_init = function(client)
           if client.workspace_folders then
             local path = client.workspace_folders[1].name
-            if vim.fn.filereadable(path .. '/.luarc.json') == 1 or vim.fn.filereadable(path .. '/.luarc.jsonc') == 1 then
+            if
+                vim.fn.filereadable(path .. "/.luarc.json") == 1 or vim.fn.filereadable(path .. "/.luarc.jsonc") == 1
+            then
               return
             end
           end
 
-          client.config.settings.Lua = vim.tbl_deep_extend('force', client.config.settings.Lua, {
+          client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
             runtime = {
-              version = 'LuaJIT'
+              version = "LuaJIT",
             },
             workspace = {
               checkThirdParty = false,
               library = {
-                vim.env.VIMRUNTIME
-              }
-            }
+                vim.env.VIMRUNTIME,
+              },
+            },
           })
         end,
         settings = {
-          Lua = {}
-        }
+          Lua = {},
+        },
       },
       sorbet = {
         root_dir = lspconfig.util.root_pattern("sorbet/config"),
@@ -172,10 +175,7 @@ return {
     for server, filetypes in pairs(server_filetypes) do
       for _, filetype in ipairs(filetypes) do
         if vim.tbl_contains(prettier_filetypes, filetype) then
-          servers[server] = vim.tbl_deep_extend("force",
-            servers[server] or {},
-            { on_attach = disable_formatting }
-          )
+          servers[server] = vim.tbl_deep_extend("force", servers[server] or {}, { on_attach = disable_formatting })
           break
         end
       end

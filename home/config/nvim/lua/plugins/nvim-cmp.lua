@@ -41,6 +41,9 @@ return {
       completion = {
         completeopt = "menu,menuone,noinsert",
       },
+      performance = {
+        debounce = 0,
+      },
       experimental = {
         ghost_text = true,
       },

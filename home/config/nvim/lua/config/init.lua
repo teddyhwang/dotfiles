@@ -68,6 +68,19 @@ vim.opt.updatetime = 100
 vim.opt.wrap = false
 vim.opt.wrap = false
 
+vim.api.nvim_create_autocmd("BufEnter", {
+  pattern = "*",
+  callback = function()
+    if vim.bo.buftype ~= "" then
+      vim.opt_local.colorcolumn = ""
+      vim.opt_local.cursorline = false
+    else
+      vim.opt_local.colorcolumn = "80,120"
+      vim.opt_local.cursorline = true
+    end
+  end,
+})
+
 vim.api.nvim_create_autocmd("VimResized", {
   pattern = "*",
   callback = function()

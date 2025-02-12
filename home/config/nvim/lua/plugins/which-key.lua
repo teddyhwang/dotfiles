@@ -164,6 +164,21 @@ return {
         end,
         desc = "lazygit",
       },
+      {
+        "<leader>sr",
+        function()
+          local grug = require("grug-far")
+          local ext = vim.bo.buftype == "" and vim.fn.expand("%:e")
+          grug.open({
+            transient = true,
+            prefills = {
+              filesFilter = ext and ext ~= "" and "*." .. ext or nil,
+            },
+          })
+        end,
+        mode = { "n", "v" },
+        desc = "Search and Replace",
+      },
       { "<leader>O",  ":! open %:h<cr>",                     desc = "Open file in Finder (Mac)" },
       { "<leader>T",  ":VimuxRunCommand 'dev test '.@%<cr>", desc = "Test current file" },
       { "<leader>V",  "ggVG<cr>",                            desc = "Visually select current buffer" },

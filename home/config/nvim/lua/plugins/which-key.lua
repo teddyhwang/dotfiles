@@ -144,6 +144,13 @@ return {
         desc = "Find files",
       },
       {
+        "<C-t>",
+        function()
+          Snacks.picker.smart()
+        end,
+        desc = "Switch between windows",
+      },
+      {
         "<C-b>",
         function()
           Snacks.picker.buffers()
@@ -210,13 +217,12 @@ return {
       { "[d",         ":Lspsaga diagnostic_jump_prev<cr>",   desc = "Previous diagnostic" },
       { "]d",         ":Lspsaga diagnostic_jump_next<cr>",   desc = "Next diagnostic" },
       { "K",          ":Lspsaga hover_doc<cr>",              desc = "Show hover documentation" },
-      { "<",          "<C-w>20h",                            desc = "Focus far left pane" },
-      { ">",          "<C-w>20l",                            desc = "Focus far right pane" },
+      { "<",          ":BufferLineMovePrev<cr>",             desc = "Focus far left pane" },
+      { ">",          ":BufferLineMoveNext<cr>",             desc = "Focus far right pane" },
       { "<BS>",       ":noh<cr>:echo ''<cr>",                desc = "Clear search and messages" },
       { "<C-f>",      search_prompt,                         desc = "Search" },
-      { "<C-t>",      require("windows").fzf_switch,         desc = "Switch between windows" },
-      { "<S-h>",      ":bprevious<cr>",                      desc = "Previous buffer" },
-      { "<S-l>",      ":bnext<cr>",                          desc = "Next buffer" },
+      { "<S-h>",      ":BufferLineCyclePrev<cr>",            desc = "Previous buffer" },
+      { "<S-l>",      ":BufferLineCycleNext<cr>",            desc = "Next buffer" },
       {
         "<S-x>",
         function()

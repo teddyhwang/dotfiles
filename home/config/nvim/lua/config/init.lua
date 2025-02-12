@@ -67,6 +67,7 @@ vim.opt.tw = 120
 vim.opt.updatetime = 100
 vim.opt.wrap = false
 vim.opt.wrap = false
+vim.opt.sessionoptions:append("globals")
 
 vim.api.nvim_create_autocmd("BufEnter", {
   pattern = "*",

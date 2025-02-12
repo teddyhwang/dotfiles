@@ -64,6 +64,7 @@ return function(base16)
       LualineWinbar = { bg = colors.base00, fg = colors.base07 },
       WinSeparator = { fg = colors.base03 },
       MatchParen = { bg = colors.base02 },
+      BufferLineTabSelected = { link = "BufferLineBufferSelected" },
     }
 
     for k, v in pairs(highlights) do

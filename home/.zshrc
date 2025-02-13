@@ -247,7 +247,7 @@ theme () {
 }
 
 if [ -n "$(command -v 'tinty')" ]; then
-  if [[ $- == *i* ]] && [[ -z "$FLOATERM" ]]; then
+  if [[ $- == *i* ]] && [[ -z "$FLOATERM" ]] && [[ -z "$NVIM" ]]; then
     eval "$(tinty generate-completion zsh)"
     alias tinty=tinty_source_shell_theme
     compdef tinty_source_shell_theme=tinty

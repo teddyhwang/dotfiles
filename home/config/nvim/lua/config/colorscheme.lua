@@ -65,6 +65,7 @@ return function(base16)
       WinSeparator = { fg = colors.base03 },
       MatchParen = { bg = colors.base02 },
       BufferLineTabSelected = { link = "BufferLineBufferSelected" },
+      ToggleTerm1FloatBorder = { link = "FloatBorder" },
     }
 
     for k, v in pairs(highlights) do

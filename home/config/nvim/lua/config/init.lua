@@ -13,12 +13,6 @@ local command_aliases = {
   Sex = "sp | Oil %:p:h",
   SEx = "sp | Oil %:p:h",
   Tabe = "tabe",
-  Irb = "FloatermNew irb",
-  Lazygit = "FloatermNew lazygit",
-  Node = "FloatermNew node",
-  Python = "FloatermNew python3",
-  Yazi = "FloatermNew yazi",
-  Terminal = "FloatermNew",
 }
 
 for alias, cmd in pairs(command_aliases) do

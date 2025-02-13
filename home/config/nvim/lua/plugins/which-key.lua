@@ -1,10 +1,41 @@
 return {
   "folke/which-key.nvim",
-  dependencies = { "folke/snacks.nvim" },
+  dependencies = {
+    "folke/snacks.nvim",
+    "akinsho/toggleterm.nvim",
+  },
   opts = function()
     local whichkey = require("which-key")
     local windows = require("windows")
     local Snacks = require("snacks")
+    local Terminal = require("toggleterm.terminal").Terminal
+
+    local yazi = Terminal:new({
+      cmd = "yazi",
+      direction = "float",
+      float_opts = {
+        border = "curved",
+        winblend = 0,
+      },
+      highlights = {
+        FloatBorder = {
+          link = "FloatBorder",
+        },
+      },
+      on_open = function(term)
+        vim.cmd("startinsert!")
+        vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
+      end,
+      on_close = function()
+        vim.cmd("startinsert!")
+      end,
+    })
+
+    local function toggle_yazi()
+      local bufpath = vim.fn.expand("%:p:h")
+      yazi.dir = bufpath ~= "" and bufpath or vim.fn.getcwd()
+      yazi:toggle()
+    end
 
     local search_prompt = function()
       vim.ui.input({
@@ -186,19 +217,20 @@ return {
         mode = { "n", "v" },
         desc = "Search and Replace",
       },
+      {
+        "<leader>fr",
+        toggle_yazi,
+        desc = "yazi",
+      },
       { "<leader>O",  ":! open %:h<cr>",                     desc = "Open file in Finder (Mac)" },
       { "<leader>T",  ":VimuxRunCommand 'dev test '.@%<cr>", desc = "Test current file" },
       { "<leader>V",  "ggVG<cr>",                            desc = "Visually select current buffer" },
       { "<leader>Y",  ":%y+<cr>",                            desc = "Yank current file" },
       { "<leader>Lr", ":LspRestart<cr>",                     desc = "Restart LSP" },
-      { "<leader>fR", ":Irb<cr>",                            desc = "irb" },
-      { "<leader>fn", ":Node<cr>",                           desc = "node" },
-      { "<leader>fp", ":Python<cr>",                         desc = "python" },
-      { "<leader>fr", ":Yazi<cr>",                           desc = "yazi" },
-      { "<leader>ft", ":Terminal<cr>",                       desc = "terminal" },
+      { "<leader>ft", ":ToggleTerm<cr>",                     desc = "terminal" },
       { "<leader>gB", ":GitLink! blame<cr>",                 desc = "Open git blame link in browser" },
-      { "<leader>gL", ":GitLink!<cr>",                       desc = "Open git permlink in browser" },
       { "<leader>gb", ":GitLink blame<cr>",                  desc = "Copy git blame link to clipboard" },
+      { "<leader>gL", ":GitLink!<cr>",                       desc = "Open git permlink in browser" },
       { "<leader>gl", ":GitLink<cr>",                        desc = "Copy git permlink to clipboard" },
       { "<leader>l",  ":VimuxRunLastCommand<cr>",            desc = "Run last command in tmux" },
       { "<leader>q",  ":q<cr>",                              desc = "Close current buffer" },
@@ -299,6 +331,8 @@ return {
         },
       })
     end
+
+    vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
     return {
       preset = "helix",

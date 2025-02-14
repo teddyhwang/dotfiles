@@ -48,7 +48,9 @@ function M.bufferline()
             auto_close = false,
             matcher = function(buf)
               local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              return filetype == "ruby"
+              local full_path = vim.api.nvim_buf_get_name(buf.id)
+              local filename = full_path:match(".*/(.*)$") or full_path
+              return filetype == "ruby" and not (filename:match("%_test") or filename:match("%_spec"))
             end,
             separator = {
               style = groups.separator.slant,
@@ -59,7 +61,9 @@ function M.bufferline()
             auto_close = false,
             matcher = function(buf)
               local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              return filetype == "typescript" or filetype == "javascript"
+              local full_path = vim.api.nvim_buf_get_name(buf.id)
+              local filename = full_path:match(".*/(.*)$") or full_path
+              return (filetype == "typescript" or filetype == "javascript") and not (filename:match("%_test") or filename:match("%_spec"))
             end,
             separator = {
               style = groups.separator.slant,

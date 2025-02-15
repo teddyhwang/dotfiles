@@ -38,11 +38,11 @@ return {
     local lspconfig = require("lspconfig")
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
     local null_ls = require("null-ls")
+    local icons = require("config.icons")
     local formatting = null_ls.builtins.formatting
     local diagnostics = null_ls.builtins.diagnostics
 
-    local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
-    for type, icon in pairs(signs) do
+    for type, icon in pairs(icons.diagnostics) do
       local hl = "DiagnosticSign" .. type
       vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
     end

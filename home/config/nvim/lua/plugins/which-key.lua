@@ -9,6 +9,7 @@ return {
     local windows = require("windows")
     local Snacks = require("snacks")
     local Terminal = require("toggleterm.terminal").Terminal
+    local flash = require("flash")
 
     local yazi = Terminal:new({
       cmd = "yazi",
@@ -224,6 +225,46 @@ return {
         end,
         mode = { "n", "v" },
         desc = "Search and Replace",
+      },
+      {
+        "s",
+        function()
+          flash.jump()
+        end,
+        mode = { "n", "x", "o" },
+        desc = "Flash",
+      },
+      {
+        "S",
+        function()
+          flash.treesitter()
+        end,
+        mode = { "n", "x", "o" },
+        desc = "Flash Treesitter",
+      },
+      {
+        "r",
+        function()
+          flash.remote()
+        end,
+        mode = "o",
+        desc = "Remote Flash",
+      },
+      {
+        "R",
+        function()
+          flash.treesitter_search()
+        end,
+        mode = { "o", "x" },
+        desc = "Treesitter Search",
+      },
+      {
+        "<c-s>",
+        function()
+          flash.toggle()
+        end,
+        mode = { "c" },
+        desc = "Toggle Flash Search",
       },
       {
         "<leader>fr",

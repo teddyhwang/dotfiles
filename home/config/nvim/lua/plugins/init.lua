@@ -124,7 +124,6 @@ return {
   },
   {
     "folke/trouble.nvim",
-    cmd = { "Trouble" },
     opts = {
       modes = {
         lsp = {
@@ -132,6 +131,17 @@ return {
         },
       },
     },
+  },
+  {
+    "folke/todo-comments.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = true,
+  },
+  {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    config = true,
+    keys = {},
   },
   {
     "MagicDuck/grug-far.nvim",

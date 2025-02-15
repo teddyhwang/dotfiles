@@ -50,7 +50,7 @@ function M.bufferline()
               local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
               local full_path = vim.api.nvim_buf_get_name(buf.id)
               local filename = full_path:match(".*/(.*)$") or full_path
-              return filetype == "ruby" and not (filename:match("%_test") or filename:match("%_spec"))
+              return filetype == "ruby" and not (filename:match("%test") or filename:match("%spec"))
             end,
             separator = {
               style = groups.separator.slant,
@@ -63,7 +63,8 @@ function M.bufferline()
               local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
               local full_path = vim.api.nvim_buf_get_name(buf.id)
               local filename = full_path:match(".*/(.*)$") or full_path
-              return (filetype == "typescript" or filetype == "javascript") and not (filename:match("%_test") or filename:match("%_spec"))
+              return (filetype == "typescript" or filetype == "javascript")
+                  and not (filename:match("%test") or filename:match("%spec"))
             end,
             separator = {
               style = groups.separator.slant,
@@ -80,7 +81,7 @@ function M.bufferline()
             matcher = function(buf)
               local full_path = vim.api.nvim_buf_get_name(buf.id)
               local filename = full_path:match(".*/(.*)$") or full_path
-              return filename:match("%_test") or filename:match("%_spec")
+              return filename:match("%test") or filename:match("%spec")
             end,
           },
           {

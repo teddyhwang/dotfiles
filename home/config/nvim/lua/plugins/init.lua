@@ -26,7 +26,7 @@ return {
   "christoomey/vim-tmux-navigator",
   {
     "preservim/vimux",
-    config = function()
+    init = function()
       vim.g["test#strategy"] = "vimux"
     end,
   },

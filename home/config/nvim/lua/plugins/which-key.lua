@@ -61,6 +61,14 @@ return {
       end)
     end
 
+    local function test_file_command()
+      if vim.fn.executable("dev") == 1 then
+        vim.cmd(":VimuxRunCommand 'dev test '.@%")
+      else
+        vim.cmd(":TestFile")
+      end
+    end
+
     local propagate_paste_buffer_to_osx = function()
       local clipboard_content = vim.fn.getreg("*")
       vim.fn.system("pbcopy-remote", clipboard_content)
@@ -196,7 +204,7 @@ return {
         desc = "Git status",
       },
       {
-        "<leader>fg",
+        "<leader>lg",
         function()
           Snacks.lazygit()
         end,
@@ -223,7 +231,7 @@ return {
         desc = "yazi",
       },
       { "<leader>O",  ":! open %:h<cr>",                        desc = "Open file in Finder (Mac)" },
-      { "<leader>T",  ":VimuxRunCommand 'dev test '.@%<cr>",    desc = "Test current file" },
+      { "<leader>T",  test_file_command,                        desc = "Test current file" },
       { "<leader>V",  "ggVG<cr>",                               desc = "Visually select current buffer" },
       { "<leader>Y",  ":%y+<cr>",                               desc = "Yank current file" },
       { "<leader>Lr", ":LspRestart<cr>",                        desc = "Restart LSP" },
@@ -232,13 +240,8 @@ return {
       { "<leader>gb", ":GitLink blame<cr>",                     desc = "Copy git blame link to clipboard" },
       { "<leader>gL", ":GitLink!<cr>",                          desc = "Open git permlink in browser" },
       { "<leader>gl", ":GitLink<cr>",                           desc = "Copy git permlink to clipboard" },
-      { "<leader>l",  ":VimuxRunLastCommand<cr>",               desc = "Run last command in tmux" },
       { "<leader>q",  ":q<cr>",                                 desc = "Close current buffer" },
-      { "<leader>te", "!TestNearest<cr>",                       desc = "Test nearest" },
-      { "<leader>tn", ":tabn<cr>",                              desc = "Go to next tab" },
-      { "<leader>to", ":tabnew<cr>",                            desc = "Open new tab" },
-      { "<leader>tp", ":tabp<cr>",                              desc = "Go to previous tab" },
-      { "<leader>tx", ":tabclose<cr>",                          desc = "Close current tab" },
+      { "<leader>t",  ":TestNearest<cr>",                       desc = "Test nearest" },
       { "<leader>v",  ":e ~/.config/nvim/init.lua<cr>",         desc = "Edit init.lua" },
       { "<leader>na", ":Noice<cr>",                             desc = "All notifications" },
       { "<leader>ne", ":Noice errors<cr>",                      desc = "Error notifications" },

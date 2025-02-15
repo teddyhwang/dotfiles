@@ -46,6 +46,3 @@ windows:
   - Editor:
     - vi -S Session.vim
   - Terminal:
-  - Server:
-    - git pull
-    - git fetch --prune --all

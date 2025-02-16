@@ -28,7 +28,7 @@ return function(base16)
       ["@property"] = { fg = colors.base08 },
       ["@parameter"] = { fg = colors.base08 },
       Title = { fg = colors.base09 },
-      SnacksPickerBorder = { link = "Title" },
+      SnacksPickerInputBorder = { link = "Title" },
       TSFuncMacro = { link = "TSString" },
       TSType = { fg = colors.base0A },
       TSNamespace = { fg = colors.base0A },

@@ -63,7 +63,7 @@ function M.bufferline()
               local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
               local full_path = vim.api.nvim_buf_get_name(buf.id)
               local filename = full_path:match(".*/(.*)$") or full_path
-              return (filetype == "typescript" or filetype == "javascript")
+              return (filetype:match("typescript") or filetype:match("javascript"))
                   and not (filename:match("%test") or filename:match("%spec"))
             end,
             separator = {

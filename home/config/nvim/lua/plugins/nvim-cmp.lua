@@ -74,10 +74,15 @@ return {
         ["<Tab>"] = cmp.mapping(
           vim.schedule_wrap(function(fallback)
             if cmp.visible() and has_words_before() then
-              cmp.confirm({
-                behavior = cmp.ConfirmBehavior.Replace,
-                select = false,
-              })
+              local entry = cmp.get_selected_entry()
+              if entry and entry.source.name == "copilot" then
+                fallback()
+              else
+                cmp.confirm({
+                  behavior = cmp.ConfirmBehavior.Replace,
+                  select = false,
+                })
+              end
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
             else

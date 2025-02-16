@@ -2,40 +2,42 @@ return {
   "folke/which-key.nvim",
   dependencies = {
     "folke/snacks.nvim",
-    "akinsho/toggleterm.nvim",
   },
   opts = function()
     local whichkey = require("which-key")
     local windows = require("windows")
     local Snacks = require("snacks")
-    local Terminal = require("toggleterm.terminal").Terminal
     local flash = require("flash")
 
-    local yazi = Terminal:new({
-      cmd = "yazi",
-      direction = "float",
-      float_opts = {
-        border = "curved",
-        winblend = 0,
-      },
-      highlights = {
-        FloatBorder = {
-          link = "FloatBorder",
-        },
-      },
-      on_open = function(term)
-        vim.cmd("startinsert!")
-        vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
-      end,
-      on_close = function()
-        vim.cmd("startinsert!")
-      end,
-    })
-
-    local function toggle_yazi()
+    local function open_yazi()
       local bufpath = vim.fn.expand("%:p:h")
-      yazi.dir = bufpath ~= "" and bufpath or vim.fn.getcwd()
-      yazi:toggle()
+      local dir = bufpath ~= "" and bufpath or vim.fn.getcwd()
+
+      local augroup = vim.api.nvim_create_augroup("YaziFileSelect", { clear = true })
+      vim.api.nvim_create_autocmd("TermClose", {
+        group = augroup,
+        pattern = "*",
+        callback = function()
+          local file = io.open("/tmp/yazi-selection", "r")
+          if file then
+            local selected = file:read("*l")
+            file:close()
+            os.remove("/tmp/yazi-selection")
+            if selected and selected ~= "" then
+              vim.schedule(function()
+                vim.cmd("edit " .. vim.fn.fnameescape(selected))
+              end)
+            end
+          end
+          vim.api.nvim_del_augroup_by_name("YaziFileSelect")
+        end,
+        once = true,
+      })
+
+      Snacks.terminal.open("yazi --chooser-file=/tmp/yazi-selection", {
+        win = { style = "float" },
+        cwd = dir,
+      })
     end
 
     local search_prompt = function()
@@ -267,8 +269,15 @@ return {
         desc = "Toggle Flash Search",
       },
       {
+        "<leader>ft",
+        function()
+          Snacks.terminal.open()
+        end,
+        desc = "terminal",
+      },
+      {
         "<leader>fr",
-        toggle_yazi,
+        open_yazi,
         desc = "yazi",
       },
       { "<leader>O",  ":! open %:h<cr>",                        desc = "Open file in Finder (Mac)" },
@@ -276,7 +285,6 @@ return {
       { "<leader>V",  "ggVG<cr>",                               desc = "Visually select current buffer" },
       { "<leader>Y",  ":%y+<cr>",                               desc = "Yank current file" },
       { "<leader>Lr", ":LspRestart<cr>",                        desc = "Restart LSP" },
-      { "<leader>ft", ":ToggleTerm<cr>",                        desc = "terminal" },
       { "<leader>gB", ":GitLink! blame<cr>",                    desc = "Open git blame link in browser" },
       { "<leader>gb", ":GitLink blame<cr>",                     desc = "Copy git blame link to clipboard" },
       { "<leader>gL", ":GitLink!<cr>",                          desc = "Open git permlink in browser" },

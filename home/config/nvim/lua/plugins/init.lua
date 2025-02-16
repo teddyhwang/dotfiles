@@ -30,11 +30,6 @@ return {
       vim.g["test#strategy"] = "vimux"
     end,
   },
-  {
-    "akinsho/toggleterm.nvim",
-    version = "*",
-    config = true,
-  },
   "vim-test/vim-test",
   "AndrewRadev/undoquit.vim",
   "dhruvasagar/vim-zoom",
@@ -90,7 +85,13 @@ return {
       scope = { enabled = true },
       scroll = { enabled = true },
       statuscolumn = { enabled = true },
-      styles = { enabled = true },
+      styles = {
+        float = {
+          border = "rounded",
+          backdrop = 40,
+        },
+      },
+      terminal = { enabled = true },
       toggle = { enabled = true },
       words = { enabled = true },
       zen = { enabled = true },

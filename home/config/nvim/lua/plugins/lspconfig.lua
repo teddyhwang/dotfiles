@@ -2,9 +2,10 @@ return {
   "neovim/nvim-lspconfig",
   event = { "BufReadPre", "BufNewFile" },
   dependencies = {
-    "gfanto/fzf-lsp.nvim",
-    "nvimtools/none-ls.nvim",
-    { "williamboman/mason.nvim", config = true },
+    { "williamboman/mason.nvim",  config = true },
+    "stevearc/conform.nvim",
+    "mfussenegger/nvim-lint",
+    { "rshkarin/mason-nvim-lint", config = true },
     {
       "williamboman/mason-lspconfig.nvim",
       opts = {
@@ -22,25 +23,13 @@ return {
         },
       },
     },
-    {
-      "jay-babu/mason-null-ls.nvim",
-      opts = {
-        automatic_installation = true,
-        ensure_installed = {
-          "eslint-lsp",
-          "prettierd",
-          "yamllint",
-        },
-      },
-    },
   },
   config = function()
     local lspconfig = require("lspconfig")
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
-    local null_ls = require("null-ls")
+    local lint = require("lint")
+    local format = require("conform")
     local icons = require("config.icons")
-    local formatting = null_ls.builtins.formatting
-    local diagnostics = null_ls.builtins.diagnostics
 
     for type, icon in pairs(icons.diagnostics) do
       local hl = "DiagnosticSign" .. type
@@ -76,14 +65,9 @@ return {
         vim.api.nvim_create_autocmd("BufWritePre", {
           group = augroup,
           buffer = bufnr,
-          callback = function()
+          callback = function(args)
             if vim.tbl_contains(prettier_filetypes, vim.bo[bufnr].filetype) then
-              vim.lsp.buf.format({
-                bufnr = bufnr,
-                filter = function(c)
-                  return c.name == "null-ls"
-                end,
-              })
+              format({ bufnr = args.buf })
             else
               vim.lsp.buf.format({ bufnr = bufnr })
             end
@@ -103,24 +87,34 @@ return {
       on_attach(client, bufnr)
     end
 
-    null_ls.setup({
-      sources = {
-        formatting.prettierd.with({
-          filetypes = prettier_filetypes,
-        }),
-        formatting.stylua,
-        diagnostics.yamllint,
-      },
-      on_attach = on_attach,
+    local function prettier_formatters(filetypes)
+      local formatters = {}
+      for _, filetype in ipairs(filetypes) do
+        formatters[filetype] = { "prettierd", "prettier", stop_after_first = true }
+      end
+      return formatters
+    end
+
+    format.setup({
+      formatters_by_ft = vim.tbl_extend("force",
+        prettier_formatters(prettier_filetypes),
+        { lua = { "stylua" } }
+      ),
+    })
+
+    lint.linters_by_ft = {
+      yaml = { "yamllint" },
+    }
+
+    vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {
+      callback = function()
+        lint.try_lint()
+      end,
     })
 
     local servers = {
-      html = {
-        filetypes = { "html", "eruby" },
-      },
-      ts_ls = {
-        on_attach = disable_formatting,
-      },
+      html = { filetypes = { "html", "eruby" } },
+      ts_ls = { on_attach = disable_formatting },
       cssls = {},
       tailwindcss = {},
       eslint = {},

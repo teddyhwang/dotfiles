@@ -108,18 +108,39 @@ return {
       { "<leader>+", "<C-a>", desc = "Increment number" },
       { "<leader>-", "<C-x>", desc = "Decrement number" },
       {
-        "<leader>E",
-        function()
-          Snacks.explorer.reveal()
-        end,
-        desc = "Find current file in nvim tree",
-      },
-      {
-        "<leader>b",
+        "<leader>gb",
         function()
           Snacks.picker.git_branches()
         end,
         desc = "Git branches",
+      },
+      {
+        "<leader>gl",
+        function()
+          Snacks.picker.git_log()
+        end,
+        desc = "Git logs",
+      },
+      {
+        "<leader>gd",
+        function()
+          Snacks.picker.git_diff()
+        end,
+        desc = "Git diff",
+      },
+      {
+        "<leader>gs",
+        function()
+          Snacks.picker.git_status()
+        end,
+        desc = "Git status",
+      },
+      {
+        "<leader>lg",
+        function()
+          Snacks.lazygit()
+        end,
+        desc = "lazygit",
       },
       {
         "<leader>fb",
@@ -157,7 +178,7 @@ return {
         desc = "Nvim help",
       },
       {
-        "<leader>fs",
+        "<leader>fg",
         function()
           Snacks.picker.grep()
         end,
@@ -198,20 +219,6 @@ return {
           Snacks.picker.buffers()
         end,
         desc = "Find buffers",
-      },
-      {
-        "<leader>gs",
-        function()
-          Snacks.picker.git_status()
-        end,
-        desc = "Git status",
-      },
-      {
-        "<leader>lg",
-        function()
-          Snacks.lazygit()
-        end,
-        desc = "lazygit",
       },
       {
         "<leader>sr",
@@ -287,8 +294,8 @@ return {
       { "<leader>Lr", ":LspRestart<cr>",                        desc = "Restart LSP" },
       { "<leader>gB", ":GitLink! blame<cr>",                    desc = "Open git blame link in browser" },
       { "<leader>gb", ":GitLink blame<cr>",                     desc = "Copy git blame link to clipboard" },
-      { "<leader>gL", ":GitLink!<cr>",                          desc = "Open git permlink in browser" },
-      { "<leader>gl", ":GitLink<cr>",                           desc = "Copy git permlink to clipboard" },
+      { "<leader>gH", ":GitLink!<cr>",                          desc = "Open git permlink in browser" },
+      { "<leader>gh", ":GitLink<cr>",                           desc = "Copy git permlink to clipboard" },
       { "<leader>q",  ":q<cr>",                                 desc = "Close current buffer" },
       { "<leader>t",  ":TestNearest<cr>",                       desc = "Test nearest" },
       { "<leader>v",  ":e ~/.config/nvim/init.lua<cr>",         desc = "Edit init.lua" },
@@ -322,25 +329,13 @@ return {
         "<C-j>",
         ":lua require'luasnip'.jump(1)<cr>",
         desc = "Luasnip scroll down",
-        mode = "i",
+        mode = { "i", "s" },
       },
       {
         "<C-k>",
         ":lua require'luasnip'.jump(-1)<cr>",
         desc = "Luasnip scroll up",
-        mode = "i",
-      },
-      {
-        "<C-j>",
-        ":lua require'luasnip'.jump(1)<cr>",
-        desc = "Luasnip scroll down",
-        mode = "s",
-      },
-      {
-        "<C-k>",
-        ":lua require'luasnip'.jump(-1)<cr>",
-        desc = "Luasnip scroll up",
-        mode = "s",
+        mode = { "i", "s" },
       },
       {
         "<C-w>H",

@@ -139,14 +139,14 @@ return {
             maxwidth = 150,
             ellipsis_char = "...",
             symbol_map = { Copilot = "" },
-            before = function(entry, vim_item)
-              local kind_hl_group = "CmpItemKind" .. vim_item.kind
-              vim_item.kind_hl_group = kind_hl_group
-              vim_item.dup = ({
+            before = function(before_entry, before_vim_item)
+              local kind_hl_group = "CmpItemKind" .. before_vim_item.kind
+              before_vim_item.kind_hl_group = kind_hl_group
+              before_vim_item.dup = ({
                 buffer = 1,
                 path = 1,
                 nvim_lsp = 0,
-              })[entry.source.name] or 0
+              })[before_entry.source.name] or 0
 
               local strings = vim.split(vim_item.abbr, " ", { trimempty = true })
               if strings[1] then

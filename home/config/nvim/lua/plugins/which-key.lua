@@ -9,7 +9,7 @@ return {
     local Snacks = require("snacks")
     local flash = require("flash")
 
-    local function open_yazi()
+    local open_yazi = function()
       local bufpath = vim.fn.expand("%:p:h")
       local dir = bufpath ~= "" and bufpath or vim.fn.getcwd()
 
@@ -64,7 +64,7 @@ return {
       end)
     end
 
-    local function test_file_command()
+    local test_file_command = function()
       if vim.fn.executable("dev") == 1 then
         vim.cmd(":VimuxRunCommand 'dev test '.@%")
       else
@@ -289,6 +289,7 @@ return {
       },
       { "<leader>O",  ":! open %:h<cr>",                        desc = "Open file in Finder (Mac)" },
       { "<leader>T",  test_file_command,                        desc = "Test current file" },
+      { "<leader>t",  ":TestNearest<cr>",                       desc = "Test nearest" },
       { "<leader>V",  "ggVG<cr>",                               desc = "Visually select current buffer" },
       { "<leader>Y",  ":%y+<cr>",                               desc = "Yank current file" },
       { "<leader>Lr", ":LspRestart<cr>",                        desc = "Restart LSP" },
@@ -297,7 +298,6 @@ return {
       { "<leader>gH", ":GitLink!<cr>",                          desc = "Open git permlink in browser" },
       { "<leader>gh", ":GitLink<cr>",                           desc = "Copy git permlink to clipboard" },
       { "<leader>q",  ":q<cr>",                                 desc = "Close current buffer" },
-      { "<leader>t",  ":TestNearest<cr>",                       desc = "Test nearest" },
       { "<leader>v",  ":e ~/.config/nvim/init.lua<cr>",         desc = "Edit init.lua" },
       { "<leader>na", ":Noice<cr>",                             desc = "All notifications" },
       { "<leader>ne", ":Noice errors<cr>",                      desc = "Error notifications" },

@@ -59,7 +59,7 @@ return {
 
     local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
-    local function on_attach(client, bufnr)
+    local on_attach = function(client, bufnr)
       if client.supports_method("textDocument/formatting") then
         vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
         vim.api.nvim_create_autocmd("BufWritePre", {
@@ -81,13 +81,13 @@ return {
       on_attach = on_attach,
     }
 
-    local function disable_formatting(client, bufnr)
+    local disable_formatting = function(client, bufnr)
       client.server_capabilities.documentFormattingProvider = false
       client.server_capabilities.documentRangeFormattingProvider = false
       on_attach(client, bufnr)
     end
 
-    local function prettier_formatters(filetypes)
+    local prettier_formatters = function(filetypes)
       local formatters = {}
       for _, filetype in ipairs(filetypes) do
         formatters[filetype] = { "prettierd", "prettier", stop_after_first = true }

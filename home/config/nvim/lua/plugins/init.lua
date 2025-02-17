@@ -18,6 +18,11 @@ return {
     end,
   },
   {
+    'echasnovski/mini.ai',
+    version = '*',
+    config = true,
+  },
+  {
     "andymass/vim-matchup",
     init = function()
       vim.g["matchup_matchparen_offscreen"] = { method = "popup" }

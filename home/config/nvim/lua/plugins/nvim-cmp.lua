@@ -27,8 +27,6 @@ return {
     luasnip.filetype_extend("javascriptreact", { "html" })
     luasnip.filetype_extend("typescriptreact", { "html" })
 
-    vim.opt.completeopt = "menu,menuone,noselect"
-
     local has_words_before = function()
       if vim.api.nvim_get_option_value("buftype", { buf = 0 }) == "prompt" then
         return false
@@ -74,15 +72,7 @@ return {
         ["<Tab>"] = cmp.mapping(
           vim.schedule_wrap(function(fallback)
             if cmp.visible() and has_words_before() then
-              local entry = cmp.get_selected_entry()
-              if entry and entry.source.name == "copilot" then
-                fallback()
-              else
-                cmp.confirm({
-                  behavior = cmp.ConfirmBehavior.Replace,
-                  select = false,
-                })
-              end
+              cmp.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = false })
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
             else

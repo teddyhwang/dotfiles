@@ -36,11 +36,6 @@
 
 [format]
 	pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset
-
-[filter "lfs"]
-	clean = git-lfs clean %f
-	smudge = git-lfs smudge %f
-	required = true
 [commit]
 	gpgsign = true
 

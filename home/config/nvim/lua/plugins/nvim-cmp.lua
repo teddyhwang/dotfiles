@@ -65,10 +65,19 @@ return {
         ["<C-f>"] = cmp.mapping.scroll_docs(4),
         ["<C-Space>"] = cmp.mapping.complete(),
         ["<C-e>"] = cmp.mapping.abort(),
-        ["<CR>"] = cmp.mapping.confirm({
-          behavior = cmp.ConfirmBehavior.Replace,
-          select = false,
-        }),
+        ["<CR>"] = cmp.mapping(
+          vim.schedule_wrap(function(fallback)
+            local entry = cmp.get_selected_entry()
+            if entry and entry.source.name == "copilot" then
+              fallback()
+            elseif cmp.visible() and has_words_before() then
+              cmp.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = false })
+            else
+              fallback()
+            end
+          end),
+          { "i", "s" }
+        ),
         ["<Tab>"] = cmp.mapping(
           vim.schedule_wrap(function(fallback)
             if cmp.visible() and has_words_before() then

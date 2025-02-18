@@ -2,33 +2,21 @@ return {
   "neovim/nvim-lspconfig",
   event = { "BufReadPre", "BufNewFile" },
   dependencies = {
-    { "williamboman/mason.nvim",  config = true },
+    { "williamboman/mason.nvim", config = true },
     "stevearc/conform.nvim",
+    { "zapling/mason-conform.nvim", config = true },
     "mfussenegger/nvim-lint",
     { "rshkarin/mason-nvim-lint", config = true },
     {
       "williamboman/mason-lspconfig.nvim",
-      opts = {
-        automatic_installation = false,
-        ensure_installed = {
-          "bashls",
-          "cssls",
-          "graphql",
-          "html",
-          "jsonls",
-          "lua_ls",
-          "tailwindcss",
-          "ts_ls",
-          "yamlls",
-        },
-      },
+      config = true,
     },
   },
   config = function()
     local lspconfig = require("lspconfig")
     local cmp_nvim_lsp = require("cmp_nvim_lsp")
     local lint = require("lint")
-    local format = require("conform")
+    local conform = require("conform")
     local icons = require("config.icons")
 
     for type, icon in pairs(icons.diagnostics) do
@@ -50,43 +38,6 @@ return {
       "typescriptreact",
     }
 
-    local server_filetypes = {
-      html = { "html" },
-      cssls = { "css", "scss", "less" },
-      graphql = { "graphql" },
-      jsonls = { "json" },
-    }
-
-    local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
-
-    local on_attach = function(client, bufnr)
-      if client.supports_method("textDocument/formatting") then
-        vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-        vim.api.nvim_create_autocmd("BufWritePre", {
-          group = augroup,
-          buffer = bufnr,
-          callback = function(args)
-            if vim.tbl_contains(prettier_filetypes, vim.bo[bufnr].filetype) then
-              format({ bufnr = args.buf })
-            else
-              vim.lsp.buf.format({ bufnr = bufnr })
-            end
-          end,
-        })
-      end
-    end
-
-    local default_config = {
-      capabilities = cmp_nvim_lsp.default_capabilities(),
-      on_attach = on_attach,
-    }
-
-    local disable_formatting = function(client, bufnr)
-      client.server_capabilities.documentFormattingProvider = false
-      client.server_capabilities.documentRangeFormattingProvider = false
-      on_attach(client, bufnr)
-    end
-
     local prettier_formatters = function(filetypes)
       local formatters = {}
       for _, filetype in ipairs(filetypes) do
@@ -95,15 +46,29 @@ return {
       return formatters
     end
 
-    format.setup({
-      formatters_by_ft = vim.tbl_extend("force",
-        prettier_formatters(prettier_filetypes),
-        { lua = { "stylua" } }
-      ),
+    conform.setup({
+      default_format_opts = {
+        lsp_format = "fallback",
+      },
+      format_on_save = {
+        lsp_format = "fallback",
+        timeout_ms = 500,
+      },
+      formatters_by_ft = vim.tbl_extend("force", prettier_formatters(prettier_filetypes), {
+        lua = { "stylua" },
+        sh = { "shfmt" },
+        zsh = { "shfmt" },
+        ["*"] = { "codespell" },
+        ["_"] = { "trim_whitespace" },
+      }),
     })
 
     lint.linters_by_ft = {
       yaml = { "yamllint" },
+    }
+
+    local default_config = {
+      capabilities = cmp_nvim_lsp.default_capabilities(),
     }
 
     vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {
@@ -114,7 +79,7 @@ return {
 
     local servers = {
       html = { filetypes = { "html", "eruby" } },
-      ts_ls = { on_attach = disable_formatting },
+      ts_ls = {},
       cssls = {},
       tailwindcss = {},
       eslint = {},
@@ -125,7 +90,7 @@ return {
           if client.workspace_folders then
             local path = client.workspace_folders[1].name
             if
-                vim.fn.filereadable(path .. "/.luarc.json") == 1 or vim.fn.filereadable(path .. "/.luarc.jsonc") == 1
+              vim.fn.filereadable(path .. "/.luarc.json") == 1 or vim.fn.filereadable(path .. "/.luarc.jsonc") == 1
             then
               return
             end
@@ -162,18 +127,11 @@ return {
           },
         }),
       },
-      bashls = {},
+      bashls = {
+        filetypes = { "sh", "zsh" },
+      },
       yamlls = {},
     }
-
-    for server, filetypes in pairs(server_filetypes) do
-      for _, filetype in ipairs(filetypes) do
-        if vim.tbl_contains(prettier_filetypes, filetype) then
-          servers[server] = vim.tbl_deep_extend("force", servers[server] or {}, { on_attach = disable_formatting })
-          break
-        end
-      end
-    end
 
     for server, config in pairs(servers) do
       lspconfig[server].setup(vim.tbl_deep_extend("force", default_config, config))

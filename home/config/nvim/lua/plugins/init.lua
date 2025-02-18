@@ -7,7 +7,7 @@ return {
       require("restart").bufferline()
     end,
   },
-  { "j-hui/fidget.nvim",         config = true },
+  { "j-hui/fidget.nvim", config = true },
   { "NvChad/nvim-colorizer.lua", config = true },
   "sitiom/nvim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
@@ -18,8 +18,8 @@ return {
     end,
   },
   {
-    'echasnovski/mini.ai',
-    version = '*',
+    "echasnovski/mini.ai",
+    version = "*",
     config = true,
   },
   {
@@ -183,9 +183,9 @@ return {
     end,
   },
   "AndrewRadev/splitjoin.vim",
-  { "numToStr/Comment.nvim",       config = true },
+  { "numToStr/Comment.nvim", config = true },
   { "linrongbin16/gitlinker.nvim", config = true },
-  { "lewis6991/gitsigns.nvim",     config = true },
+  { "lewis6991/gitsigns.nvim", config = true },
   "f-person/git-blame.nvim",
   "matze/vim-move",
   "mg979/vim-visual-multi",

@@ -119,13 +119,6 @@ return {
         init_options = {
           formatter = "rubocop",
         },
-        capabilities = vim.tbl_deep_extend("force", default_config.capabilities, {
-          textDocument = {
-            references = true,
-            definition = true,
-            implementation = true,
-          },
-        }),
       },
       bashls = {
         filetypes = { "sh", "zsh" },

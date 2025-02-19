@@ -1,7 +1,7 @@
 # /Users/teddyhwang/.config/tmuxinator/shopify.yml
 
 name: shopify
-root: ~/src/github.com/Shopify/shopify/areas/core/shopify
+root: ~/world/trees/root/src/areas/core/shopify
 
 
 # Optional tmux socket
@@ -48,5 +48,4 @@ windows:
     - vi -S Session.vim
   - Terminal:
   - Server:
-    - git pull
-    - git fetch --prune --all
+    - dev up shopify

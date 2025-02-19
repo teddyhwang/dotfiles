@@ -165,6 +165,9 @@ return {
           enable = false,
           delay = 0,
         },
+        lightbulb = {
+          enable = false,
+        },
         finder = {
           keys = {
             toggle_or_open = "<cr>",

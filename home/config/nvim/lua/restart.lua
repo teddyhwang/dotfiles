@@ -64,7 +64,7 @@ function M.bufferline()
               local full_path = vim.api.nvim_buf_get_name(buf.id)
               local filename = full_path:match(".*/(.*)$") or full_path
               return (filetype:match("typescript") or filetype:match("javascript"))
-                  and not (filename:match("%test") or filename:match("%spec"))
+                and not (filename:match("%test") or filename:match("%spec"))
             end,
             separator = {
               style = groups.separator.slant,
@@ -100,7 +100,7 @@ function M.bufferline()
             auto_close = false,
             matcher = function(buf)
               local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              return filetype == "json" or filetype == "yaml"
+              return filetype:match("%json") or filetype:match("%yaml")
             end,
             separator = {
               style = groups.separator.slant,

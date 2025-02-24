@@ -65,7 +65,7 @@ return {
     end
 
     local test_file_command = function()
-      if vim.fn.executable("dev") == 1 then
+      if vim.fn.executable("/opt/dev/bin/dev") == 1 then
         vim.cmd(":VimuxRunCommand 'dev test '.@%")
       else
         vim.cmd(":TestFile")

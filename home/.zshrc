@@ -191,7 +191,6 @@ branch() {
       refs/heads/ \
       --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' | \
       fzf --ansi | \
-      cut -f2 -d'*' | \
       cut -f1 -d'|' | \
       xargs)
 

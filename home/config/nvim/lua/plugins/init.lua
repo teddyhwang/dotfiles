@@ -187,6 +187,16 @@ return {
   },
   "AndrewRadev/splitjoin.vim",
   { "numToStr/Comment.nvim", config = true },
+  {
+    "pwntester/octo.nvim",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "folke/snacks.nvim",
+    },
+    opts = {
+      picker = "snacks",
+    },
+  },
   { "linrongbin16/gitlinker.nvim", config = true },
   { "lewis6991/gitsigns.nvim", config = true },
   "f-person/git-blame.nvim",

@@ -1,7 +1,7 @@
-# /Users/teddyhwang/.config/tmuxinator/web.yml
+# /Users/teddyhwang/.config/tmuxinator/admin-web.yml
 
-name: web
-root: ~/src/github.com/Shopify/web/areas/clients/admin-web
+name: admin-web
+root: ~/world/trees/root/src/areas/clients/admin-web
 
 # Optional tmux socket
 # socket_name: foo
@@ -40,12 +40,11 @@ root: ~/src/github.com/Shopify/web/areas/clients/admin-web
 # attach: false
 
 # Runs after everything. Use it to attach to tmux with custom options etc.
-# post: tmux -CC attach -t web
+# post: tmux -CC attach -t admin-web
 
 windows:
   - Editor:
     - vi -S Session.vim
   - Terminal:
   - Server:
-    - git pull
-    - git fetch --prune --all
+    - dev up admin-web

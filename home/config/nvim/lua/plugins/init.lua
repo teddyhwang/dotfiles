@@ -45,7 +45,11 @@ return {
       vim.g["winresizer_vert_resize"] = 3
     end,
   },
-  "tpope/vim-obsession",
+  {
+    "folke/persistence.nvim",
+    event = "BufReadPre",
+    opts = {},
+  },
   "vim-scripts/Tabmerge",
   {
     "airblade/vim-rooter",

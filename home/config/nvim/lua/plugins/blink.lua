@@ -59,6 +59,10 @@ return {
     },
     sources = {
       default = { "copilot", "lsp", "path", "snippets", "buffer" },
+      per_filetype = {
+        sql = { "snippets", "dadbod", "buffer" },
+        mysql = { "snippets", "dadbod", "buffer" },
+      },
       providers = {
         copilot = {
           name = "copilot",
@@ -66,6 +70,7 @@ return {
           score_offset = 100,
           async = true,
         },
+        dadbod = { name = "Dadbod", module = "vim_dadbod_completion.blink" },
       },
     },
     fuzzy = { implementation = "prefer_rust_with_warning" },

@@ -14,7 +14,7 @@ return {
   },
   config = function()
     local lspconfig = require("lspconfig")
-    local cmp_nvim_lsp = require("cmp_nvim_lsp")
+    local blink_cmp = require("blink.cmp")
     local lint = require("lint")
     local conform = require("conform")
     local icons = require("config.icons")
@@ -68,7 +68,7 @@ return {
     }
 
     local default_config = {
-      capabilities = cmp_nvim_lsp.default_capabilities(),
+      capabilities = blink_cmp.get_lsp_capabilities(),
     }
 
     vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {

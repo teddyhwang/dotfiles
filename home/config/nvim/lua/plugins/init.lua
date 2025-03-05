@@ -131,28 +131,6 @@ return {
     cmd = "GrugFar",
   },
   {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "InsertEnter",
-    opts = {
-      suggestion = { enabled = false, auto_trigger = true },
-      panel = { enabled = false },
-      copilot_node_command = vim.fn.executable("/opt/homebrew/bin/node") == 1 and "/opt/homebrew/bin/node" or "node",
-    },
-    dependencies = {
-      {
-        "zbirenbaum/copilot-cmp",
-        config = function()
-          require("copilot_cmp").setup({
-            formatters = {
-              insert_text = require("copilot_cmp.format").format_existing_text,
-            },
-          })
-        end,
-      },
-    },
-  },
-  {
     "glepnir/lspsaga.nvim",
     event = "BufRead",
     dependencies = {

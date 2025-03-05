@@ -7,7 +7,6 @@ return {
       require("restart").bufferline()
     end,
   },
-  { "j-hui/fidget.nvim", config = true },
   { "NvChad/nvim-colorizer.lua", config = true },
   "sitiom/nvim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",

@@ -287,6 +287,7 @@ return {
         open_yazi,
         desc = "yazi",
       },
+      { "<leader>D", ":DBUIToggle<cr>", desc = "Toggle Dadbod UI" },
       { "<leader>O", ":! open %:h<cr>", desc = "Open file in Finder (Mac)" },
       { "<leader>T", test_file_command, desc = "Test current file" },
       { "<leader>t", ":TestNearest<cr>", desc = "Test nearest" },

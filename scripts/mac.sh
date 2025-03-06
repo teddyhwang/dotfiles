@@ -3,7 +3,7 @@
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 source "${SCRIPT_DIR}/print.sh"
 
-if ! command -v brew &> /dev/null; then
+if ! command -v brew &>/dev/null; then
   if [ -f "/usr/local/bin/brew" ]; then
     BREW_BIN="/usr/local/bin/brew"
   else
@@ -20,7 +20,7 @@ fi
 if [ -d ~/Library/Application\ Support/Amethyst/ ]; then
   if ! [ -f ~/Library/Preferences/com.amethyst.Amethyst.plist ]; then
     print_progress "Copying Amethyst config file..."
-    cp -rf ./app_configs/amethyst/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
+    cp -rf ../apps/amethyst/com.amethyst.Amethyst.plist ~/Library/Preferences/com.amethyst.Amethyst.plist
     track_change
   else
     print_info "Amethyst config file is copied"
@@ -28,7 +28,7 @@ if [ -d ~/Library/Application\ Support/Amethyst/ ]; then
 
   if ! [ -f ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js ]; then
     print_progress "Copying Amethyst custom layout file..."
-    cp -rf ./app_configs/amethyst/uniform-columns.js ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js
+    cp -rf ../apps/amethyst/uniform-columns.js ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js
     track_change
   else
     print_info "Amethyst custom layout file is copied"
@@ -42,8 +42,8 @@ if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
   echo -e "\033[1A\033[2K\033[1A"
   if [[ "$response" =~ ^[Yy]$ ]]; then
     print_progress "Copying launch agent config files..."
-    cp app_configs/pbcopy.plist ~/Library/LaunchAgents/.
-    cp app_configs/pbpaste.plist ~/Library/LaunchAgents/.
+    cp ../apps/pbcopy.plist ~/Library/LaunchAgents/.
+    cp ../apps/pbpaste.plist ~/Library/LaunchAgents/.
     launchctl load ~/Library/LaunchAgents/pbcopy.plist
     launchctl load ~/Library/LaunchAgents/pbpaste.plist
     track_change

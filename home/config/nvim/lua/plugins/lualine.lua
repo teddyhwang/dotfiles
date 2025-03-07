@@ -19,6 +19,7 @@ return {
         theme = lualine_theme_base16,
         disabled_filetypes = {
           "packer",
+          "dbui"
         },
       },
       sections = {

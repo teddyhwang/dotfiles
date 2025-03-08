@@ -44,7 +44,7 @@ root: ~/src/github.com/teddyhwang/tico
 
 windows:
   - Editor:
-    - vi -S Session.vim
+    - nvim
   - Terminal:
   - Server:
   - Overmind:

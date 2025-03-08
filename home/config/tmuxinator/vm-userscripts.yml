@@ -44,6 +44,6 @@ root: ~/src/github.com/teddyhwang/vm-userscripts
 
 windows:
   - Editor:
-      - vi -S Session.vim
+      - nvim
   - Terminal:
   - Server:

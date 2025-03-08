@@ -44,5 +44,5 @@ root: ~/src/github.com/Shopify/graphql-ruby-shopify
 
 windows:
   - Editor:
-    - vi -S Session.vim
+    - nvim
   - Terminal:

@@ -45,7 +45,7 @@ root: ~/src/github.com/Shopify/partners
 
 windows:
   - Editor:
-    - vi -S Session.vim
+    - nvim
   - Terminal:
   - Server:
     - git pull

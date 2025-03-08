@@ -45,7 +45,7 @@ root: ~/world/trees/root/src/areas/core/shopify
 
 windows:
   - Editor:
-    - vi -S Session.vim
+    - nvim
   - Terminal:
   - Server:
     - dev up shopify

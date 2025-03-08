@@ -44,5 +44,5 @@ root: ~/src/github.com/Shopify/api-management
 
 windows:
   - Editor:
-    - vi -S Session.vim
+    - nvim
   - Terminal:

@@ -44,7 +44,7 @@ root: ~/src/github.com/Shopify/u2
 
 windows:
   - Editor:
-    - vi -S Session.vim
+    - nvim
   - Terminal:
   - Server:
     - git pull

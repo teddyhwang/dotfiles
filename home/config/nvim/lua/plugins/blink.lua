@@ -19,7 +19,6 @@ return {
     },
   },
   version = "*",
-  build = "cargo build --release",
   opts = {
     keymap = {
       preset = "super-tab",

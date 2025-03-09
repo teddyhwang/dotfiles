@@ -9,10 +9,10 @@ export BASE16_THEME_DEFAULT="seti"
 export EDITOR='nvim'
 export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"
 export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
-export FZF_CTRL_T_OPTS="--preview 'bat --theme=base16-seti --style=numbers --color=always --line-range :500 {}'"
+export FZF_CTRL_T_OPTS="--preview 'bat --theme=base16-seti --style=numbers --color=always --line-range :500 {}' --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort' --multi"
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
 export FZF_DEFAULT_OPTS="--border"
-export FZF_TMUX_OPTS='-d 40%'
+export FZF_TMUX_OPTS='-p'
 export HIGHLIGHT_STYLE=base16/seti
 export TERM="xterm-256color"
 export XDG_CONFIG_HOME="$HOME/.config"

@@ -267,3 +267,6 @@ fi
 if command -v zoxide &> /dev/null; then
   eval "$(zoxide init zsh)"
 fi
+if command -v gt &> /dev/null; then
+  eval "$(gt completion)"
+fi

@@ -45,7 +45,7 @@ return {
         prompt = "Search: ",
       }, function(input)
         if input then
-          Snacks.picker.grep_word({ search = input })
+          Snacks.picker.grep_word({ search = input, hidden = true })
         else
           vim.cmd("echo ''")
         end
@@ -159,7 +159,7 @@ return {
       {
         ",ff",
         function()
-          Snacks.picker.grep_word()
+          Snacks.picker.grep_word({ hidden = true })
         end,
         desc = "grep word",
       },

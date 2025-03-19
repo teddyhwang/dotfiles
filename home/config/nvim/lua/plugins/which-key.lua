@@ -108,6 +108,16 @@ return {
       { "<leader>+", "<C-a>", desc = "Increment number" },
       { "<leader>-", "<C-x>", desc = "Decrement number" },
       {
+        "<leader>uf",
+        function()
+          local toggle = Snacks.toggle.get("format")
+          if toggle then
+            toggle:toggle()
+          end
+        end,
+        desc = "Toggle autoformat",
+      },
+      {
         "<leader>gb",
         function()
           Snacks.picker.git_branches()
@@ -162,13 +172,6 @@ return {
           Snacks.picker.grep_word({ hidden = true })
         end,
         desc = "grep word",
-      },
-      {
-        "<leader>ff",
-        function()
-          Snacks.picker()
-        end,
-        desc = "Snacks picker",
       },
       {
         "<leader>fh",

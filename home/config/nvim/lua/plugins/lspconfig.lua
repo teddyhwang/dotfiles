@@ -2,6 +2,7 @@ return {
   "neovim/nvim-lspconfig",
   event = { "BufReadPre", "BufNewFile" },
   dependencies = {
+    "folke/snacks.nvim",
     { "williamboman/mason.nvim", config = true },
     "stevearc/conform.nvim",
     { "zapling/mason-conform.nvim", config = true },
@@ -18,6 +19,7 @@ return {
     local lint = require("lint")
     local conform = require("conform")
     local icons = require("config.icons")
+    local Snacks = require("snacks")
 
     for type, icon in pairs(icons.diagnostics) do
       local hl = "DiagnosticSign" .. type
@@ -50,10 +52,12 @@ return {
       default_format_opts = {
         lsp_format = "fallback",
       },
-      format_on_save = {
-        lsp_format = "fallback",
-        timeout_ms = 1000,
-      },
+      format_on_save = function(bufnr)
+        if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+          return
+        end
+        return { timeout_ms = 1000, lsp_format = "fallback" }
+      end,
       formatters_by_ft = vim.tbl_extend("force", prettier_formatters(prettier_filetypes), {
         lua = { "stylua" },
         sh = { "shfmt" },
@@ -61,6 +65,22 @@ return {
         ["*"] = { "codespell" },
         ["_"] = { "trim_whitespace" },
       }),
+    })
+
+    Snacks.toggle.new({
+      id = "format",
+      name = "format",
+      get = function()
+        return not (vim.g.disable_autoformat or vim.b.disable_autoformat)
+      end,
+      set = function(state)
+        if state then
+          vim.b.disable_autoformat = false
+          vim.g.disable_autoformat = false
+        else
+          vim.b.disable_autoformat = true
+        end
+      end,
     })
 
     lint.linters_by_ft = {

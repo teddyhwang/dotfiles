@@ -140,9 +140,6 @@ return {
           formatter = "rubocop",
         },
       },
-      bashls = {
-        filetypes = { "sh", "zsh" },
-      },
       yamlls = {},
     }
 

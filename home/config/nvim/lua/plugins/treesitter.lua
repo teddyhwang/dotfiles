@@ -105,7 +105,7 @@ return {
         },
       },
       hidesig = {
-        enable = true,
+        enable = false,
         opacity = 0.5,
         delay = 0,
       },

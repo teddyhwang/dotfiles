@@ -21,10 +21,21 @@ return {
     local icons = require("config.icons")
     local Snacks = require("snacks")
 
-    for type, icon in pairs(icons.diagnostics) do
-      local hl = "DiagnosticSign" .. type
-      vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-    end
+    vim.diagnostic.config({
+      virtual_text = true,
+      virtual_lines = false,
+      signs = {
+        text = {
+          [vim.diagnostic.severity.ERROR] = icons.diagnostics.Error,
+          [vim.diagnostic.severity.WARN] = icons.diagnostics.Warn,
+          [vim.diagnostic.severity.INFO] = icons.diagnostics.Info,
+          [vim.diagnostic.severity.HINT] = icons.diagnostics.Hint,
+        },
+      },
+      underline = true,
+      update_in_insert = false,
+      severity_sort = true,
+    })
 
     local prettier_filetypes = {
       "css",
@@ -116,7 +127,7 @@ return {
             end
           end
 
-          client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
+          client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua or {}, {
             runtime = {
               version = "LuaJIT",
             },

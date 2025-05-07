@@ -279,6 +279,19 @@ return {
         desc = "Toggle Flash Search",
       },
       {
+        "<leader>fy",
+        function()
+          local filepath = vim.fn.expand("%:p")
+          if filepath ~= "" then
+            vim.fn.setreg("+", filepath)
+            vim.notify("Copied filepath: " .. filepath)
+          else
+            vim.notify("No filepath for current buffer", vim.log.levels.WARN)
+          end
+        end,
+        desc = "Copy file path",
+      },
+      {
         "<leader>ft",
         function()
           Snacks.terminal.open()

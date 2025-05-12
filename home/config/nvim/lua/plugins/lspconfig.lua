@@ -72,13 +72,21 @@ return {
         if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
           return
         end
+
+        local filetype = vim.bo[bufnr].filetype
+        if filetype == "ruby" then
+          return {
+            timeout_ms = 2000,
+            lsp_format = "prefer",
+          }
+        end
+
         return { timeout_ms = 2000, lsp_format = "fallback" }
       end,
       formatters_by_ft = vim.tbl_extend("force", prettier_formatters(prettier_filetypes), {
         lua = { "stylua" },
         sh = { "shfmt" },
         zsh = { "shfmt" },
-        ruby = { "rubocop" },
         ["*"] = { "codespell" },
         ["_"] = { "trim_whitespace" },
       }),

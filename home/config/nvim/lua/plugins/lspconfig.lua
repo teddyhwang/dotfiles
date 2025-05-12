@@ -5,7 +5,12 @@ return {
     "folke/snacks.nvim",
     { "williamboman/mason.nvim", config = true },
     "stevearc/conform.nvim",
-    { "zapling/mason-conform.nvim", config = true },
+    {
+      "zapling/mason-conform.nvim",
+      config = {
+        ignore_install = { "rubocop" },
+      },
+    },
     "mfussenegger/nvim-lint",
     { "rshkarin/mason-nvim-lint", config = true },
     {
@@ -67,12 +72,13 @@ return {
         if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
           return
         end
-        return { timeout_ms = 1000, lsp_format = "fallback" }
+        return { timeout_ms = 2000, lsp_format = "fallback" }
       end,
       formatters_by_ft = vim.tbl_extend("force", prettier_formatters(prettier_filetypes), {
         lua = { "stylua" },
         sh = { "shfmt" },
         zsh = { "shfmt" },
+        ruby = { "rubocop" },
         ["*"] = { "codespell" },
         ["_"] = { "trim_whitespace" },
       }),

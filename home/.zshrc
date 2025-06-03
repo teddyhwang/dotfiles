@@ -155,12 +155,20 @@ ssh() {
 tmux() {
   case $1 in
     start)
-      command tmux new-session -d -s $2
-      command tmux new-window -n Terminal
-      command tmux kill-window -t 0
-      command tmux new-window -d -n Editor
-      command tmux new-window -d -n Server
-      command tmux select-window -t 0
+      if [ -n "$TMUX" ]; then
+        command tmux new-session -d -s $2
+        command tmux rename-window -t $2:0 Terminal
+        command tmux new-window -t $2 -n Editor
+        command tmux new-window -t $2 -n Server
+        command tmux select-window -t $2:0
+        command tmux switch-client -t $2
+      else
+        command tmux new-session -s $2
+        command tmux rename-window -t $2:0 Terminal
+        command tmux new-window -t $2 -n Editor
+        command tmux new-window -t $2 -n Server
+        command tmux select-window -t $2:0
+      fi
       ;;
     *)
       command tmux $@

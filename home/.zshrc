@@ -1,3 +1,7 @@
+if [[ "$TERM_PROGRAM" == "vscode" || "$TERM_PROGRAM" == "cursor" ]]; then
+  return
+fi
+
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
@@ -278,3 +282,5 @@ fi
 if command -v gt &> /dev/null; then
   eval "$(gt completion)"
 fi
+
+[ -f ~/.claude/local/claude ] && alias claude="~/.claude/local/claude"

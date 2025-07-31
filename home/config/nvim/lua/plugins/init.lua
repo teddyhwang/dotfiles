@@ -11,6 +11,15 @@ return {
   "sitiom/nvim-numbertoggle",
   "kristijanhusak/vim-carbon-now-sh",
   {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    build = "cd app && yarn install",
+    init = function()
+      vim.g.mkdp_filetypes = { "markdown" }
+    end,
+    ft = { "markdown" },
+  },
+  {
     "machakann/vim-highlightedyank",
     init = function()
       vim.g["highlightedyank_highlight_duration"] = 100

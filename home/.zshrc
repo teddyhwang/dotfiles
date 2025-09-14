@@ -66,6 +66,10 @@ fi
 autoload -U compinit && compinit
 setopt AUTO_PUSHD
 
+if command -v carapace &> /dev/null; then
+  source <(carapace _carapace)
+fi
+
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 zstyle ':completion:*' accept-exact '*(N)'
 zstyle ':completion:*' cache-path ~/.zsh/cache
@@ -73,11 +77,20 @@ zstyle ':completion:*' use-cache on
 zstyle ':completion:*:directory-stack' list-colors '=(#b) #([0-9]#)*( *)==95=38;5;12'
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-zstyle ':completion:*:descriptions' format '%F{green}-- %d --%f'
-zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
 
-source <(carapace _carapace)
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' list-separator ''
+zstyle ':completion:*:descriptions' format '%F{green}%d%f'
+zstyle ':completion:*:warnings' format '%F{red}no matches found%f'
+
+zstyle ':completion:*' list-colors '=*=38;5;14' '=*=38;5;15'
+zstyle ':completion:*:default' list-colors '=*=38;5;14' '=*=38;5;15'
+zstyle ':completion:*:corrections' list-colors '=*=38;5;14' '=*=38;5;15'
+zstyle ':completion:*:descriptions' list-colors '=*=38;5;14' '=*=38;5;15'
+
+zstyle ':completion:*' completer _complete _match _approximate
+zstyle ':completion:*:match:*' original only
+zstyle ':completion:*:approximate:*' max-errors 1 numeric
 
 bindkey '^[[Z' autosuggest-accept
 bindkey '^f' fzf-cd-widget

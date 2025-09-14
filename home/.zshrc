@@ -19,6 +19,9 @@ export XDG_CONFIG_HOME="$HOME/.config"
 if [ $SPIN ]; then
   source ~/.spin.zsh
 fi
+if command -v vivid &> /dev/null; then
+  export LS_COLORS=$(vivid generate molokai)
+fi
 
 DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true
@@ -63,6 +66,7 @@ fi
 autoload -U compinit && compinit
 setopt AUTO_PUSHD
 
+zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 zstyle ':completion:*' accept-exact '*(N)'
 zstyle ':completion:*' cache-path ~/.zsh/cache
 zstyle ':completion:*' use-cache on
@@ -72,6 +76,8 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*:descriptions' format '%F{green}-- %d --%f'
 zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
+
+source <(carapace _carapace)
 
 bindkey '^[[Z' autosuggest-accept
 bindkey '^f' fzf-cd-widget

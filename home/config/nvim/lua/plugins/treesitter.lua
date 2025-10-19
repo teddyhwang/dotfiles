@@ -3,7 +3,6 @@ return {
   dependencies = {
     "bfontaine/Brewfile.vim",
     "nvim-treesitter/nvim-treesitter-textobjects",
-    "sle-c/nvim-hidesig",
     "tpope/vim-liquid",
     "tpope/vim-rails",
     "whatyouhide/vim-tmux-syntax",
@@ -38,6 +37,7 @@ return {
         "markdown",
         "markdown_inline",
         "python",
+        "rbs",
         "regex",
         "ruby",
         "svelte",
@@ -104,11 +104,12 @@ return {
           },
         },
       },
-      hidesig = {
-        enable = false,
-        opacity = 0.5,
-        delay = 0,
-      },
+    })
+
+    -- Setup sorbet signature dimming
+    require("sorbet-dim").setup({
+      opacity = 0.5,
+      delay = 200,
     })
 
     -- https://github.com/nvim-treesitter/nvim-treesitter/issues/655#issuecomment-1021160477

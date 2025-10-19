@@ -124,7 +124,6 @@ return {
 
     local servers = {
       html = { filetypes = { "html", "eruby" } },
-      copilot = {},
       ts_ls = {},
       cssls = {},
       tailwindcss = {},

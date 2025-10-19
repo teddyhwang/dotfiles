@@ -18,6 +18,10 @@ local update_timer = nil
 -- Cache for dimmed highlight groups
 local hl_cache = {}
 
+-- Cache for processed signature blocks per buffer
+-- Format: { [bufnr] = { ["start_row:start_col:end_row:end_col"] = true } }
+local sig_cache = {}
+
 -- Convert decimal color to hex
 local function dec_to_hex(dec)
   return string.format("#%06x", dec)
@@ -95,6 +99,22 @@ end
 local function dim_sorbet_node(bufnr, node)
   local start_row, start_col, end_row, end_col = node:range()
 
+  -- Create cache key for this signature
+  local sig_key = string.format("%d:%d:%d:%d", start_row, start_col, end_row, end_col)
+
+  -- Initialize buffer cache if needed
+  if not sig_cache[bufnr] then
+    sig_cache[bufnr] = {}
+  end
+
+  -- Skip if already processed
+  if sig_cache[bufnr][sig_key] then
+    return
+  end
+
+  -- Mark as processed
+  sig_cache[bufnr][sig_key] = true
+
   -- Get all treesitter highlights in this range
   local parser = vim.treesitter.get_parser(bufnr, "ruby")
   if not parser then
@@ -143,17 +163,20 @@ local function dim_sorbet_node(bufnr, node)
   end
 end
 
--- Update highlights for visible portion of buffer
-local function update_visible()
+-- Clear cache and highlights for a buffer
+local function clear_buffer_cache(bufnr)
+  sig_cache[bufnr] = {}
+  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+end
+
+-- Update highlights for visible portion of buffer (incremental)
+local function update_visible_incremental()
   local bufnr = vim.api.nvim_get_current_buf()
 
   -- Only process Ruby files
   if vim.bo[bufnr].filetype ~= "ruby" then
     return
   end
-
-  -- Clear existing highlights
-  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
 
   -- Get visible range
   local start_line = vim.fn.line("w0") - 1
@@ -187,7 +210,7 @@ local function update_visible()
     return
   end
 
-  -- Execute query and dim matching nodes
+  -- Execute query and dim matching nodes (only new ones due to cache)
   for id, node in query:iter_captures(root, bufnr, start_line, end_line) do
     if query.captures[id] == "sig_def" then
       dim_sorbet_node(bufnr, node)
@@ -195,14 +218,30 @@ local function update_visible()
   end
 end
 
--- Debounced update
+-- Full update (clears cache and re-renders everything visible)
+local function update_visible_full()
+  local bufnr = vim.api.nvim_get_current_buf()
+
+  -- Only process Ruby files
+  if vim.bo[bufnr].filetype ~= "ruby" then
+    return
+  end
+
+  -- Clear cache and highlights
+  clear_buffer_cache(bufnr)
+
+  -- Re-render visible signatures
+  update_visible_incremental()
+end
+
+-- Debounced incremental update
 local function update_debounced()
   if update_timer then
     update_timer:stop()
   end
 
   update_timer = vim.defer_fn(function()
-    update_visible()
+    update_visible_incremental()
   end, config.delay)
 end
 
@@ -213,24 +252,49 @@ function M.setup(opts)
   -- Create autocommands
   local group = vim.api.nvim_create_augroup("SorbetDim", { clear = true })
 
-  vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "TextChanged" }, {
+  -- Full update on buffer enter and initial load
+  vim.api.nvim_create_autocmd("BufEnter", {
     group = group,
     pattern = "*.rb",
-    callback = update_visible,
+    callback = update_visible_incremental, -- Use incremental since cache is per-buffer
   })
 
+  -- Full update when content changes
+  vim.api.nvim_create_autocmd({ "BufWritePost", "TextChanged", "TextChangedI" }, {
+    group = group,
+    pattern = "*.rb",
+    callback = update_visible_full,
+  })
+
+  -- Incremental update on scroll/cursor movement (debounced)
   vim.api.nvim_create_autocmd({ "CursorMoved", "InsertLeave" }, {
     group = group,
     pattern = "*.rb",
     callback = update_debounced,
   })
 
-  -- Refresh on colorscheme change
+  -- Full refresh on colorscheme change
   vim.api.nvim_create_autocmd("ColorScheme", {
     group = group,
     callback = function()
-      hl_cache = {} -- Clear cache
-      update_visible()
+      hl_cache = {} -- Clear highlight cache
+      -- Clear all buffer caches and re-render
+      for bufnr, _ in pairs(sig_cache) do
+        if vim.api.nvim_buf_is_valid(bufnr) then
+          clear_buffer_cache(bufnr)
+        end
+      end
+      sig_cache = {}
+      update_visible_incremental()
+    end,
+  })
+
+  -- Clean up cache when buffer is deleted
+  vim.api.nvim_create_autocmd("BufDelete", {
+    group = group,
+    pattern = "*.rb",
+    callback = function(args)
+      sig_cache[args.buf] = nil
     end,
   })
 end

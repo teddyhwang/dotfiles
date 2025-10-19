@@ -299,3 +299,6 @@ if command -v gt &> /dev/null; then
 fi
 
 [ -f ~/.claude/local/claude ] && alias claude="~/.claude/local/claude"
+
+# Added by tec agent
+[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"

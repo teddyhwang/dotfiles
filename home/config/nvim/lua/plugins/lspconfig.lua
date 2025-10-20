@@ -1,6 +1,5 @@
 return {
   "neovim/nvim-lspconfig",
-  event = { "BufReadPre", "BufNewFile" },
   dependencies = {
     "folke/snacks.nvim",
     { "williamboman/mason.nvim", config = true },
@@ -19,7 +18,6 @@ return {
     },
   },
   config = function()
-    local lspconfig = require("lspconfig")
     local blink_cmp = require("blink.cmp")
     local lint = require("lint")
     local conform = require("conform")
@@ -157,9 +155,6 @@ return {
           Lua = {},
         },
       },
-      sorbet = {
-        root_dir = lspconfig.util.root_pattern("sorbet/config"),
-      },
       ruby_lsp = {
         init_options = {
           formatter = "rubocop",
@@ -169,7 +164,18 @@ return {
     }
 
     for server, config in pairs(servers) do
-      vim.lsp.enable(server, vim.tbl_deep_extend("force", default_config, config))
+      vim.lsp.config(server, vim.tbl_deep_extend("force", default_config, config))
+      vim.lsp.enable(server)
     end
+
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "ruby",
+      callback = function(args)
+        local is_sorbet_project = vim.fs.root(args.buf, { "sorbet/config" })
+        if is_sorbet_project then
+          vim.lsp.enable("sorbet", args.buf)
+        end
+      end,
+    })
   end,
 }

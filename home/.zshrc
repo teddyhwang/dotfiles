@@ -3,22 +3,17 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 [[ -f ~/.zprofile ]] && source ~/.zprofile
-typeset -U PATH path
 
 export BASE16_THEME_DEFAULT="seti"
 export EDITOR='nvim'
 export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"
 export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
-export FZF_CTRL_T_OPTS="--preview 'bat --theme=base16-seti --style=numbers --color=always --line-range :500 {}' --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort' --multi"
+export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {}' --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort' --multi"
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
-export FZF_DEFAULT_OPTS="--border"
-export FZF_TMUX_OPTS='-p'
+export FZF_TMUX_OPTS='-p 80%,50%'
 export HIGHLIGHT_STYLE=base16/seti
 export TERM="xterm-256color"
 export XDG_CONFIG_HOME="$HOME/.config"
-if [ $SPIN ]; then
-  source ~/.spin.zsh
-fi
 if command -v vivid &> /dev/null; then
   export LS_COLORS=$(vivid generate molokai)
 fi
@@ -45,7 +40,6 @@ plugins=(
 )
 
 [ -f ~/.oh-my-zsh/oh-my-zsh.sh ] && source ~/.oh-my-zsh/oh-my-zsh.sh
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 if [ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ]; then
   source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
   source /opt/homebrew/opt/chruby/share/chruby/auto.sh
@@ -60,8 +54,7 @@ if [ -f /opt/dev/dev.sh ]; then
   source /opt/dev/dev.sh
   [[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
 fi
-[[ -x /usr/local/bin/brew ]] && eval $(/usr/local/bin/brew shellenv)
-[[ -x /opt/homebrew/bin/brew ]] && eval $(/opt/homebrew/bin/brew shellenv)
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 autoload -U compinit && compinit
 setopt AUTO_PUSHD
@@ -254,21 +247,25 @@ upstream() {
 }
 
 tinty_source_shell_theme() {
-  newer_file=$(mktemp)
-  tinty $@
-  subcommand="$1"
+  tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
 
-  if [ "$subcommand" = "apply" ] || [ "$subcommand" = "init" ]; then
-    tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
-
+  if [ "$1" = "init" ]; then
+    tinty $@
     while read -r script; do
       . "$script"
-    done < <(find "$tinty_data_dir" -maxdepth 1 -type f -name "*.sh" -newer "$newer_file")
-
-    unset tinty_data_dir
+    done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh")
+  elif [ "$1" = "apply" ]; then
+    newer_file=$(mktemp)
+    tinty $@
+    while read -r script; do
+      . "$script"
+    done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh" -newer "$newer_file")
+    rm -f "$newer_file"
+  else
+    tinty $@
   fi
 
-  unset subcommand
+  unset tinty_data_dir
 }
 
 theme () {
@@ -302,3 +299,18 @@ fi
 
 # Added by tec agent
 [[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"
+
+# Fix fzf ctrl-t not working when entering shadowenv environment
+__fzf_rebind_hook() {
+  if [[ "$1" == "precmd" ]]; then
+    if [[ "${__shadowenv_data:-}" != "${__fzf_last_shadowenv_data:-}" ]]; then
+      __fzf_last_shadowenv_data="${__shadowenv_data:-}"
+
+      [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+    fi
+  fi
+}
+
+if typeset -f hookbook_add_hook > /dev/null; then
+  hookbook_add_hook __fzf_rebind_hook
+fi

@@ -43,80 +43,80 @@ function M.bufferline()
         },
         items = {
           groups.builtin.ungrouped,
-          {
-            name = "Ruby",
-            auto_close = false,
-            matcher = function(buf)
-              local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              local full_path = vim.api.nvim_buf_get_name(buf.id)
-              local filename = full_path:match(".*/(.*)$") or full_path
-              return filetype == "ruby" and not (filename:match("%test") or filename:match("%spec"))
-            end,
-            separator = {
-              style = groups.separator.slant,
-            },
-          },
-          {
-            name = "TS/JS",
-            auto_close = false,
-            matcher = function(buf)
-              local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              local full_path = vim.api.nvim_buf_get_name(buf.id)
-              local filename = full_path:match(".*/(.*)$") or full_path
-              return (filetype:match("typescript") or filetype:match("javascript"))
-                and not (filename:match("%test") or filename:match("%spec"))
-            end,
-            separator = {
-              style = groups.separator.slant,
-            },
-          },
-          {
-            name = "Tests",
-            -- BufferLineCycleNext/Prev doesn't descend into closed groups
-            -- https://github.com/akinsho/bufferline.nvim/issues/980
-            auto_close = false,
-            separator = {
-              style = groups.separator.slant,
-            },
-            matcher = function(buf)
-              local full_path = vim.api.nvim_buf_get_name(buf.id)
-              local filename = full_path:match(".*/(.*)$") or full_path
-              return filename:match("%test") or filename:match("%spec")
-            end,
-          },
-          {
-            name = "GraphQL",
-            auto_close = false,
-            matcher = function(buf)
-              local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              return filetype == "graphql"
-            end,
-            separator = {
-              style = groups.separator.slant,
-            },
-          },
-          {
-            name = "Data",
-            auto_close = false,
-            matcher = function(buf)
-              local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              return filetype:match("%json") or filetype:match("%yaml")
-            end,
-            separator = {
-              style = groups.separator.slant,
-            },
-          },
-          {
-            name = "Docs",
-            auto_close = false,
-            matcher = function(buf)
-              local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
-              return filetype == "text" or filetype == "markdown"
-            end,
-            separator = {
-              style = groups.separator.slant,
-            },
-          },
+          -- {
+          --   name = "Ruby",
+          --   auto_close = false,
+          --   matcher = function(buf)
+          --     local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
+          --     local full_path = vim.api.nvim_buf_get_name(buf.id)
+          --     local filename = full_path:match(".*/(.*)$") or full_path
+          --     return filetype == "ruby" and not (filename:match("%test") or filename:match("%spec"))
+          --   end,
+          --   separator = {
+          --     style = groups.separator.slant,
+          --   },
+          -- },
+          -- {
+          --   name = "TS/JS",
+          --   auto_close = false,
+          --   matcher = function(buf)
+          --     local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
+          --     local full_path = vim.api.nvim_buf_get_name(buf.id)
+          --     local filename = full_path:match(".*/(.*)$") or full_path
+          --     return (filetype:match("typescript") or filetype:match("javascript"))
+          --       and not (filename:match("%test") or filename:match("%spec"))
+          --   end,
+          --   separator = {
+          --     style = groups.separator.slant,
+          --   },
+          -- },
+          -- {
+          --   name = "Tests",
+          --   -- BufferLineCycleNext/Prev doesn't descend into closed groups
+          --   -- https://github.com/akinsho/bufferline.nvim/issues/980
+          --   auto_close = false,
+          --   separator = {
+          --     style = groups.separator.slant,
+          --   },
+          --   matcher = function(buf)
+          --     local full_path = vim.api.nvim_buf_get_name(buf.id)
+          --     local filename = full_path:match(".*/(.*)$") or full_path
+          --     return filename:match("%test") or filename:match("%spec")
+          --   end,
+          -- },
+          -- {
+          --   name = "GraphQL",
+          --   auto_close = false,
+          --   matcher = function(buf)
+          --     local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
+          --     return filetype == "graphql"
+          --   end,
+          --   separator = {
+          --     style = groups.separator.slant,
+          --   },
+          -- },
+          -- {
+          --   name = "Data",
+          --   auto_close = false,
+          --   matcher = function(buf)
+          --     local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
+          --     return filetype:match("%json") or filetype:match("%yaml")
+          --   end,
+          --   separator = {
+          --     style = groups.separator.slant,
+          --   },
+          -- },
+          -- {
+          --   name = "Docs",
+          --   auto_close = false,
+          --   matcher = function(buf)
+          --     local filetype = vim.api.nvim_get_option_value("filetype", { buf = buf.id })
+          --     return filetype == "text" or filetype == "markdown"
+          --   end,
+          --   separator = {
+          --     style = groups.separator.slant,
+          --   },
+          -- },
         },
       },
     },

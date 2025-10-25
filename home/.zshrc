@@ -10,7 +10,7 @@ export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"
 export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
 export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {}' --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort' --multi"
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
-export FZF_TMUX_OPTS='-p 80%,50%'
+export FZF_TMUX_OPTS='-p 80%,60%'
 export HIGHLIGHT_STYLE=base16/seti
 export TERM="xterm-256color"
 export XDG_CONFIG_HOME="$HOME/.config"

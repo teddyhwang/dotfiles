@@ -84,7 +84,6 @@ return {
       formatters_by_ft = vim.tbl_extend("force", prettier_formatters(prettier_filetypes), {
         lua = { "stylua" },
         sh = { "shfmt" },
-        zsh = { "shfmt" },
         ["*"] = { "codespell" },
         ["_"] = { "trim_whitespace" },
       }),

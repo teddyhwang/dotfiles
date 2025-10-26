@@ -149,6 +149,24 @@ return {
         show_without_selection = true,
       },
     },
+    cmdline = {
+      enabled = true,
+      completion = {
+        menu = {
+          auto_show = true,
+        },
+      },
+      keymap = {
+        preset = "none",
+        ["<Tab>"] = { "show", "select_and_accept", "fallback" },
+        ["<S-Tab>"] = { "show", "select_prev", "fallback" },
+        ["<C-j>"] = { "show", "select_next", "fallback" },
+        ["<C-k>"] = { "show", "select_prev", "fallback" },
+        ["<C-y>"] = { "accept", "fallback" },
+        ["<C-e>"] = { "cancel", "fallback" },
+        ["<C-space>"] = { "show", "fallback" },
+      },
+    },
     sources = {
       default = { "copilot", "lsp", "path", "snippets", "buffer" },
       per_filetype = {

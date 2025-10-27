@@ -13,6 +13,9 @@ end
 
 function M.bufferline()
   package.loaded["bufferline"] = nil
+  package.loaded["bufferline.highlights"] = nil
+  package.loaded["bufferline.colors"] = nil
+
   local Snacks = require("snacks")
   local bufferline = require("bufferline")
   local groups = require("bufferline.groups")
@@ -121,6 +124,9 @@ function M.bufferline()
       },
     },
   })
+
+  -- Force highlight regeneration
+  vim.cmd("doautocmd ColorScheme")
 end
 
 return M

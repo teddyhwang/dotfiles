@@ -17,6 +17,12 @@ return {
         },
       },
       picker = {
+        transform = function(item)
+          if item.file and item.file:match("%.rbi$") then
+            item.score_add = -50
+          end
+          return item
+        end,
         formatters = {
           file = {
             truncate = 60,

@@ -1,45 +1,15 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-source "${SCRIPT_DIR}/print.sh"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
-function symlink {
-  ln -nsf $1 $2
-}
-
-function validate_and_symlink {
-  file=$1
-  source=$2
-  target=$3
-
-  if [ $file = ".DS_Store" ]; then
-    print_info "Ignoring system file."
-  elif [[ -h $target && ($(readlink $target) == $source)]]; then
-    print_info "$target is symlinked to your dotfiles."
-  elif [[ -a $target ]]; then
-    print_warning "$target exists and differs from your dotfile."
-    read -r "response?Do you want to replace it? (y/N) "
-    echo -e "\033[1A\033[2K\033[1A"
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-      print_progress "Replacing existing file..."
-      rm -rf $target && symlink $source $target
-      track_change
-    else
-      print_warning "Keeping existing file"
-    fi
-  else
-    print_progress "$target does not exist. Symlinking to dotfile."
-    symlink $source $target
-    track_change
-  fi
-}
-
-local dotfiles_path=$(realpath $(pwd))
+dotfiles_path=$(get_realpath "$(pwd)")
 
 if [[ -n "${CHECK_BROKEN_SYMLINKS}" ]]; then
   print_progress "Checking for broken symlinks pointing to dotfiles..."
 
-  find $HOME/\.[^.]* $HOME/.config $HOME/.bin -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
+  find "$HOME" -maxdepth 1 -name '.*' -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
     target=$(readlink "$link")
     if [[ "$target" == "$dotfiles_path"* ]]; then
       if [[ ! -e "$link" ]]; then
@@ -50,32 +20,48 @@ if [[ -n "${CHECK_BROKEN_SYMLINKS}" ]]; then
       fi
     fi
   done
+
+  for dir in "$HOME/.config" "$HOME/.bin"; do
+    if [ -d "$dir" ]; then
+      find "$dir" -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
+        target=$(readlink "$link")
+        if [[ "$target" == "$dotfiles_path"* ]]; then
+          if [[ ! -e "$link" ]]; then
+            print_error "Found broken symlink: $link -> $target"
+            print_progress "Removing broken symlink..."
+            rm "$link"
+            track_change
+          fi
+        fi
+      done
+    fi
+  done
 fi
 
 for filepath in home/.[^.]*; do
-  file=$filepath:t
+  file=$(basename "$filepath")
   source="$(pwd)/$filepath"
   target="$HOME/$file"
 
-  validate_and_symlink $file $source $target
+  validate_and_symlink "$file" "$source" "$target"
 done
 
 print_progress "\nSymlinking..."
 
 for filepath in home/config/*; do
-  file=$filepath:t
+  file=$(basename "$filepath")
   source="$(pwd)/$filepath"
   target="$HOME/.config/$file"
 
-  validate_and_symlink $file $source $target
+  validate_and_symlink "$file" "$source" "$target"
 done
 
 for filepath in home/bin/*; do
-  file=$filepath:t
+  file=$(basename "$filepath")
   source="$(pwd)/$filepath"
   target="$HOME/.bin/$file"
 
-  validate_and_symlink $file $source $target
+  validate_and_symlink "$file" "$source" "$target"
 done
 
 print_conditional_success "Symlinks"

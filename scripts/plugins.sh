@@ -1,7 +1,8 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-source "${SCRIPT_DIR}/print.sh"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
 omz_plugins=(
   'zsh-users/zsh-autosuggestions'
@@ -19,13 +20,13 @@ else
   track_change
 fi
 
-for plugin in $omz_plugins; do
-  plugin_name=$(echo $plugin | cut -d '/' -f 2)
-  if [ -d ~/.oh-my-zsh/custom/plugins/$plugin_name ]; then
+for plugin in "${omz_plugins[@]}"; do
+  plugin_name=$(echo "$plugin" | cut -d '/' -f 2)
+  if [ -d ~/.oh-my-zsh/custom/plugins/"$plugin_name" ]; then
     print_info "$plugin_name is installed"
   else
     print_progress "Installing $plugin_name..."
-    git clone https://github.com/$plugin ~/.oh-my-zsh/custom/plugins/$plugin_name
+    git clone "https://github.com/$plugin" ~/.oh-my-zsh/custom/plugins/"$plugin_name"
     track_change
   fi
 done

@@ -6,7 +6,7 @@ local M = {}
 -- Configuration
 local config = {
   opacity = 0.5, -- 0.0 = invisible, 1.0 = normal
-  delay = 200,   -- ms delay for debounced updates
+  delay = 200, -- ms delay for debounced updates
 }
 
 -- Namespace for our highlights
@@ -78,10 +78,18 @@ local function get_dimmed_hl(hl_name)
   end
 
   -- Preserve other attributes
-  if hl_def.bg then dimmed_hl.bg = hl_def.bg end
-  if hl_def.bold then dimmed_hl.bold = true end
-  if hl_def.italic then dimmed_hl.italic = true end
-  if hl_def.underline then dimmed_hl.underline = true end
+  if hl_def.bg then
+    dimmed_hl.bg = hl_def.bg
+  end
+  if hl_def.bold then
+    dimmed_hl.bold = true
+  end
+  if hl_def.italic then
+    dimmed_hl.italic = true
+  end
+  if hl_def.underline then
+    dimmed_hl.underline = true
+  end
 
   -- Create unique highlight group name
   local dimmed_name = "SorbetDim_" .. hl_name:gsub("[^%w]", "_") .. "_" .. math.floor(config.opacity * 100)

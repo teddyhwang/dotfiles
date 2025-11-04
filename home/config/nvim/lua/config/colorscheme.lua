@@ -1,9 +1,4 @@
--- Seti
--- base00 = '#151718', base01 = '#282a2b', base02 = '#3b758c', base03 = '#41535b',
--- base04 = '#43a5d5', base05 = '#d6d6d6', base06 = '#eeeeee', base07 = '#ffffff',
--- base08 = '#cd3f45', base09 = '#db7b55', base0A = '#e6cd69', base0B = '#9fca56',
--- base0C = '#55dbbe', base0D = '#55b5db', base0E = '#a074c4', base0F = '#8a553f'
-
+-- Auto-reload colorscheme from tinty
 return function(base16)
   local default_theme = "base16-seti"
 
@@ -39,36 +34,27 @@ return function(base16)
       PmenuSel = { bg = colors.base02, fg = colors.base06 },
       PmenuThumb = { bg = colors.base09, fg = colors.base09 },
       VertSplit = { link = "LineNr" },
-      CmpItemAbbr = { fg = colors.base05 },
-      CmpItemAbbrMatch = { fg = colors.base0D, bold = true },
-      CmpItemAbbrMatchFuzzy = { link = "CmpItemAbbrMatch" },
-      CmpItemKind = { link = "@text" },
-      CmpItemKindClass = { link = "@type" },
-      CmpItemKindConstant = { link = "@constant" },
-      CmpItemKindEnum = { link = "@type" },
-      CmpItemKindFile = { link = "Directory" },
-      CmpItemKindFolder = { link = "Directory" },
-      CmpItemKindFunction = { link = "@function" },
-      CmpItemKindInterface = { link = "@interface" },
-      CmpItemKindKeyword = { link = "@keyword" },
-      CmpItemKindMethod = { link = "@method" },
-      CmpItemKindModule = { link = "@namespace" },
-      CmpItemKindProperty = { link = "@property" },
-      CmpItemKindSnippet = { link = "@text" },
-      CmpItemKindText = { link = "@text" },
-      CmpItemKindUnit = { link = "@constant" },
-      CmpItemKindValue = { link = "@constant" },
-      CmpItemKindVariable = { link = "@variable" },
-      CmpGhostText = { link = "NonText" },
-      FloatBorder = { link = "VertSplit" },
+      -- Blink.cmp highlights
+      BlinkCmpMenu = { bg = colors.base00, fg = colors.base05 },
       BlinkCmpMenuBorder = { link = "FloatBorder" },
+      BlinkCmpMenuSelection = { bg = colors.base02, fg = colors.base06 },
+      BlinkCmpLabel = { fg = colors.base05 },
+      BlinkCmpLabelMatch = { fg = colors.base0D, bold = true },
+      BlinkCmpKind = { link = "@text" },
+      BlinkCmpDoc = { bg = colors.base00, fg = colors.base05 },
       BlinkCmpDocBorder = { link = "BlinkCmpMenuBorder" },
+      FloatBorder = { link = "VertSplit" },
       HighlightedyankRegion = { bg = colors.base03 },
-      LualineWinbar = { bg = colors.base00, fg = colors.base07 },
       WinSeparator = { fg = colors.base03 },
       MatchParen = { bg = colors.base02 },
-      BufferLineTabSelected = { link = "BufferLineBufferSelected" },
-      ToggleTerm1FloatBorder = { link = "FloatBorder" },
+      -- Fix lualine section backgrounds to use StatusLine bg
+      StatusLine = { bg = colors.base01, fg = colors.base04 },
+      lualine_c_normal = { bg = colors.base01 },
+      lualine_c_insert = { bg = colors.base01 },
+      lualine_c_visual = { bg = colors.base01 },
+      lualine_c_replace = { bg = colors.base01 },
+      lualine_c_command = { bg = colors.base01 },
+      lualine_c_inactive = { bg = colors.base01 },
     }
 
     for k, v in pairs(highlights) do
@@ -83,9 +69,9 @@ return function(base16)
     if current_theme_name ~= new_theme_name then
       vim.cmd("colorscheme " .. new_theme_name)
       handle_custom_highlights()
-      local restart = require("restart")
-      restart.lualine()
-      restart.bufferline()
+
+      -- Trigger ColorScheme autocmd for LazyVim
+      vim.cmd("doautocmd ColorScheme")
     end
   end
 

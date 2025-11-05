@@ -95,7 +95,7 @@ map("n", '"', "<cmd>lua require('snacks').picker.registers()<cr>", { desc = "Sho
 
 -- LSP keymaps (these override LazyVim defaults to match your muscle memory)
 map("n", "gd", vim.lsp.buf.definition, { desc = "Go to definition" })
-map("n", "gr", vim.lsp.buf.references, { desc = "Find references" })
+map("n", "gr", "<cmd>lua require('snacks').picker.lsp_references()<cr>", { desc = "Find references" })
 map("n", "gI", vim.lsp.buf.implementation, { desc = "Go to implementation" })
 map("n", "gy", vim.lsp.buf.type_definition, { desc = "Go to type definition" })
 map("n", "gD", vim.lsp.buf.declaration, { desc = "Go to declaration" })

@@ -56,6 +56,7 @@ Linux)
     "nvim"
     "tinted-theming"
     "yamllint"
+
     "yazi"
   )
 

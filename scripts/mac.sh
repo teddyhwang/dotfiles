@@ -1,7 +1,8 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-source "${SCRIPT_DIR}/print.sh"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
 if ! command -v brew &>/dev/null; then
   if [ -f "/usr/local/bin/brew" ]; then
@@ -12,7 +13,7 @@ if ! command -v brew &>/dev/null; then
   print_progress "Installing Brew packages..."
   $BREW_BIN tap "homebrew/bundle"
   $BREW_BIN bundle
-  $($BREW_BIN --prefix)/opt/fzf/install --all
+  "$($BREW_BIN --prefix)/opt/fzf/install" --all
 else
   print_info "Brew bundled"
 fi
@@ -38,7 +39,7 @@ else
 fi
 
 if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
-  read -r "response?Do you want to setup pbcopy/pbpaste launch agents? (y/N) "
+  read -r -p "Do you want to setup pbcopy/pbpaste launch agents? (y/N) " response
   echo -e "\033[1A\033[2K\033[1A"
   if [[ "$response" =~ ^[Yy]$ ]]; then
     print_progress "Copying launch agent config files..."

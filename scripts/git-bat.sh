@@ -1,7 +1,8 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-source "${SCRIPT_DIR}/print.sh"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
 print_progress "Configuring git and bat..."
 

@@ -1,13 +1,14 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-source "${SCRIPT_DIR}/print.sh"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
-function add_directory_in_home {
-  directory=$1
-  if ! [ -d ~/$directory ]; then
+add_directory_in_home() {
+  local directory="$1"
+  if ! [ -d "$HOME/$directory" ]; then
     print_success "Creating $directory folder..."
-    mkdir ~/$directory
+    mkdir "$HOME/$directory"
     track_change
   else
     print_info "$directory exists"
@@ -33,7 +34,7 @@ if ! [ -d ~/Library/Application\ Support/lazygit ]; then
   sudo mkdir ~/Library/Application\ Support/lazygit
   track_change
 else
-  print_info "~/Library/Application Support/lazygit exists"
+  print_info "$HOME/Library/Application Support/lazygit exists"
 fi
 
 print_conditional_success "Directories"

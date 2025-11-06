@@ -42,7 +42,6 @@ Linux)
   print_progress "Installing Linux dependencies..."
   ./scripts/linux.sh
   ./scripts/tmux.sh
-
   ;;
 *)
   print_error "Unsupported operating system: $OS"

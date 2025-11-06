@@ -2,7 +2,6 @@ return {
   {
     "neovim/nvim-lspconfig",
     opts = {
-      -- LSP Server Settings
       servers = {
         html = {
           filetypes = { "html", "eruby" },
@@ -45,17 +44,14 @@ return {
           },
         },
         rubocop = {
-          -- Disable rubocop LSP since ruby_lsp handles it
           enabled = false,
         },
         yamlls = {},
       },
-      -- Additional setup for servers
       setup = {},
     },
   },
 
-  -- Configure conform.nvim for formatting
   {
     "stevearc/conform.nvim",
     opts = {
@@ -79,7 +75,6 @@ return {
     },
   },
 
-  -- Configure nvim-lint
   {
     "mfussenegger/nvim-lint",
     opts = {

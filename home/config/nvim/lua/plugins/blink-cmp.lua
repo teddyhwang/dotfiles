@@ -1,8 +1,6 @@
 return {
-  -- Disable nvim-cmp
   { "hrsh7th/nvim-cmp", enabled = false },
 
-  -- Enable blink.cmp
   {
     "saghen/blink.cmp",
     version = "*",

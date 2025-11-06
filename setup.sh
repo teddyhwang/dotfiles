@@ -51,16 +51,12 @@ Linux)
     "atuin"
     "bat"
     "btop"
-    "ghostty"
     "lazygit"
     "nvim"
     "tinted-theming"
     "yamllint"
     "yazi"
   )
-
-  # Ensure .config exists
-  mkdir -p "$HOME/.config"
 
   for config in "${linux_configs[@]}"; do
     filepath="$SCRIPT_DIR/home/config/$config"
@@ -80,13 +76,14 @@ Linux)
 
   # Individual dotfiles to symlink for Linux
   linux_dotfiles=(
-    ".ignore"
-    ".gitignore"
-    ".tmux.conf"
-    ".shared.gitconfig"
+    ".bashrc"
     ".curlrc"
+    ".gitignore"
+    ".ignore"
     ".myclirc"
     ".rgignore"
+    ".shared.gitconfig"
+    ".tmux.conf"
   )
 
   for dotfile in "${linux_dotfiles[@]}"; do

@@ -40,7 +40,7 @@ Darwin)
   ;;
 Linux)
   print_progress "Installing Linux dependencies..."
-  ./scripts/linux.sh
+  ./scripts/linker-linux.sh
   ./scripts/tmux.sh
   ./scripts/packages.sh
   ;;

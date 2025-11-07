@@ -11,7 +11,7 @@ OS="$(uname -s)"
 case "$OS" in
 Darwin)
   print_progress "Installing Mac dependencies..."
-  ./scripts/mac.sh
+  ./scripts/packages-mac.sh
   ./scripts/directories.sh
   ./scripts/linker.sh
   ./scripts/zsh.sh
@@ -22,7 +22,7 @@ Linux)
   print_progress "Installing Linux dependencies..."
   ./scripts/linker-linux.sh
   ./scripts/tmux.sh
-  ./scripts/packages.sh
+  ./scripts/packages-linux.sh
   ;;
 *)
   print_error "Unsupported operating system: $OS"

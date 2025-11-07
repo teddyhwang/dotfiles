@@ -1,0 +1,3 @@
+# Bind Ctrl+C to discard line in vim mode
+ble-bind -m vi_imap -f 'C-c' discard-line
+ble-bind -m vi_nmap -f 'C-c' discard-line

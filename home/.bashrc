@@ -34,6 +34,8 @@ alias latte='tinty apply base16-catppuccin-latte'
 alias macchiato='tinty apply base16-catppuccin-macchiato'
 alias mocha='tinty apply base16-catppuccin-mocha'
 
+set -o vi
+
 [[ -f /usr/share/bash-preexec/bash-preexec.sh ]] && source /usr/share/bash-preexec/bash-preexec.sh
 
 if command -v gh &> /dev/null; then

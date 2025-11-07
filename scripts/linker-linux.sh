@@ -37,7 +37,9 @@ print_progress "Symlinking home directory dotfiles..."
 
 dotfiles=(
   ".bashrc"
+  ".blerc"
   ".curlrc"
+  ".functions.bash"
   ".gitignore"
   ".ignore"
   ".myclirc"

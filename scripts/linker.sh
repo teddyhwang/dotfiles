@@ -45,7 +45,7 @@ for filepath in home/.[^.]*; do
   source="$(pwd)/$filepath"
   target="$HOME/$file"
 
-  validate_and_symlink "$file" "$source" "$target"
+  validate_and_symlink "$source" "$target"
 done
 
 print_progress "\nSymlinking config directories..."
@@ -55,7 +55,7 @@ for filepath in home/config/*; do
   source="$(pwd)/$filepath"
   target="$HOME/.config/$file"
 
-  validate_and_symlink "$file" "$source" "$target"
+  validate_and_symlink "$source" "$target"
 done
 
 print_progress "\nSymlinking binaries..."
@@ -65,7 +65,7 @@ for filepath in home/bin/*; do
   source="$(pwd)/$filepath"
   target="$HOME/.bin/$file"
 
-  validate_and_symlink "$file" "$source" "$target"
+  validate_and_symlink "$source" "$target"
 done
 
 print_conditional_success "Symlinks"

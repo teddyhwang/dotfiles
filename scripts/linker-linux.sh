@@ -30,7 +30,7 @@ for config in "${configs[@]}"; do
   source="$filepath"
   target="$HOME/.config/$config"
 
-  validate_and_symlink "$config" "$source" "$target"
+  validate_and_symlink "$source" "$target"
 done
 
 print_progress "\nSymlinking home directory dotfiles..."
@@ -59,7 +59,7 @@ for dotfile in "${dotfiles[@]}"; do
   source="$filepath"
   target="$HOME/$dotfile"
 
-  validate_and_symlink "$dotfile" "$source" "$target"
+  validate_and_symlink "$source" "$target"
 done
 
 print_progress "\nSymlinking hypr config..."
@@ -69,7 +69,7 @@ for filepath in home/hypr/*; do
   source="$(pwd)/$filepath"
   target="$HOME/.config/hypr/$file"
 
-  validate_and_symlink "$file" "$source" "$target"
+  validate_and_symlink "$source" "$target"
 done
 
 print_progress "\nSymlinking binaries..."
@@ -79,8 +79,14 @@ for filepath in home/local/bin/*; do
   source="$(pwd)/$filepath"
   target="$HOME/.local/bin/$file"
 
-  validate_and_symlink "$file" "$source" "$target"
+  validate_and_symlink "$source" "$target"
 done
 
-print_conditional_success "Linux setup"
+print_progress "\nSymlinking keyd config..."
 
+validate_and_symlink "$DOTFILES_DIR/home/keyd/app.conf" "$HOME/.config/keyd/app.conf"
+if [[ ! -f /etc/keyd/default.conf ]]; then
+  cp "$DOTFILES_DIR/home/keyd/default.conf" "/etc/keyd/default.conf"
+fi
+
+print_conditional_success "Symlinking"

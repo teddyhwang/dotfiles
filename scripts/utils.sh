@@ -68,9 +68,10 @@ symlink() {
 }
 
 validate_and_symlink() {
-  local file="$1"
-  local source="$2"
-  local target="$3"
+  local source="$1"
+  local target="$2"
+  local file
+  file=$(basename "$source")
 
   if [ "$file" = ".DS_Store" ]; then
     print_info "Ignoring system file."

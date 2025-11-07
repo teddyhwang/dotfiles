@@ -145,6 +145,11 @@ map("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 -- Database UI
 map("n", "<leader>D", "<cmd>DBUIToggle<cr>", { desc = "Toggle Dadbod UI" })
 
+-- Sidekick AI
+map("n", "<leader>ac", function()
+  require("sidekick.cli").toggle({ name = "claude", focus = true })
+end, { desc = "Toggle Claude" })
+
 -- LazyVim uses flash.nvim by default, these mappings should work out of the box
 -- but we'll define them explicitly to match your config
 map({ "n", "x", "o" }, "s", function()

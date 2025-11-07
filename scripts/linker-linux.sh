@@ -5,7 +5,7 @@ DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=utils.sh
 source "${SCRIPT_DIR}/utils.sh"
 
-print_progress "Symlinking config directories..."
+print_progress "\nSymlinking config directories..."
 
 configs=(
   "atuin"
@@ -33,7 +33,7 @@ for config in "${configs[@]}"; do
   validate_and_symlink "$config" "$source" "$target"
 done
 
-print_progress "Symlinking home directory dotfiles..."
+print_progress "\nSymlinking home directory dotfiles..."
 
 dotfiles=(
   ".bashrc"
@@ -62,7 +62,7 @@ for dotfile in "${dotfiles[@]}"; do
   validate_and_symlink "$dotfile" "$source" "$target"
 done
 
-print_progress "Symlinking hypr config..."
+print_progress "\nSymlinking hypr config..."
 
 for filepath in home/hypr/*; do
   file=$(basename "$filepath")
@@ -72,7 +72,7 @@ for filepath in home/hypr/*; do
   validate_and_symlink "$file" "$source" "$target"
 done
 
-print_progress "Symlinking binaries..."
+print_progress "\nSymlinking binaries..."
 
 for filepath in home/local/bin/*; do
   file=$(basename "$filepath")

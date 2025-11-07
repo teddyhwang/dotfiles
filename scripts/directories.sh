@@ -37,4 +37,12 @@ else
   print_info "$HOME/Library/Application Support/lazygit exists"
 fi
 
+if ! [ -d "$HOME/.config/ghostty/themes" ]; then
+  print_progress "Adding directory $HOME/.config/ghostty/themes..."
+  mkdir -p "$HOME/.config/ghostty/themes"
+  track_change
+else
+  print_info "$HOME/.config/ghostty/themes exists"
+fi
+
 print_conditional_success "Directories"

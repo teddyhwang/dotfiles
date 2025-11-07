@@ -1,15 +1,16 @@
 return {
   {
-    "RRethy/nvim-base16",
+    "tinted-theming/tinted-nvim",
     lazy = false,
     priority = 1000,
     config = function()
-      local base16 = require("base16-colorscheme")
+      local tinted = require("tinted-colorscheme")
       local setup_colors = require("config.colorscheme")
-      setup_colors(base16)
+
+      tinted.setup()
+      setup_colors(tinted.colors)
     end,
   },
-
   -- Disable LazyVim's default colorscheme
   { "folke/tokyonight.nvim", enabled = false },
   { "catppuccin/nvim", enabled = false },

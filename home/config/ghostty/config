@@ -9,4 +9,4 @@ macos-titlebar-style = hidden
 
 confirm-close-surface = false
 
-theme = Seti
+theme = "tinted-theming"

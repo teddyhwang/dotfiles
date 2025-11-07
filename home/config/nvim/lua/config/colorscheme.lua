@@ -6,21 +6,8 @@
 -- base08 = '#cd3f45', base09 = '#db7b55', base0A = '#e6cd69', base0B = '#9fca56',
 -- base0C = '#55dbbe', base0D = '#55b5db', base0E = '#a074c4', base0F = '#8a553f'
 
-return function(base16)
-  local default_theme = "base16-seti"
-
-  local get_tinty_theme = function()
-    local theme_name = vim.fn.system("tinty current &> /dev/null && tinty current")
-
-    if vim.v.shell_error ~= 0 then
-      return default_theme
-    else
-      return vim.trim(theme_name)
-    end
-  end
-
+return function(colors)
   local handle_custom_highlights = function()
-    local colors = base16.colors or base16.colorschemes[vim.env.BASE16_THEME or "seti"]
     local highlights = {
       ["@symbol"] = { fg = colors.base09 },
       ["@variable"] = { fg = colors.base08 },
@@ -69,27 +56,13 @@ return function(base16)
     end
   end
 
-  local handle_focus_gained = function()
-    local new_theme_name = get_tinty_theme()
-    local current_theme_name = vim.g.colors_name
-
-    if current_theme_name ~= new_theme_name then
-      vim.cmd("colorscheme " .. new_theme_name)
+  vim.api.nvim_create_autocmd("User", {
+    pattern = "TintedColorsPost",
+    callback = function()
+      local tinted = require("tinted-colorscheme")
+      colors = tinted.colors
       handle_custom_highlights()
-
-      -- Trigger ColorScheme autocmd for LazyVim
-      vim.cmd("doautocmd ColorScheme")
-    end
-  end
-
-  vim.o.termguicolors = true
-  vim.g["tinted_colorspace"] = 256
-  local current_theme_name = get_tinty_theme()
-
-  vim.cmd("colorscheme " .. current_theme_name)
-
-  vim.api.nvim_create_autocmd({ "FocusGained", "VimResume" }, {
-    callback = handle_focus_gained,
+    end,
   })
 
   handle_custom_highlights()

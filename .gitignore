@@ -2,3 +2,4 @@ home/config/karabiner/automatic_backups/*
 lazy-lock.json
 Brewfile.lock.json
 home/config/alacritty/colors.toml
+home/config/ghostty/themes/

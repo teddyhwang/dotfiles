@@ -3,11 +3,11 @@ default-scheme = "base16-seti"
 hooks = ["tmux set-option -g @tinted-color \"base16-$TINTY_SCHEME_SLUG\" 2> /dev/null; tmux source-file ~/.tmux.conf 2> /dev/null"]
 
 [[items]]
-name = "tinted-shell"
-path = "https://github.com/tinted-theming/tinted-shell"
-hook = ". %f"
+path = "https://github.com/tinted-theming/tinted-terminal"
+name = "tinted-terminal"
+themes-dir = "themes/ghostty"
+hook = "command cp -f %f ~/.config/ghostty/themes/tinted-theming && killall -SIGUSR2 ghostty"
 supported-systems = ["base16", "base24"]
-themes-dir = "scripts"
 
 [[items]]
 name = "tinted-fzf"

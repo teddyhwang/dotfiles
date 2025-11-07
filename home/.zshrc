@@ -148,14 +148,11 @@ ssh() {
     work)
       command ssh teddys-shopify-macBook-pro.local
       ;;
-    mbp)
-      command ssh teddys-macbook-pro.local
+    omarchy)
+      command ssh omarchy-mbp
       ;;
     nicole)
       command ssh nicolepaik@nicoles-macbook-air.local
-      ;;
-    spin)
-      command ssh $(spin show --output fqdn)
       ;;
     *)
       command ssh $@

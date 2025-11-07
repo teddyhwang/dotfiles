@@ -15,7 +15,7 @@ add_directory_in_home() {
   fi
 }
 
-print_progress "Creating directories..."
+print_progress "\nCreating directories..."
 
 add_directory_in_home '.config'
 add_directory_in_home '.ssh'

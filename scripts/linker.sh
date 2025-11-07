@@ -38,7 +38,7 @@ if [[ -n "${CHECK_BROKEN_SYMLINKS}" ]]; then
   done
 fi
 
-print_progress "\nSymlinking dotfiles..."
+print_progress "Symlinking dotfiles..."
 
 for filepath in home/.[^.]*; do
   file=$(basename "$filepath")

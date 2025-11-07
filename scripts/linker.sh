@@ -21,7 +21,7 @@ if [[ -n "${CHECK_BROKEN_SYMLINKS}" ]]; then
     fi
   done
 
-  for dir in "$HOME/.config" "$HOME/.bin"; do
+  for dir in "$HOME/.config" "$HOME/.bin" "$HOME/.config/hypr"; do
     if [ -d "$dir" ]; then
       find "$dir" -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
         target=$(readlink "$link")
@@ -38,6 +38,8 @@ if [[ -n "${CHECK_BROKEN_SYMLINKS}" ]]; then
   done
 fi
 
+print_progress "\nSymlinking..."
+
 for filepath in home/.[^.]*; do
   file=$(basename "$filepath")
   source="$(pwd)/$filepath"
@@ -45,8 +47,6 @@ for filepath in home/.[^.]*; do
 
   validate_and_symlink "$file" "$source" "$target"
 done
-
-print_progress "\nSymlinking..."
 
 for filepath in home/config/*; do
   file=$(basename "$filepath")

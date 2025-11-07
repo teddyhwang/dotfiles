@@ -62,5 +62,13 @@ for dotfile in "${dotfiles[@]}"; do
   validate_and_symlink "$dotfile" "$source" "$target"
 done
 
+for filepath in home/hypr/*; do
+  file=$(basename "$filepath")
+  source="$(pwd)/$filepath"
+  target="$HOME/.config/hypr/$file"
+
+  validate_and_symlink "$file" "$source" "$target"
+done
+
 print_conditional_success "Linux setup"
 

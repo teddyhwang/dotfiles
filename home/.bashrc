@@ -3,11 +3,11 @@
 
 . "$HOME/.local/share/../bin/env"
 
-source ~/.local/share/blesh/ble.sh --noattach
+[[ -f ~/.local/share/blesh/ble.sh ]] && source ~/.local/share/blesh/ble.sh --noattach
 
 # All the default Omarchy aliases and functions
 # (don't mess with these directly, just overwrite them here!)
-source ~/.local/share/omarchy/default/bash/rc
+[[ -f ~/.local/share/omarchy/default/bash/rc ]] && source ~/.local/share/omarchy/default/bash/rc
 
 export EDITOR='nvim'
 export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"

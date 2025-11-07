@@ -62,10 +62,22 @@ for dotfile in "${dotfiles[@]}"; do
   validate_and_symlink "$dotfile" "$source" "$target"
 done
 
+print_progress "Symlinking hypr config..."
+
 for filepath in home/hypr/*; do
   file=$(basename "$filepath")
   source="$(pwd)/$filepath"
   target="$HOME/.config/hypr/$file"
+
+  validate_and_symlink "$file" "$source" "$target"
+done
+
+print_progress "Symlinking binaries..."
+
+for filepath in home/local/bin/*; do
+  file=$(basename "$filepath")
+  source="$(pwd)/$filepath"
+  target="$HOME/.local/bin/$file"
 
   validate_and_symlink "$file" "$source" "$target"
 done

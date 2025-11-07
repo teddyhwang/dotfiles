@@ -38,7 +38,7 @@ if [[ -n "${CHECK_BROKEN_SYMLINKS}" ]]; then
   done
 fi
 
-print_progress "\nSymlinking..."
+print_progress "\nSymlinking dotfiles..."
 
 for filepath in home/.[^.]*; do
   file=$(basename "$filepath")
@@ -48,6 +48,8 @@ for filepath in home/.[^.]*; do
   validate_and_symlink "$file" "$source" "$target"
 done
 
+print_progress "\nSymlinking config directories..."
+
 for filepath in home/config/*; do
   file=$(basename "$filepath")
   source="$(pwd)/$filepath"
@@ -55,6 +57,8 @@ for filepath in home/config/*; do
 
   validate_and_symlink "$file" "$source" "$target"
 done
+
+print_progress "\nSymlinking binaries..."
 
 for filepath in home/bin/*; do
   file=$(basename "$filepath")

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+DEVICE="apple-inc.-apple-internal-keyboard-/-trackpad-1"
+STATE_FILE="/tmp/trackpad-state"
+
+# Initialize state file if it doesn't exist (assume enabled by default)
+if [ ! -f "$STATE_FILE" ]; then
+    echo "1" > "$STATE_FILE"
+fi
+
+# Read current state
+CURRENT_STATE=$(cat "$STATE_FILE")
+
+# Toggle the state
+if [ "$CURRENT_STATE" = "1" ]; then
+    hyprctl keyword "device[$DEVICE]:enabled" false
+    echo "0" > "$STATE_FILE"
+    notify-send "Trackpad" "Disabled" -t 2000
+else
+    hyprctl keyword "device[$DEVICE]:enabled" true
+    echo "1" > "$STATE_FILE"
+    notify-send "Trackpad" "Enabled" -t 2000
+fi

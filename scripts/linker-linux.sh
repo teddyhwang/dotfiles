@@ -13,6 +13,7 @@ configs=(
   "btop"
   "lazygit"
   "nvim"
+  "starship.toml"
   "tinted-theming"
   "yamllint"
   "yazi"

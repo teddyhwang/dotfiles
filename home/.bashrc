@@ -18,9 +18,9 @@ if [ -n "$DESKTOP_SESSION" ]; then
   export SSH_ASKPASS_REQUIRE=prefer
 fi
 
-[ -f ~/.shared/aliases ] && . ~/.shared/aliases
+[ -f ~/.shared/aliases ] && source ~/.shared/aliases
 [[ -f /usr/share/bash-preexec/bash-preexec.sh ]] && source /usr/share/bash-preexec/bash-preexec.sh
-[ -f ~/.shared/init ] && . ~/.shared/init
+[ -f ~/.shared/init ] && source ~/.shared/init
 
 [[ ${BLE_VERSION-} ]] && ble-attach
 

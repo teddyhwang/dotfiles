@@ -13,7 +13,7 @@ ZSH_AUTOSUGGEST_USE_ASYNC='true'
 ZSH_DISABLE_COMPFIX=true
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
-source ~/.p10k.zsh
+[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 
 plugins=(
   colorize

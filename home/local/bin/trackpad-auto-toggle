@@ -6,44 +6,44 @@ LAST_CLASS_FILE="/tmp/trackpad-last-class"
 
 # Function to enable trackpad
 enable_trackpad() {
-    CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "0")
-    if [ "$CURRENT" != "1" ]; then
-        hyprctl keyword "device[$DEVICE]:enabled" true >/dev/null 2>&1
-        echo "1" > "$STATE_FILE"
-    fi
+  CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "0")
+  if [ "$CURRENT" != "1" ]; then
+    hyprctl keyword "device[$DEVICE]:enabled" true >/dev/null 2>&1
+    echo "1" > "$STATE_FILE"
+  fi
 }
 
 # Function to disable trackpad
 disable_trackpad() {
-    CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "1")
-    if [ "$CURRENT" != "0" ]; then
-        hyprctl keyword "device[$DEVICE]:enabled" false >/dev/null 2>&1
-        echo "0" > "$STATE_FILE"
-    fi
+  CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "1")
+  if [ "$CURRENT" != "0" ]; then
+    hyprctl keyword "device[$DEVICE]:enabled" false >/dev/null 2>&1
+    echo "0" > "$STATE_FILE"
+  fi
 }
 
 # Main loop - check active window periodically
 while true; do
-    # Get the active window class (try jq first, fallback to grep)
-    CLASS=$(hyprctl activewindow -j 2>/dev/null | jq -r '.class' 2>/dev/null || hyprctl activewindow -j 2>/dev/null | grep -o '"class": "[^"]*"' | cut -d'"' -f4)
+  # Get the active window class (try jq first, fallback to grep)
+  CLASS=$(hyprctl activewindow -j 2>/dev/null | jq -r '.class' 2>/dev/null || hyprctl activewindow -j 2>/dev/null | grep -o '"class": "[^"]*"' | cut -d'"' -f4)
 
     # Only process if class changed
     LAST_CLASS=$(cat "$LAST_CLASS_FILE" 2>/dev/null || echo "")
     if [ "$CLASS" != "$LAST_CLASS" ]; then
-        echo "$CLASS" > "$LAST_CLASS_FILE"
+      echo "$CLASS" > "$LAST_CLASS_FILE"
 
         # Check if it's a terminal window
         case "$CLASS" in
-            *terminal*|*kitty*|*alacritty*|*wezterm*|*foot*|*konsole*|*xterm*|*ghostty*)
-                disable_trackpad
-                ;;
+          *terminal*|*kitty*|*alacritty*|*wezterm*|*foot*|*konsole*|*xterm*|*ghostty*)
+            disable_trackpad
+            ;;
             # Check if it's a browser window
             *firefox*|*chromium*|*chrome*|*brave*|*edge*|*webkit*|*navigator*|*browser*)
-                enable_trackpad
-                ;;
+            enable_trackpad
+            ;;
         esac
     fi
 
     # Sleep for a short interval
     sleep 0.2
-done
+  done

@@ -68,4 +68,9 @@ if [ ! -f /etc/keyd/default.conf ]; then
   cp "$DOTFILES_DIR/home/keyd/default.conf" "/etc/keyd/default.conf"
 fi
 
+if [ -n "$OMARCHY_PATH" ]; then
+  print_progress "\nSymlinking Omarchy..."
+  validate_and_symlink "$DOTFILES_DIR/home/omarchy/hooks/theme-set" "$HOME/.config/omarchy/hooks/theme-set"
+fi
+
 print_conditional_success "Symlinking"

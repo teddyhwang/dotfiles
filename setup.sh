@@ -4,14 +4,15 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=scripts/utils.sh
 . "${SCRIPT_DIR}/scripts/utils.sh"
 
-./scripts/verify.sh
-
-print_status "Starting installation...\n"
+print_line
+./scripts/verify_dependencies.sh
+print_line
 OS="$(uname -s)"
 case "$OS" in
 Darwin)
   print_progress "Installing Mac dependencies..."
   ./scripts/packages-mac.sh
+  ./scripts/verify_symlinks.sh
   ./scripts/directories.sh
   ./scripts/linker.sh
   ./scripts/zsh.sh
@@ -20,6 +21,7 @@ Darwin)
   ;;
 Linux)
   print_progress "Installing Linux dependencies..."
+  ./scripts/verify_symlinks.sh
   ./scripts/linker-linux.sh
   ./scripts/tmux.sh
   ./scripts/packages-linux.sh
@@ -31,3 +33,4 @@ Linux)
 esac
 
 print_success "Local setup complete 🚀"
+print_line

@@ -44,6 +44,10 @@ print_progress() {
   printf "%b%b%b\n" "${C_CYAN}" "$1" "${C_DEFAULT}"
 }
 
+print_line() {
+  printf "%b%s%b\n" "${C_LIGHTGRAY}" "-------------------------------------------------------------------------------" "${C_DEFAULT}"
+}
+
 changes_made=0
 
 track_change() {
@@ -57,10 +61,11 @@ reset_changes() {
 print_conditional_success() {
   component="${1:-Component}"
   if [ "$changes_made" -eq 1 ]; then
-    printf "%b%s setup complete 🎉\n\n%b" "${C_GREEN}" "$component" "${C_DEFAULT}"
+    printf "%b%s setup complete 🎉%b\n" "${C_GREEN}" "$component" "${C_DEFAULT}"
   else
-    printf "%b%s already configured, no changes needed\n\n%b" "${C_BLUE}" "$component" "${C_DEFAULT}"
+    printf "%b%s already configured, no changes needed%b\n" "${C_BLUE}" "$component" "${C_DEFAULT}"
   fi
+  print_line
   reset_changes
 }
 

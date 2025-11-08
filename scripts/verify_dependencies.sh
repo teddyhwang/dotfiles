@@ -4,7 +4,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=scripts/utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
-print_status "Checking dependencies...\n"
+print_status "Checking dependencies..."
 missing_deps=""
 
 for cmd in curl git readlink; do
@@ -22,4 +22,4 @@ if [ -n "$missing_deps" ]; then
   exit 1
 fi
 
-print_success "All required dependencies found\n"
+print_success "All required dependencies found"

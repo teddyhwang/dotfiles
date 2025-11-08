@@ -5,7 +5,7 @@ DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
-print_progress "\nSymlinking config directories..."
+print_progress "Symlinking config directories..."
 
 configs="atuin bat btop lazygit nvim starship.toml tinted-theming yamllint yazi"
 

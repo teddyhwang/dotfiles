@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=utils.sh
-source "${SCRIPT_DIR}/utils.sh"
+. "${SCRIPT_DIR}/utils.sh"
 
-if ! command -v brew &>/dev/null; then
+if ! command -v brew >/dev/null 2>&1; then
   if [ -f "/usr/local/bin/brew" ]; then
     BREW_BIN="/usr/local/bin/brew"
   else
@@ -39,18 +39,22 @@ else
 fi
 
 if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
-  read -r -p "Do you want to setup pbcopy/pbpaste launch agents? (y/N) " response
-  echo -e "\033[1A\033[2K\033[1A"
-  if [[ "$response" =~ ^[Yy]$ ]]; then
-    print_progress "Copying launch agent config files..."
-    cp ../apps/pbcopy.plist ~/Library/LaunchAgents/.
-    cp ../apps/pbpaste.plist ~/Library/LaunchAgents/.
-    launchctl load ~/Library/LaunchAgents/pbcopy.plist
-    launchctl load ~/Library/LaunchAgents/pbpaste.plist
-    track_change
-  else
-    print_warning "Skipping launch agent setup"
-  fi
+  printf "Do you want to setup pbcopy/pbpaste launch agents? (y/N) "
+  read -r response
+  printf "\033[1A\033[2K\033[1A"
+  case "$response" in
+    [Yy]|[Yy][Ee][Ss])
+      print_progress "Copying launch agent config files..."
+      cp ../apps/pbcopy.plist ~/Library/LaunchAgents/.
+      cp ../apps/pbpaste.plist ~/Library/LaunchAgents/.
+      launchctl load ~/Library/LaunchAgents/pbcopy.plist
+      launchctl load ~/Library/LaunchAgents/pbpaste.plist
+      track_change
+      ;;
+    *)
+      print_warning "Skipping launch agent setup"
+      ;;
+  esac
 else
   print_info "launch agent config files are copied"
 fi

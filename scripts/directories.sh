@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=utils.sh
-source "${SCRIPT_DIR}/utils.sh"
+. "${SCRIPT_DIR}/utils.sh"
 
 add_directory_in_home() {
-  local directory="$1"
+  directory="$1"
   if ! [ -d "$HOME/$directory" ]; then
     print_success "Creating $directory folder..."
     mkdir "$HOME/$directory"

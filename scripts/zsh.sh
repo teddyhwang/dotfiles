@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=utils.sh
-source "${SCRIPT_DIR}/utils.sh"
+. "${SCRIPT_DIR}/utils.sh"
 
 print_progress "Installing OhMyZSH..."
 
@@ -15,11 +15,7 @@ fi
 
 print_conditional_success "OhMyZsh"
 
-omz_plugins=(
-  'zsh-users/zsh-autosuggestions'
-  'zsh-users/zsh-completions'
-  'zsh-users/zsh-syntax-highlighting'
-)
+omz_plugins="zsh-users/zsh-autosuggestions zsh-users/zsh-completions zsh-users/zsh-syntax-highlighting"
 
 print_progress "Installing custom zsh themes and plugins..."
 
@@ -31,7 +27,7 @@ else
   track_change
 fi
 
-for plugin in "${omz_plugins[@]}"; do
+for plugin in $omz_plugins; do
   plugin_name=$(echo "$plugin" | cut -d '/' -f 2)
   if [ -d ~/.oh-my-zsh/custom/plugins/"$plugin_name" ]; then
     print_info "$plugin_name is installed"

@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=utils.sh
-source "${SCRIPT_DIR}/utils.sh"
+. "${SCRIPT_DIR}/utils.sh"
 
 print_progress "Installing OhMyZSH..."
 

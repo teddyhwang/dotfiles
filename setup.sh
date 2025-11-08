@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=scripts/utils.sh
-source "${SCRIPT_DIR}/scripts/utils.sh"
+. "${SCRIPT_DIR}/scripts/utils.sh"
 
 ./scripts/verify.sh
 

@@ -1,38 +1,42 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=utils.sh
-source "${SCRIPT_DIR}/utils.sh"
+. "${SCRIPT_DIR}/utils.sh"
 
 dotfiles_path=$(get_realpath "$(pwd)")
 
-if [[ -n "${CHECK_BROKEN_SYMLINKS}" ]]; then
+if [ -n "${CHECK_BROKEN_SYMLINKS}" ]; then
   print_progress "Checking for broken symlinks pointing to dotfiles..."
 
-  find "$HOME" -maxdepth 1 -name '.*' -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
+  find "$HOME" -maxdepth 1 -name '.*' -type l 2>/dev/null | while IFS= read -r link; do
     target=$(readlink "$link")
-    if [[ "$target" == "$dotfiles_path"* ]]; then
-      if [[ ! -e "$link" ]]; then
-        print_error "Found broken symlink: $link -> $target"
-        print_progress "Removing broken symlink..."
-        rm "$link"
-        track_change
-      fi
-    fi
+    case "$target" in
+      "$dotfiles_path"*)
+        if [ ! -e "$link" ]; then
+          print_error "Found broken symlink: $link -> $target"
+          print_progress "Removing broken symlink..."
+          rm "$link"
+          track_change
+        fi
+        ;;
+    esac
   done
 
   for dir in "$HOME/.config" "$HOME/.bin" "$HOME/.config/hypr"; do
     if [ -d "$dir" ]; then
-      find "$dir" -type l -print0 2>/dev/null | while IFS= read -r -d '' link; do
+      find "$dir" -type l 2>/dev/null | while IFS= read -r link; do
         target=$(readlink "$link")
-        if [[ "$target" == "$dotfiles_path"* ]]; then
-          if [[ ! -e "$link" ]]; then
-            print_error "Found broken symlink: $link -> $target"
-            print_progress "Removing broken symlink..."
-            rm "$link"
-            track_change
-          fi
-        fi
+        case "$target" in
+          "$dotfiles_path"*)
+            if [ ! -e "$link" ]; then
+              print_error "Found broken symlink: $link -> $target"
+              print_progress "Removing broken symlink..."
+              rm "$link"
+              track_change
+            fi
+            ;;
+        esac
       done
     fi
   done
@@ -40,7 +44,7 @@ fi
 
 print_progress "Symlinking dotfiles..."
 
-for filepath in home/.[^.]*; do
+for filepath in home/.[!.]*; do
   file=$(basename "$filepath")
   source="$(pwd)/$filepath"
   target="$HOME/$file"

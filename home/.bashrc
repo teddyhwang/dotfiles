@@ -15,8 +15,15 @@ export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
 export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {}' --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort' --multi"
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
 export FZF_TMUX_OPTS='-p 80%,60%'
-export HIGHLIGHT_STYLE=base16/seti
 export GHOSTTY_SHELL_FEATURES="path,title"
+export HIGHLIGHT_STYLE=base16/seti
+
+if [ -n "$DESKTOP_SESSION" ]; then
+  export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"
+  export SSH_ASKPASS="/usr/lib/seahorse/ssh-askpass"
+  export SSH_ASKPASS_REQUIRE=prefer
+fi
+export PATH="$HOME/.cargo/bin:$PATH"
 
 alias vi='nvim'
 alias n='nvim'
@@ -53,13 +60,6 @@ fi
 if command -v carapace &> /dev/null; then
   source <(carapace _carapace)
 fi
-
-if [ -n "$DESKTOP_SESSION" ]; then
-  export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"
-  export SSH_ASKPASS="/usr/lib/seahorse/ssh-askpass"
-  export SSH_ASKPASS_REQUIRE=prefer
-fi
-export PATH="$HOME/.cargo/bin:$PATH"
 
 [[ ${BLE_VERSION-} ]] && ble-attach
 

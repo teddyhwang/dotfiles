@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-# Portable realpath for bash 3.2 compatibility
+# Portable realpath for sh compatibility
 get_realpath() {
-  local path="$1"
+  path="$1"
   if command -v realpath >/dev/null 2>&1; then
     realpath "$path"
   else
@@ -10,36 +10,38 @@ get_realpath() {
   fi
 }
 
-export C_DEFAULT="\x1B[39m"
-export C_GREEN="\x1B[32m"
-export C_RED="\x1B[31m"
-export C_LIGHTGRAY="\x1B[90m"
-export C_ORANGE="\x1B[33m"
-export C_BLUE="\x1B[34m"
-export C_CYAN="\x1B[36m"
+C_DEFAULT="\033[39m"
+C_GREEN="\033[32m"
+C_RED="\033[31m"
+C_LIGHTGRAY="\033[90m"
+C_ORANGE="\033[33m"
+C_BLUE="\033[34m"
+C_CYAN="\033[36m"
+
+export C_DEFAULT C_GREEN C_RED C_LIGHTGRAY C_ORANGE C_BLUE C_CYAN
 
 print_success() {
-  echo -e "${C_GREEN}$1${C_DEFAULT}"
+  printf "%b%b%b\n" "${C_GREEN}" "$1" "${C_DEFAULT}"
 }
 
 print_error() {
-  echo -e "${C_RED}$1${C_DEFAULT}"
+  printf "%b%b%b\n" "${C_RED}" "$1" "${C_DEFAULT}"
 }
 
 print_warning() {
-  echo -e "${C_ORANGE}$1${C_DEFAULT}"
+  printf "%b%b%b\n" "${C_ORANGE}" "$1" "${C_DEFAULT}"
 }
 
 print_info() {
-  echo -e "${C_LIGHTGRAY}$1${C_DEFAULT}"
+  printf "%b%b%b\n" "${C_LIGHTGRAY}" "$1" "${C_DEFAULT}"
 }
 
 print_status() {
-  echo -e "${C_BLUE}$1${C_DEFAULT}"
+  printf "%b%b%b\n" "${C_BLUE}" "$1" "${C_DEFAULT}"
 }
 
 print_progress() {
-  echo -e "${C_CYAN}$1${C_DEFAULT}"
+  printf "%b%b%b\n" "${C_CYAN}" "$1" "${C_DEFAULT}"
 }
 
 changes_made=0
@@ -53,11 +55,11 @@ reset_changes() {
 }
 
 print_conditional_success() {
-  local component="${1:-Component}"
+  component="${1:-Component}"
   if [ "$changes_made" -eq 1 ]; then
-    print_success "$component setup complete 🎉\n"
+    printf "%b%s setup complete 🎉\n\n%b" "${C_GREEN}" "$component" "${C_DEFAULT}"
   else
-    print_status "$component already configured, no changes needed\n"
+    printf "%b%s already configured, no changes needed\n\n%b" "${C_BLUE}" "$component" "${C_DEFAULT}"
   fi
   reset_changes
 }
@@ -68,26 +70,29 @@ symlink() {
 }
 
 validate_and_symlink() {
-  local source="$1"
-  local target="$2"
-  local file
+  source="$1"
+  target="$2"
   file=$(basename "$source")
 
   if [ "$file" = ".DS_Store" ]; then
     print_info "Ignoring system file."
-  elif [[ -h "$target" && "$(readlink "$target")" == "$source" ]]; then
+  elif [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
     print_info "$target is symlinked to your dotfiles."
-  elif [[ -e "$target" ]]; then
+  elif [ -e "$target" ]; then
     print_warning "$target exists and differs from your dotfile."
-    read -r -p "Do you want to replace it? (y/N) " response
-    echo -e "\033[1A\033[2K\033[1A"
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-      print_progress "Replacing existing file..."
-      rm -rf "$target" && symlink "$source" "$target"
-      track_change
-    else
-      print_warning "Keeping existing file"
-    fi
+    printf "Do you want to replace it? (y/N) "
+    read -r response
+    printf "\033[1A\033[2K\033[1A"
+    case "$response" in
+      [Yy]|[Yy][Ee][Ss])
+        print_progress "Replacing existing file..."
+        rm -rf "$target" && symlink "$source" "$target"
+        track_change
+        ;;
+      *)
+        print_warning "Keeping existing file"
+        ;;
+    esac
   else
     print_progress "$target does not exist. Symlinking to dotfile."
     symlink "$source" "$target"

@@ -1,47 +1,31 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=utils.sh
-source "${SCRIPT_DIR}/utils.sh"
+. "${SCRIPT_DIR}/utils.sh"
 
 print_progress "Installing custom packages..."
 
-packages=(
-  "atuin"
-  "bash-preexec"
-  "carapace-bin"
-  "claude-code"
-  "git-delta"
-  "google-chrome"
-  "keychain"
-  "keyd"
-  "lsof"
-  "rust"
-  "seahorse"
-  "tig"
-  "tmux"
-  "ttf-firacode-nerd"
-  "ttf-meslo-nerd"
-  "yazi"
-  "zellij"
-  "zsh"
-)
+packages="atuin bash-preexec carapace-bin claude-code git-delta google-chrome keychain keyd lsof rust seahorse tig tmux ttf-firacode-nerd ttf-meslo-nerd yazi zellij zsh"
 
-packages_to_install=()
+packages_to_install=""
+package_count=0
 
-for package in "${packages[@]}"; do
-  if pacman -Q "$package" &> /dev/null; then
+for package in $packages; do
+  if pacman -Q "$package" >/dev/null 2>&1; then
     print_info "$package is already installed"
   else
     print_progress "$package needs to be installed"
-    packages_to_install+=("$package")
+    packages_to_install="$packages_to_install $package"
+    package_count=$((package_count + 1))
     track_change
   fi
 done
 
-if [ ${#packages_to_install[@]} -gt 0 ]; then
-  print_progress "Installing ${#packages_to_install[@]} package(s)..."
-  yay -S --needed --noconfirm "${packages_to_install[@]}"
+if [ -n "$packages_to_install" ]; then
+  print_progress "Installing $package_count package(s)..."
+  # shellcheck disable=SC2086
+  yay -S --needed --noconfirm $packages_to_install
 else
   print_info "All packages are already installed"
 fi

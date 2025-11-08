@@ -1,25 +1,15 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=utils.sh
-source "${SCRIPT_DIR}/utils.sh"
+. "${SCRIPT_DIR}/utils.sh"
 
 print_progress "\nSymlinking config directories..."
 
-configs=(
-  "atuin"
-  "bat"
-  "btop"
-  "lazygit"
-  "nvim"
-  "starship.toml"
-  "tinted-theming"
-  "yamllint"
-  "yazi"
-)
+configs="atuin bat btop lazygit nvim starship.toml tinted-theming yamllint yazi"
 
-for config in "${configs[@]}"; do
+for config in $configs; do
   filepath="$DOTFILES_DIR/home/config/$config"
 
   if [ ! -e "$filepath" ]; then
@@ -35,20 +25,9 @@ done
 
 print_progress "\nSymlinking home directory dotfiles..."
 
-dotfiles=(
-  ".bashrc"
-  ".blerc"
-  ".curlrc"
-  ".functions.bash"
-  ".gitignore"
-  ".ignore"
-  ".myclirc"
-  ".rgignore"
-  ".shared.gitconfig"
-  ".tmux.conf"
-)
+dotfiles=".bashrc .blerc .curlrc .functions.bash .gitignore .ignore .myclirc .rgignore .shared.gitconfig .tmux.conf"
 
-for dotfile in "${dotfiles[@]}"; do
+for dotfile in $dotfiles; do
   filepath="$DOTFILES_DIR/home/$dotfile"
 
   if [ ! -e "$filepath" ]; then
@@ -85,7 +64,7 @@ done
 print_progress "\nSymlinking keyd config..."
 
 validate_and_symlink "$DOTFILES_DIR/home/keyd/app.conf" "$HOME/.config/keyd/app.conf"
-if [[ ! -f /etc/keyd/default.conf ]]; then
+if [ ! -f /etc/keyd/default.conf ]; then
   cp "$DOTFILES_DIR/home/keyd/default.conf" "/etc/keyd/default.conf"
 fi
 

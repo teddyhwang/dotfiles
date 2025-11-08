@@ -1,6 +1,5 @@
 shell = "zsh -c '{}'"
 default-scheme = "base16-seti"
-hooks = ["tmux set-option -g @tinted-color \"base16-$TINTY_SCHEME_SLUG\" 2> /dev/null; tmux source-file ~/.tmux.conf 2> /dev/null"]
 
 [[items]]
 path = "https://github.com/tinted-theming/tinted-terminal"

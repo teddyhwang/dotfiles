@@ -1,6 +1,7 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 

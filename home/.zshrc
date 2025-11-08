@@ -3,7 +3,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 [[ -f ~/.zprofile ]] && source ~/.zprofile
-[ -f ~/.shared/exports ] && . ~/.shared/exports
+[[ -f ~/.shared/exports ]] && source ~/.shared/exports
 
 DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true
@@ -75,9 +75,9 @@ zstyle ':completion:*:approximate:*' max-errors 1 numeric
 bindkey '^[[Z' autosuggest-accept
 bindkey '^f' fzf-cd-widget
 
-[ -f ~/.shared/aliases ] && . ~/.shared/aliases
-[ -f ~/.shared/init ] && . ~/.shared/init
-[ -f ~/.claude/local/claude ] && alias claude="~/.claude/local/claude"
+[[ -f ~/.shared/aliases ]] && source ~/.shared/aliases
+[[ -f ~/.shared/init ]] && source ~/.shared/init
+[[ -f ~/.claude/local/claude ]] && alias claude="~/.claude/local/claude"
 
 # Added by tec agent
 [[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"
@@ -98,4 +98,4 @@ if typeset -f hookbook_add_hook > /dev/null; then
   hookbook_add_hook __fzf_rebind_hook
 fi
 
-[ -f ~/.shared/functions ] && . ~/.shared/functions
+[[ -f ~/.shared/functions ]] && . ~/.shared/functions

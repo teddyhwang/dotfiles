@@ -9,7 +9,9 @@ alias macchiato='tinty apply base16-catppuccin-macchiato'
 alias mocha='tinty apply base16-catppuccin-mocha'
 
 alias gpgstart='gpgconf --launch gpg-agent'
-alias ls='lsd'
+if command -v lsd >/dev/null 2>&1; then
+  alias ls='lsd'
+fi
 alias main='git checkout main'
 alias mux="tmuxinator"
 alias ng="npm list -g --depth=0 2>/dev/null"

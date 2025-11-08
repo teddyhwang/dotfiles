@@ -10,7 +10,7 @@ set -o vi
 # (don't mess with these directly, just overwrite them here!)
 [[ -f ~/.local/share/omarchy/default/bash/rc ]] && source ~/.local/share/omarchy/default/bash/rc
 
-[ -f ~/.shared/exports ] && source ~/.shared/exports
+[[ -f ~/.shared/exports ]] && source ~/.shared/exports
 export GHOSTTY_SHELL_FEATURES="path,title"
 if [ -n "$DESKTOP_SESSION" ]; then
   export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"
@@ -18,9 +18,9 @@ if [ -n "$DESKTOP_SESSION" ]; then
   export SSH_ASKPASS_REQUIRE=prefer
 fi
 
-[ -f ~/.shared/aliases ] && source ~/.shared/aliases
+[[ -f ~/.shared/aliases ]] && source ~/.shared/aliases
 [[ -f /usr/share/bash-preexec/bash-preexec.sh ]] && source /usr/share/bash-preexec/bash-preexec.sh
-[ -f ~/.shared/init ] && source ~/.shared/init
+[[ -f ~/.shared/init ]] && source ~/.shared/init
 
 [[ ${BLE_VERSION-} ]] && ble-attach
 
@@ -34,4 +34,4 @@ if [[ ${BLE_VERSION-} ]]; then
   ble-bind -m auto_complete -f 'S-TAB' 'auto_complete/insert'
 fi
 
-[ -f ~/.shared/functions ] && source ~/.shared/functions
+[[ -f ~/.shared/functions ]] && source ~/.shared/functions

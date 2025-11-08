@@ -26,22 +26,22 @@ plugins=(
   zsh-syntax-highlighting
 )
 
-[ -f ~/.oh-my-zsh/oh-my-zsh.sh ] && source ~/.oh-my-zsh/oh-my-zsh.sh
-if [ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ]; then
+[[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]] && source ~/.oh-my-zsh/oh-my-zsh.sh
+if [[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ]]; then
   source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
   source /opt/homebrew/opt/chruby/share/chruby/auto.sh
   chpwd_functions+=("chruby_auto")
 fi
-if [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]; then
+if [[ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]]; then
   source /usr/local/opt/chruby/share/chruby/chruby.sh
   source /usr/local/opt/chruby/share/chruby/auto.sh
   chpwd_functions+=("chruby_auto")
 fi
-if [ -f /opt/dev/dev.sh ]; then
+if [[ -f /opt/dev/dev.sh ]]; then
   source /opt/dev/dev.sh
   [[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
 fi
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 
 autoload -U compinit && compinit
 setopt AUTO_PUSHD
@@ -88,7 +88,7 @@ __fzf_rebind_hook() {
     if [[ "${__shadowenv_data:-}" != "${__fzf_last_shadowenv_data:-}" ]]; then
       __fzf_last_shadowenv_data="${__shadowenv_data:-}"
 
-      [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+      [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
       eval "$(atuin init zsh --disable-up-arrow)"
     fi
   fi

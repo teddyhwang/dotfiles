@@ -25,7 +25,9 @@ done
 
 print_progress "\nSymlinking home directory dotfiles..."
 
-dotfiles=".bashrc .blerc .curlrc .functions.bash .gitignore .ignore .myclirc .rgignore .shared.gitconfig .tmux.conf"
+validate_and_symlink "$DOTFILES_DIR/home/shared" "$HOME/.shared"
+
+dotfiles=".bashrc .blerc .curlrc .gitignore .ignore .myclirc .rgignore .shared.gitconfig .tmux.conf"
 
 for dotfile in $dotfiles; do
   filepath="$DOTFILES_DIR/home/$dotfile"
@@ -64,6 +66,7 @@ done
 print_progress "\nSymlinking keyd config..."
 
 validate_and_symlink "$DOTFILES_DIR/home/keyd/app.conf" "$HOME/.config/keyd/app.conf"
+
 if [ ! -f /etc/keyd/default.conf ]; then
   cp "$DOTFILES_DIR/home/keyd/default.conf" "/etc/keyd/default.conf"
 fi

@@ -1,0 +1,22 @@
+alias brighter='tinty apply base16-synth-midnight-dark'
+alias dark='tinty apply base16-seti'
+alias darker='tinty apply base16-3024'
+alias light='tinty apply base16-solarized-light'
+alias lighter='tinty apply base16-one-light'
+alias frappe='tinty apply base16-catppuccin-frappe'
+alias latte='tinty apply base16-catppuccin-latte'
+alias macchiato='tinty apply base16-catppuccin-macchiato'
+alias mocha='tinty apply base16-catppuccin-mocha'
+
+alias gpgstart='gpgconf --launch gpg-agent'
+alias ls='lsd'
+alias main='git checkout main'
+alias mux="tmuxinator"
+alias ng="npm list -g --depth=0 2>/dev/null"
+alias nl="npm list --depth=0 2>/dev/null"
+alias ping='prettyping --nolegend'
+alias please='sudo $(fc -ln -1)'
+alias rake="noglob rake"
+alias n="nvim"
+alias vi='nvim'
+alias weather='curl wttr.in'

@@ -14,6 +14,8 @@ for filepath in home/.[!.]*; do
   validate_and_symlink "$source" "$target"
 done
 
+validate_and_symlink "$DOTFILES_DIR/home/shared" "$HOME/.shared"
+
 print_progress "\nSymlinking config directories..."
 
 for filepath in home/config/*; do

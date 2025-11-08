@@ -1,0 +1,66 @@
+#!/bin/bash
+# Omarchy theme name is passed as $1
+OMARCHY_THEME="$1"
+
+# Map Omarchy themes to base16 tinty themes
+case "$OMARCHY_THEME" in
+  catppuccin)
+    TINTY_THEME="base16-catppuccin-frappe"
+    ;;
+  catppuccin-dark)
+    TINTY_THEME="base16-catppuccin-mocha"
+    ;;
+  catppuccin-latte)
+    TINTY_THEME="base16-catppuccin-latte"
+    ;;
+  dracula)
+    TINTY_THEME="base16-dracula"
+    ;;
+  everforest)
+    TINTY_THEME="base16-everforest"
+    ;;
+  gruvbox)
+    TINTY_THEME="base16-gruvbox-dark-medium"
+    ;;
+  kanagawa)
+    TINTY_THEME="base16-kanagawa"
+    ;;
+  monokai)
+    TINTY_THEME="base16-monokai"
+    ;;
+  nord)
+    TINTY_THEME="base16-nord"
+    ;;
+  rose-pine)
+    TINTY_THEME="base16-rose-pine"
+    ;;
+  tokyo-night)
+    TINTY_THEME="base16-tokyo-night-dark"
+    ;;
+  aetheria)
+    # Dark purple/magenta with cyan/teal accents
+    TINTY_THEME="base16-outrun-dark"
+    ;;
+  flexoki-light)
+    # Light theme - using atelier light variant
+    TINTY_THEME="base16-atelier-estuary-light"
+    ;;
+  matte-black)
+    # Very dark black with vibrant orange and red accents
+    TINTY_THEME="base16-hardcore"
+    ;;
+  osaka-jade)
+    # Dark green/jade nature theme
+    TINTY_THEME="base16-darkmoss"
+    ;;
+  ristretto)
+    # Monokai variant
+    TINTY_THEME="base16-monokai"
+    ;;
+  *)
+    # Default to base16-seti for themes without base16 equivalent
+    TINTY_THEME="base16-seti"
+    ;;
+esac
+
+tinty apply "$TINTY_THEME"

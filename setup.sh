@@ -21,10 +21,13 @@ Darwin)
   ;;
 Linux)
   print_progress "Installing Linux dependencies..."
+  ./scripts/packages_linux.sh
   ./scripts/verify_symlinks.sh
   ./scripts/linker_linux.sh
   ./scripts/tmux.sh
-  ./scripts/packages_linux.sh
+  if command -v zsh >/dev/null 2>&1; then
+    ./scripts/zsh.sh
+  fi
   ./scripts/git_bat.sh
   ;;
 *)

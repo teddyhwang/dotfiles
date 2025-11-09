@@ -27,7 +27,7 @@ print_progress "\nSymlinking home directory dotfiles..."
 
 validate_and_symlink "$DOTFILES_DIR/home/shared" "$HOME/.shared"
 
-dotfiles=".bashrc .blerc .curlrc .gitignore .ignore .myclirc .rgignore .shared.gitconfig .tmux.conf"
+dotfiles=".bashrc .blerc .curlrc .gitignore .ignore .myclirc .rgignore .shared.gitconfig .tmux.conf .zshrc .p10k.zsh"
 
 for dotfile in $dotfiles; do
   filepath="$DOTFILES_DIR/home/$dotfile"

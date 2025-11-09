@@ -26,6 +26,13 @@ if [ -n "$packages_to_install" ]; then
   print_progress "Installing $package_count package(s)..."
   # shellcheck disable=SC2086
   yay -S --needed --noconfirm $packages_to_install
+
+  # Rebuild font cache if font packages were installed
+  if echo "$packages_to_install" | grep -q "ttf-"; then
+    print_progress "Rebuilding font cache..."
+    fc-cache -fv >/dev/null 2>&1
+    print_success "Font cache rebuilt"
+  fi
 else
   print_info "All packages are already installed"
 fi

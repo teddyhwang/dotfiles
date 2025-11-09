@@ -11,20 +11,21 @@ OS="$(uname -s)"
 case "$OS" in
 Darwin)
   print_progress "Installing Mac dependencies..."
-  ./scripts/packages-mac.sh
+  ./scripts/packages_mac.sh
   ./scripts/verify_symlinks.sh
   ./scripts/directories.sh
   ./scripts/linker.sh
   ./scripts/zsh.sh
   ./scripts/tmux.sh
-  ./scripts/git-bat.sh
+  ./scripts/git_bat.sh
   ;;
 Linux)
   print_progress "Installing Linux dependencies..."
   ./scripts/verify_symlinks.sh
-  ./scripts/linker-linux.sh
+  ./scripts/linker_linux.sh
   ./scripts/tmux.sh
-  ./scripts/packages-linux.sh
+  ./scripts/packages_linux.sh
+  ./scripts/git_bat.sh
   ;;
 *)
   print_error "Unsupported operating system: $OS"

@@ -3,7 +3,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 [[ -f ~/.zprofile ]] && source ~/.zprofile
-[[ -f ~/.shared/exports ]] && source ~/.shared/exports
+[[ -f ~/.shared/env ]] && source ~/.shared/env
 
 DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true

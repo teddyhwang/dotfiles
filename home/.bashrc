@@ -10,7 +10,7 @@ set -o vi
 # (don't mess with these directly, just overwrite them here!)
 [[ -f ~/.local/share/omarchy/default/bash/rc ]] && source ~/.local/share/omarchy/default/bash/rc
 
-[[ -f ~/.shared/exports ]] && source ~/.shared/exports
+[[ -f ~/.shared/env ]] && source ~/.shared/env
 export GHOSTTY_SHELL_FEATURES="path,title"
 if [ -n "$DESKTOP_SESSION" ]; then
   export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"

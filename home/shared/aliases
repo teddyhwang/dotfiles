@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 alias brighter='tinty apply base16-synth-midnight-dark'
 alias dark='tinty apply base16-seti'
 alias darker='tinty apply base16-3024'

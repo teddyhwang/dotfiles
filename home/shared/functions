@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 tinty_source_shell_theme() {
   local tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
 

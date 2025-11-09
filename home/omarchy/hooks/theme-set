@@ -57,6 +57,10 @@ case "$OMARCHY_THEME" in
     # Monokai variant
     TINTY_THEME="base16-monokai"
     ;;
+  seti)
+    # Seti UI theme
+    TINTY_THEME="base16-seti"
+    ;;
   *)
     # Default to base16-seti for themes without base16 equivalent
     TINTY_THEME="base16-seti"

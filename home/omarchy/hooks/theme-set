@@ -68,3 +68,5 @@ case "$OMARCHY_THEME" in
 esac
 
 tinty apply "$TINTY_THEME"
+ln -snf ~/.config/omarchy/current/theme/btop.theme ~/.config/btop/themes/current.theme
+pkill -SIGUSR2 btop

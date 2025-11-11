@@ -1,3 +1,8 @@
+[[ -f ~/.bashrc ]] && . ~/.bashrc
+
+[[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
+[[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
+
 if [[ -d "/opt/homebrew" ]]; then
   BREW_PREFIX="/opt/homebrew"
 fi
@@ -6,7 +11,7 @@ if [[ -f "/usr/local/bin/brew" ]]; then
 fi
 if [[ -n "$BREW_PREFIX" ]]; then
   DEFAULT_PATH=$(cat /etc/paths | xargs | tr " " :)
-  USER_PATH=$(echo $PATH | sed "s/${DEFAULT_PATH//\//\\/}//" | sed "s/^:\(.*\)/\1/")
+  USER_PATH=$(echo "$PATH" | sed "s/${DEFAULT_PATH//\//\\/}//" | sed "s/^:\(.*\)/\1/")
 
   PATH="$BREW_PREFIX/bin:$PATH"
   PATH="$BREW_PREFIX/sbin:$PATH"

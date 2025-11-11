@@ -8,10 +8,10 @@ set -o vi
 
 # All the default Omarchy aliases and functions
 # (don't mess with these directly, just overwrite them here!)
-[[ -f ~/.local/share/omarchy/default/bash/rc ]] && source ~/.local/share/omarchy/default/bash/rc
-
-if command -v starship &> /dev/null && [[ ! -f ~/.local/share/omarchy/default/bash/rc ]]; then
-  eval "$(starship init bash)"
+if [[ -f ~/.local/share/omarchy/default/bash/rc ]]; then
+  source ~/.local/share/omarchy/default/bash/rc
+else
+  command -v starship &> /dev/null && eval "$(starship init bash)"
 fi
 
 [[ -f ~/.shared/env ]] && source ~/.shared/env

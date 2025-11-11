@@ -1,5 +1,3 @@
-[[ -f ~/.bashrc ]] && . ~/.bashrc
-
 [[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
 [[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
 
@@ -36,3 +34,5 @@ if [[ -n "$USER_PATH" ]]; then
   PATH="$USER_PATH:$PATH"
 fi
 export PATH=$PATH
+
+[[ -f ~/.bashrc ]] && . ~/.bashrc

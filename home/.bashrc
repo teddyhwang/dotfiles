@@ -8,11 +8,15 @@ set -o vi
 
 # All the default Omarchy aliases and functions
 # (don't mess with these directly, just overwrite them here!)
-[[ -f ~/.local/share/omarchy/default/bash/rc ]] && source ~/.local/share/omarchy/default/bash/rc
+if [[ -f ~/.local/share/omarchy/default/bash/rc ]]; then
+  source ~/.local/share/omarchy/default/bash/rc
+else
+  command -v starship &> /dev/null && eval "$(starship init bash)"
+fi
 
 [[ -f ~/.shared/env ]] && source ~/.shared/env
 export GHOSTTY_SHELL_FEATURES="path,title"
-if [ -n "$DESKTOP_SESSION" ]; then
+if [[ -n "$DESKTOP_SESSION" ]]; then
   export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"
   export SSH_ASKPASS="/usr/lib/seahorse/ssh-askpass"
   export SSH_ASKPASS_REQUIRE=prefer

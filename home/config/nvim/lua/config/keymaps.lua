@@ -81,14 +81,6 @@ map("n", "<leader>gY", "<cmd>GitLink!<cr>", { desc = "Open git permalink in brow
 map("n", "<leader>gv", "<cmd>GitLink blame<cr>", { desc = "Copy git blame link" })
 map("n", "<leader>gV", "<cmd>GitLink! blame<cr>", { desc = "Open git blame link in browser" })
 
--- Toggle autoformat
-map("n", "<leader>uf", function()
-  local toggle = require("snacks").toggle.get("format")
-  if toggle then
-    toggle:toggle()
-  end
-end, { desc = "Toggle autoformat" })
-
 -- Command history and registers
 map("n", "q:", "<cmd>lua require('snacks').picker.command_history()<cr>", { desc = "Command history" })
 map("n", '"', "<cmd>lua require('snacks').picker.registers()<cr>", { desc = "Show registers" })

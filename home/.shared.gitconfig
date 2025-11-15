@@ -36,6 +36,7 @@
 
 [format]
 	pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset
+
 [commit]
 	gpgsign = true
 

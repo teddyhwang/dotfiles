@@ -3,7 +3,8 @@
 
 [[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
 
-[[ -f ~/.local/share/blesh/ble.sh ]] && source ~/.local/share/blesh/ble.sh --noattach
+# Don't load ble.sh over SSH to avoid double-typing issues
+[[ -z "$SSH_CONNECTION" ]] && [[ -f ~/.local/share/blesh/ble.sh ]] && source ~/.local/share/blesh/ble.sh --noattach
 set -o vi
 
 # All the default Omarchy aliases and functions

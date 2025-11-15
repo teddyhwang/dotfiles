@@ -10,6 +10,12 @@ return {
     end,
   },
   "vim-scripts/Tabmerge", -- Merge tabs with :Tabmerge
+  {
+    "andymass/vim-matchup", -- show relative number of closing block
+    init = function()
+      vim.g["matchup_matchparen_offscreen"] = { method = "popup" }
+    end,
+  },
 
   -- Git
   "f-person/git-blame.nvim", -- Inline git blame at end of line

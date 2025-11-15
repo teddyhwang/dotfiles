@@ -30,6 +30,11 @@ end, { desc = "Toggle file explorer" })
 
 map("n", "-", "<cmd>Oil<cr>", { desc = "Open parent directory" })
 
+map("n", "<leader>oo", "<cmd>Other<cr>", { desc = "Open alternate file" })
+map("n", "<leader>os", "<cmd>OtherSplit<cr>", { desc = "Open alternate file in split" })
+map("n", "<leader>ov", "<cmd>OtherVSplit<cr>", { desc = "Open alternate file in vsplit" })
+map("n", "<leader>ot", "<cmd>OtherTabNew<cr>", { desc = "Open alternate file in new tab" })
+
 map("n", "<leader>fr", function()
   require("util.yazi").open()
 end, { desc = "Open yazi file manager" })

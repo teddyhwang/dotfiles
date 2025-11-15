@@ -7,6 +7,23 @@
 -- base0C = '#55dbbe', base0D = '#55b5db', base0E = '#a074c4', base0F = '#8a553f'
 
 return function(colors)
+  -- Helper to blend two hex colors (for subtle backgrounds)
+  local function blend_colors(fg_color, bg_color, alpha)
+    local function hex_to_rgb(hex)
+      hex = hex:gsub("#", "")
+      return tonumber(hex:sub(1, 2), 16), tonumber(hex:sub(3, 4), 16), tonumber(hex:sub(5, 6), 16)
+    end
+    local function rgb_to_hex(r, g, b)
+      return string.format("#%02x%02x%02x", math.floor(r), math.floor(g), math.floor(b))
+    end
+    local fr, fg, fb = hex_to_rgb(fg_color)
+    local br, bg, bb = hex_to_rgb(bg_color)
+    local r = fr * alpha + br * (1 - alpha)
+    local g = fg * alpha + bg * (1 - alpha)
+    local b = fb * alpha + bb * (1 - alpha)
+    return rgb_to_hex(r, g, b)
+  end
+
   local handle_custom_highlights = function()
     local highlights = {
       ["@symbol"] = { fg = colors.base09 },
@@ -49,6 +66,10 @@ return function(colors)
       lualine_c_replace = { bg = colors.base01 },
       lualine_c_command = { bg = colors.base01 },
       lualine_c_inactive = { bg = colors.base01 },
+      DiffAdd = { bg = blend_colors(colors.base0B, colors.base00, 0.15) },
+      DiffDelete = { bg = blend_colors(colors.base08, colors.base00, 0.15), strikethrough = true },
+      DiffChange = { bg = blend_colors(colors.base0A, colors.base00, 0.15) },
+      DiffText = { bg = blend_colors(colors.base0C, colors.base00, 0.20), italic = true },
     }
 
     for k, v in pairs(highlights) do

@@ -1,4 +1,10 @@
 return {
+  -- Improved Ruby indentation
+  {
+    "vim-ruby/vim-ruby",
+    ft = "ruby",
+  },
+
   {
     "neovim/nvim-lspconfig",
     opts = {

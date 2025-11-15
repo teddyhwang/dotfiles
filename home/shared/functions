@@ -47,45 +47,45 @@ update() {
 
 ssh() {
   case $1 in
-    mini)
-      command ssh teddys-mac-mini.local
-      ;;
-    work)
-      command ssh teddys-shopify-macBook-pro.local
-      ;;
-    omarchy)
-      command ssh omarchy-mbp
-      ;;
-    nicole)
-      command ssh nicolepaik@nicoles-macbook-air.local
-      ;;
-    *)
-      command ssh "$@"
-      ;;
+  mini)
+    command ssh teddys-mac-mini.local
+    ;;
+  work)
+    command ssh teddys-shopify-macBook-pro.local
+    ;;
+  omarchy)
+    command ssh omarchy-mbp
+    ;;
+  nicole)
+    command ssh nicolepaik@nicoles-macbook-air.local
+    ;;
+  *)
+    command ssh "$@"
+    ;;
   esac
 }
 
 tmux() {
   case $1 in
-    start)
-      if [[ -n "$TMUX" ]]; then
-        command tmux new-session -d -s "$2"
-        command tmux rename-window -t "$2:0" Terminal
-        command tmux new-window -t "$2" -n Editor
-        command tmux new-window -t "$2" -n Server
-        command tmux select-window -t "$2:0"
-        command tmux switch-client -t "$2"
-      else
-        command tmux new-session -s "$2"
-        command tmux rename-window -t "$2:0" Terminal
-        command tmux new-window -t "$2" -n Editor
-        command tmux new-window -t "$2" -n Server
-        command tmux select-window -t "$2:0"
-      fi
-      ;;
-    *)
-      command tmux "$@"
-      ;;
+  start)
+    if [[ -n "$TMUX" ]]; then
+      command tmux new-session -d -s "$2"
+      command tmux rename-window -t "$2:0" Terminal
+      command tmux new-window -t "$2" -n Editor
+      command tmux new-window -t "$2" -n Server
+      command tmux select-window -t "$2:0"
+      command tmux switch-client -t "$2"
+    else
+      command tmux new-session -s "$2"
+      command tmux rename-window -t "$2:0" Terminal
+      command tmux new-window -t "$2" -n Editor
+      command tmux new-window -t "$2" -n Server
+      command tmux select-window -t "$2:0"
+    fi
+    ;;
+  *)
+    command tmux "$@"
+    ;;
   esac
 }
 
@@ -94,7 +94,7 @@ killport() {
 }
 
 branch() {
-  if git rev-parse --git-dir &> /dev/null; then
+  if git rev-parse --git-dir &>/dev/null; then
     branch=$(git for-each-ref --color --sort=-committerdate \
       refs/heads/ \
       --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' |
@@ -111,7 +111,7 @@ branch() {
 }
 
 cob() {
-  if git rev-parse --git-dir &> /dev/null; then
+  if git rev-parse --git-dir &>/dev/null; then
     branch=$(git branch --color --sort=-committerdate \
       --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' -r |
       fzf --ansi |
@@ -141,7 +141,7 @@ lg() {
 
   if [[ -f "$LAZYGIT_NEW_DIR_FILE" ]]; then
     cd "$(cat "$LAZYGIT_NEW_DIR_FILE")" || return
-    rm -f "$LAZYGIT_NEW_DIR_FILE" &> /dev/null
+    rm -f "$LAZYGIT_NEW_DIR_FILE" &>/dev/null
   fi
 }
 
@@ -160,20 +160,20 @@ y() {
 }
 
 # Tinty initialization (only run in interactive shells, not in nvim/floaterm)
-if command -v tinty &> /dev/null; then
+if command -v tinty &>/dev/null; then
   case $- in
-    *i*)
-      if [[ -z "$FLOATERM" ]] && [[ -z "$NVIM" ]]; then
-        # Detect shell type for completion generation
-        if [[ -n "$BASH_VERSION" ]]; then
-          eval "$(tinty generate-completion bash)"
-        elif [[ -n "$ZSH_VERSION" ]]; then
-          eval "$(tinty generate-completion zsh)"
-          compdef tinty_source_shell_theme=tinty
-        fi
-        alias tinty=tinty_source_shell_theme
-        tinty_source_shell_theme "init" &> /dev/null
+  *i*)
+    if [[ -z "$FLOATERM" ]] && [[ -z "$NVIM" ]]; then
+      # Detect shell type for completion generation
+      if [[ -n "$BASH_VERSION" ]]; then
+        eval "$(tinty generate-completion bash)"
+      elif [[ -n "$ZSH_VERSION" ]]; then
+        eval "$(tinty generate-completion zsh)"
+        compdef tinty_source_shell_theme=tinty
       fi
-      ;;
+      alias tinty=tinty_source_shell_theme
+      tinty_source_shell_theme "init" &>/dev/null
+    fi
+    ;;
   esac
 fi

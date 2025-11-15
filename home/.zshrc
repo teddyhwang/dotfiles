@@ -4,7 +4,6 @@ fi
 
 [[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
 
-[[ -f ~/.zprofile ]] && source ~/.zprofile
 [[ -f ~/.shared/env ]] && source ~/.shared/env
 
 DISABLE_AUTO_UPDATE=true
@@ -48,10 +47,6 @@ fi
 autoload -U compinit && compinit
 setopt AUTO_PUSHD
 
-if command -v carapace &> /dev/null; then
-  source <(carapace _carapace)
-fi
-
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 zstyle ':completion:*' accept-exact '*(N)'
 zstyle ':completion:*' cache-path ~/.zsh/cache
@@ -91,7 +86,6 @@ __fzf_rebind_hook() {
       __fzf_last_shadowenv_data="${__shadowenv_data:-}"
 
       [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
-      eval "$(atuin init zsh --disable-up-arrow)"
     fi
   fi
 }

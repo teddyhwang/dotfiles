@@ -49,6 +49,11 @@ return function(colors)
       lualine_c_replace = { bg = colors.base01 },
       lualine_c_command = { bg = colors.base01 },
       lualine_c_inactive = { bg = colors.base01 },
+      -- Sidekick NES (Next Edit Suggestions)
+      SidekickSign = { fg = colors.base0C, bold = true },
+      SidekickDiffAdd = { bg = "NONE", fg = colors.base04, italic = true, blend = 30 },
+      SidekickDiffDelete = { bg = colors.base01, fg = colors.base03, strikethrough = true },
+      SidekickDiffContext = { bg = "NONE", fg = colors.base03 },
     }
 
     for k, v in pairs(highlights) do

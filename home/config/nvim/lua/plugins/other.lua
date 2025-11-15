@@ -6,6 +6,41 @@ return {
         mappings = {
           "rails",
           "react",
+          -- Custom mapping for FolderName/FolderName.tsx <-> FolderName/tests/FolderName.test.tsx
+          {
+            pattern = "(.*)/(.*)/(%2)%.tsx$",
+            target = "%1/%2/tests/%3.test.tsx",
+            context = "test",
+          },
+          {
+            pattern = "(.*)/(.*)/tests/(%2)%.test%.tsx$",
+            target = "%1/%2/%3.tsx",
+            context = "component",
+          },
+          -- Custom mapping for FolderName/FolderName.ts <-> FolderName/tests/FolderName.test.tsx (or .ts)
+          {
+            pattern = "(.*)/(.*)/(%2)%.ts$",
+            target = {
+              { target = "%1/%2/tests/%3.test.tsx", context = "test (tsx)" },
+              { target = "%1/%2/tests/%3.test.ts", context = "test (ts)" },
+            },
+          },
+          {
+            pattern = "(.*)/(.*)/tests/(%2)%.test%.tsx?$",
+            target = "%1/%2/%3.ts",
+            context = "source",
+          },
+          -- Custom mapping for file.ts <-> tests/file.test.ts
+          {
+            pattern = "(.*)/(.-)%.ts$",
+            target = "%1/tests/%2.test.ts",
+            context = "test",
+          },
+          {
+            pattern = "(.*)/tests/(.-)%.test%.ts$",
+            target = "%1/%2.ts",
+            context = "source",
+          },
         },
       })
 

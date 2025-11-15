@@ -40,14 +40,24 @@ map("n", "<leader>fr", function()
 end, { desc = "Open yazi file manager" })
 
 map("n", "<leader>fy", function()
-  local filepath = vim.fn.expand("%:p")
+  local filepath = vim.fn.expand("%:.")
   if filepath ~= "" then
     vim.fn.setreg("+", filepath)
-    vim.notify("Copied filepath: " .. filepath)
+    vim.notify("Copied: " .. filepath)
   else
     vim.notify("No filepath for current buffer", vim.log.levels.WARN)
   end
-end, { desc = "Copy file path" })
+end, { desc = "Copy relative file path" })
+
+map("n", "<leader>fY", function()
+  local filepath = vim.fn.expand("%:p")
+  if filepath ~= "" then
+    vim.fn.setreg("+", filepath)
+    vim.notify("Copied: " .. filepath)
+  else
+    vim.notify("No filepath for current buffer", vim.log.levels.WARN)
+  end
+end, { desc = "Copy absolute file path" })
 
 map("n", "<leader>ft", function()
   require("snacks").terminal.open()
@@ -114,6 +124,33 @@ map("n", "<leader>V", "ggVG<cr>", { desc = "Select entire buffer" })
 map("n", "<leader>Y", ":%y+<cr>", { desc = "Yank entire buffer" })
 map("n", "<leader>q", ":q<cr>", { desc = "Close buffer" })
 map("n", "<leader>v", ":e ~/.config/nvim/init.lua<cr>", { desc = "Edit init.lua" })
+
+map("n", "<leader>ym", function()
+  local ok, snacks = pcall(require, "snacks")
+  if not ok or not snacks.notifier then
+    print("Snacks notifier not available")
+    return
+  end
+
+  local history = snacks.notifier.get_history()
+
+  if #history > 0 then
+    -- Get the last notification
+    local last = history[#history]
+    ---@type string
+    local msg
+    if type(last.msg) == "table" then
+      ---@diagnostic disable-next-line: param-type-mismatch
+      msg = table.concat(last.msg, "\n")
+    else
+      msg = tostring(last.msg)
+    end
+    vim.fn.setreg("+", msg)
+    print("Copied: " .. msg)
+  else
+    print("No notifications to copy")
+  end
+end, { desc = "Copy last notification" })
 
 -- Tmux integration
 map("n", "<leader>!", function()

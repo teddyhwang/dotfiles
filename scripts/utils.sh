@@ -87,7 +87,7 @@ validate_and_symlink() {
     print_warning "$target exists and differs from your dotfile."
     printf "Do you want to replace it? (y/N) "
     read -r response
-    printf "\033[1A\033[2K\033[1A"
+    printf "\033[1A\033[2K"
     case "$response" in
       [Yy]|[Yy][Ee][Ss])
         print_progress "Replacing existing file..."
@@ -95,7 +95,7 @@ validate_and_symlink() {
         track_change
         ;;
       *)
-        print_warning "Keeping existing file"
+        print_info "Keeping existing $target"
         ;;
     esac
   else

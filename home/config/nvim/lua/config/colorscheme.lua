@@ -57,7 +57,7 @@ return function(colors)
       FloatBorder = { link = "VertSplit" },
       HighlightedyankRegion = { bg = colors.base03 },
       WinSeparator = { fg = colors.base03 },
-      MatchParen = { bg = blend_colors(colors.base02, colors.base00, 0.50) },
+      MatchParen = { bg = blend_colors(colors.base02, colors.base00, 0.30) },
       -- Fix lualine section backgrounds to use StatusLine bg
       StatusLine = { bg = colors.base01, fg = colors.base04 },
       lualine_c_normal = { bg = colors.base01 },

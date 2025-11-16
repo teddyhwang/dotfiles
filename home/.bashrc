@@ -15,7 +15,6 @@ else
 fi
 
 [[ -f ~/.shared/env ]] && source ~/.shared/env
-export GHOSTTY_SHELL_FEATURES="path,title"
 if [[ -n "$DESKTOP_SESSION" ]]; then
   export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"
   export SSH_ASKPASS="/usr/lib/seahorse/ssh-askpass"

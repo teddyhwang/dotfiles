@@ -9,4 +9,5 @@ macos-titlebar-style = hidden
 
 confirm-close-surface = false
 
+shell-integration-features = ssh-terminfo,ssh-env
 theme = "tinted-theming"

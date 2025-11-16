@@ -16,11 +16,14 @@ if command -v lsd >/dev/null 2>&1; then
 fi
 alias main='git checkout main'
 alias mux="tmuxinator"
-alias ng="npm list -g --depth=0 2>/dev/null"
-alias nl="npm list --depth=0 2>/dev/null"
 alias ping='prettyping --nolegend'
 alias please='sudo $(fc -ln -1)'
 alias rake="noglob rake"
 alias n="nvim"
 alias vi='nvim'
 alias weather='curl wttr.in'
+
+alias mini='ssh teddys-mac-mini.local'
+alias work='ssh teddys-shopify-macBook-pro.local'
+alias omarchy='ssh omarchy-mbp'
+alias nicole='ssh nicolepaik@nicoles-macbook-air.local'

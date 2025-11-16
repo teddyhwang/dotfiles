@@ -45,7 +45,7 @@ update() {
   tinty update
 }
 
-ssh() {
+s() {
   case $1 in
   mini)
     command ssh teddys-mac-mini.local

@@ -86,6 +86,7 @@ __fzf_rebind_hook() {
       __fzf_last_shadowenv_data="${__shadowenv_data:-}"
 
       [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
+      eval "$(atuin init zsh --disable-up-arrow)"
     fi
   fi
 }

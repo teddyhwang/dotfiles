@@ -27,18 +27,10 @@ print_progress "\nSymlinking home directory dotfiles..."
 
 validate_and_symlink "$DOTFILES_DIR/home/shared" "$HOME/.shared"
 
-dotfiles=".bash_profile .bashrc .blerc .curlrc .gitignore .ignore .myclirc .rgignore .shared.gitconfig .tmux.conf .zprofile .zshrc .p10k.zsh"
-
-for dotfile in $dotfiles; do
-  filepath="$DOTFILES_DIR/home/$dotfile"
-
-  if [ ! -e "$filepath" ]; then
-    print_warning "$dotfile does not exist in dotfiles, skipping"
-    continue
-  fi
-
-  source="$filepath"
-  target="$HOME/$dotfile"
+for filepath in home/.[!.]*; do
+  file=$(basename "$filepath")
+  source="$(pwd)/$filepath"
+  target="$HOME/$file"
 
   validate_and_symlink "$source" "$target"
 done

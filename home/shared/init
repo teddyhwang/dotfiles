@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if command -v gh &> /dev/null; then
+if command -v gh &>/dev/null; then
   if [[ -n "$BASH_VERSION" ]]; then
     eval "$(gh completion -s bash)"
   elif [[ -n "$ZSH_VERSION" ]]; then
@@ -8,7 +8,7 @@ if command -v gh &> /dev/null; then
   fi
 fi
 
-if command -v atuin &> /dev/null; then
+if command -v atuin &>/dev/null; then
   if [[ -n "$BASH_VERSION" ]]; then
     eval "$(atuin init bash --disable-up-arrow)"
   elif [[ -n "$ZSH_VERSION" ]]; then
@@ -16,7 +16,7 @@ if command -v atuin &> /dev/null; then
   fi
 fi
 
-if command -v zoxide &> /dev/null; then
+if command -v zoxide &>/dev/null; then
   if [[ -n "$BASH_VERSION" ]]; then
     eval "$(zoxide init bash)"
   elif [[ -n "$ZSH_VERSION" ]]; then
@@ -24,11 +24,10 @@ if command -v zoxide &> /dev/null; then
   fi
 fi
 
-if command -v gt &> /dev/null; then
+if command -v gt &>/dev/null; then
   eval "$(gt completion)"
 fi
 
-if command -v carapace &> /dev/null; then
+if command -v carapace &>/dev/null; then
   eval "$(carapace _carapace)"
 fi
-

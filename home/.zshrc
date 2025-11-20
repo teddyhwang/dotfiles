@@ -28,6 +28,10 @@ plugins=(
 )
 
 [[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]] && source ~/.oh-my-zsh/oh-my-zsh.sh
+# if command -v carapace &>/dev/null; then
+#   eval "$(starship init zsh)"
+# fi
+
 if [[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ]]; then
   source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
   source /opt/homebrew/opt/chruby/share/chruby/auto.sh

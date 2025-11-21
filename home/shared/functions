@@ -22,7 +22,14 @@ tinty_source_shell_theme() {
 }
 
 theme() {
-  tinty_source_shell_theme apply "$(tinty list | fzf)"
+  local selected tmpfile
+  tmpfile=$(mktemp)
+  command tmux popup -E -w 70% -h 70% "tinty list | fzf --preview 'tinty info {}' > '$tmpfile'"
+  selected=$(cat "$tmpfile")
+  rm -f "$tmpfile"
+  if [[ -n "$selected" ]]; then
+    tinty_source_shell_theme apply "$selected"
+  fi
 }
 
 # Zsh-specific function for updating oh-my-zsh custom plugins/themes

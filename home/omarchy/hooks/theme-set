@@ -38,7 +38,7 @@ case "$OMARCHY_THEME" in
     TINTY_THEME="base16-nord"
     ;;
   rose-pine)
-    TINTY_THEME="base16-rose-pine"
+    TINTY_THEME="base16-rose-pine-dawn"
     ;;
   tokyo-night)
     TINTY_THEME="base16-tokyo-night-dark"

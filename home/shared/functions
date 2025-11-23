@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
+
 tinty_source_shell_theme() {
   local tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
 
@@ -23,6 +25,7 @@ tinty_source_shell_theme() {
 
 theme() {
   local selected
+  [ -f $TINTY_FZF ] && . $TINTY_FZF
   selected=$(tinty list | fzf-tmux -p 70%,70% --preview 'tinty info {}')
   if [[ -n "$selected" ]]; then
     tinty_source_shell_theme apply "$selected"

@@ -16,11 +16,17 @@ case "$OMARCHY_THEME" in
   dracula)
     TINTY_THEME="base16-dracula"
     ;;
+  ethereal)
+    TINTY_THEME="base16-horizon-dark"
+    ;;
   everforest)
     TINTY_THEME="base16-everforest"
     ;;
   gruvbox)
     TINTY_THEME="base16-gruvbox-dark-medium"
+    ;;
+  hackerman)
+    TINTY_THEME="base24-blue-matrix"
     ;;
   kanagawa)
     TINTY_THEME="base16-kanagawa"

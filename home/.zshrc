@@ -28,7 +28,7 @@ plugins=(
 )
 
 [[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]] && source ~/.oh-my-zsh/oh-my-zsh.sh
-# if command -v carapace &>/dev/null; then
+# if command -v starship &>/dev/null; then
 #   eval "$(starship init zsh)"
 # fi
 

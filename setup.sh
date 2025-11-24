@@ -29,6 +29,11 @@ Linux)
     ./scripts/zsh.sh
   fi
   ./scripts/git_bat.sh
+  if [ -n "$SUDO_USER" ] || [ "$(id -u)" -eq 0 ]; then
+    ./scripts/macbook_t2_linux.sh
+  else
+    print_warning "Skipping T2 MacBook setup (requires sudo). Run 'sudo ./scripts/macbook_t2_linux.sh' if needed."
+  fi
   ;;
 *)
   print_error "Unsupported operating system: $OS"

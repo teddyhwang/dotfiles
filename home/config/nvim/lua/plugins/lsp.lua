@@ -55,7 +55,7 @@ return {
           },
         },
         ruby_lsp = {
-          mason = false,
+          -- mason = false,
           init_options = {
             formatter = "rubocop",
           },

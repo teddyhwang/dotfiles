@@ -94,17 +94,14 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- Reduce indent line opacity
 local indent_opacity = require("util.indent-opacity")
-local indent_opacity_group = vim.api.nvim_create_augroup("SnacksIndentOpacity", { clear = true })
 
 vim.api.nvim_create_autocmd("FileType", {
-  group = indent_opacity_group,
   callback = function()
     vim.schedule(indent_opacity.apply)
   end,
 })
 
 vim.api.nvim_create_autocmd("ColorScheme", {
-  group = indent_opacity_group,
   callback = function()
     indent_opacity.reset()
     vim.schedule(indent_opacity.apply)

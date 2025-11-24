@@ -46,10 +46,10 @@ update_custom_oh_my_zsh() {
 
 # Zsh-specific update function
 update() {
+  tinty update
   update_custom_oh_my_zsh 'plugins'
   update_custom_oh_my_zsh 'themes'
   omz update
-  tinty update
 }
 
 tmux() {

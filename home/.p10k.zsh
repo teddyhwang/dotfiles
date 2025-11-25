@@ -19,6 +19,17 @@ POWERLEVEL9K_USER_DEFAULT_BACKGROUND=yellow
 POWERLEVEL9K_USER_DEFAULT_FOREGROUND=black
 POWERLEVEL9K_VCS_GIT_GITHUB_ICON='\uF408 '
 POWERLEVEL9K_VCS_GIT_HOOKS=(vcs-detect-changes)
+POWERLEVEL9K_VCS_DISABLED_WORKDIR_PATTERN='*/world/trees/root/*'
+
+# Custom segment for sparse checkout repos - shows branch only
+function prompt_sparse_git() {
+  [[ $PWD != */world/trees/root/* ]] && return
+  local branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+  [[ -n $branch ]] && p10k segment -f black -b green -t "$branch"
+}
+POWERLEVEL9K_SPARSE_GIT_FOREGROUND=black
+POWERLEVEL9K_SPARSE_GIT_BACKGROUND=green
+POWERLEVEL9K_SPARSE_GIT_VISUAL_IDENTIFIER_EXPANSION=$'\uF408 '
 POWERLEVEL9K_VCS_GIT_ICON='\uF408 '
 POWERLEVEL9K_VI_MODE_BACKGROUND=green
 POWERLEVEL9K_VI_MODE_FOREGROUND=black
@@ -38,6 +49,7 @@ POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
   dir_writable
   dir
   vcs
+  sparse_git
 )
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
   status

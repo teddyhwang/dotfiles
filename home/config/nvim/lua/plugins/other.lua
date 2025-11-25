@@ -41,6 +41,17 @@ return {
             target = "%1/%2.ts",
             context = "source",
           },
+          -- Custom mapping for components/.../lib/foo.rb <-> components/.../test/lib/foo_test.rb
+          {
+            pattern = "(.*)/lib/(.*)%.rb$",
+            target = "%1/test/lib/%2_test.rb",
+            context = "test",
+          },
+          {
+            pattern = "(.*)/test/lib/(.*)_test%.rb$",
+            target = "%1/lib/%2.rb",
+            context = "source",
+          },
         },
       })
 

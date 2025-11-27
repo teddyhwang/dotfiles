@@ -152,6 +152,9 @@ map("n", "<leader>ym", function()
   end
 end, { desc = "Copy last notification" })
 
+-- Neominimap keymaps
+map("n", "<leader>uM", "<cmd>Neominimap Toggle<cr>", { desc = "Toggle global minimap" })
+
 -- Tmux integration
 map("n", "<leader>!", function()
   vim.ui.input({

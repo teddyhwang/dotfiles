@@ -47,3 +47,4 @@ vim.diagnostic.config({
 })
 
 vim.treesitter.language.register("bash", "zsh")
+vim.g.lazyvim_prettier_needs_config = false

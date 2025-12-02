@@ -2,7 +2,7 @@
 
 alias brighter='tinty apply base16-synth-midnight-dark'
 alias dark='tinty apply base16-seti'
-alias darker='tinty apply base16-3024'
+alias darker='tinty apply base16-ayu-dark'
 alias light='tinty apply base16-solarized-light'
 alias lighter='tinty apply base16-one-light'
 alias frappe='tinty apply base16-catppuccin-frappe'

@@ -25,6 +25,16 @@ return function(colors)
   end
 
   local handle_custom_highlights = function()
+    local function is_light_theme()
+      local bg = colors.base00:gsub("#", "")
+      local r = tonumber(bg:sub(1, 2), 16)
+      local g = tonumber(bg:sub(3, 4), 16)
+      local b = tonumber(bg:sub(5, 6), 16)
+
+      local luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+      return luminance > 0.5
+    end
+
     local highlights = {
       ["@symbol"] = { fg = colors.base09 },
       ["@variable"] = { fg = colors.base08 },
@@ -70,6 +80,7 @@ return function(colors)
       DiffDelete = { bg = blend_colors(colors.base08, colors.base00, 0.15), strikethrough = true },
       DiffChange = { bg = blend_colors(colors.base0A, colors.base00, 0.15) },
       DiffText = { bg = blend_colors(colors.base0C, colors.base00, 0.20), italic = true },
+      Visual = { bg = is_light_theme() and colors.base02 or blend_colors(colors.base0D, colors.base00, 0.40) },
     }
 
     for k, v in pairs(highlights) do

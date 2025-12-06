@@ -80,7 +80,7 @@ return function(colors)
       DiffDelete = { bg = blend_colors(colors.base08, colors.base00, 0.15), strikethrough = true },
       DiffChange = { bg = blend_colors(colors.base0A, colors.base00, 0.15) },
       DiffText = { bg = blend_colors(colors.base0C, colors.base00, 0.20), italic = true },
-      Visual = { bg = is_light_theme() and colors.base02 or blend_colors(colors.base0D, colors.base00, 0.40) },
+      Visual = { bg = is_light_theme() and colors.base02 or blend_colors(colors.base0D, colors.base00, 0.20) },
     }
 
     for k, v in pairs(highlights) do

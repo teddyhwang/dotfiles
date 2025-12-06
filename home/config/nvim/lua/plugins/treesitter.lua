@@ -3,8 +3,10 @@ return {
     "nvim-treesitter/nvim-treesitter",
     opts = {
       ensure_installed = {
-        "tmux",
+        "bash",
         "hyprlang",
+        "tmux",
+        "zsh",
       },
     },
   },

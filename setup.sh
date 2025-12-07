@@ -14,7 +14,7 @@ Darwin)
   ./scripts/packages_mac.sh
   ./scripts/verify_symlinks.sh
   ./scripts/directories.sh
-  ./scripts/linker.sh
+  ./scripts/linker_mac.sh
   ./scripts/zsh.sh
   ./scripts/tmux.sh
   ./scripts/git_bat.sh

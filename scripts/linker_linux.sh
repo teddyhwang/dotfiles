@@ -5,35 +5,7 @@ DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
-print_progress "Symlinking config directories..."
-
-configs="atuin bat btop lazygit nvim starship.toml television tinted-theming yamllint yazi"
-
-for config in $configs; do
-  filepath="$DOTFILES_DIR/home/config/$config"
-
-  if [ ! -e "$filepath" ]; then
-    print_warning "$config does not exist in dotfiles, skipping"
-    continue
-  fi
-
-  source="$filepath"
-  target="$HOME/.config/$config"
-
-  validate_and_symlink "$source" "$target"
-done
-
-print_progress "\nSymlinking home directory dotfiles..."
-
-validate_and_symlink "$DOTFILES_DIR/home/shared" "$HOME/.shared"
-
-for filepath in home/.[!.]*; do
-  file=$(basename "$filepath")
-  source="$(pwd)/$filepath"
-  target="$HOME/$file"
-
-  validate_and_symlink "$source" "$target"
-done
+. "${SCRIPT_DIR}/linker.sh"
 
 print_progress "\nSymlinking hypr config..."
 
@@ -68,4 +40,4 @@ if [ -n "$OMARCHY_PATH" ]; then
   validate_and_symlink "$DOTFILES_DIR/home/omarchy/hooks/theme-set" "$HOME/.config/omarchy/hooks/theme-set"
 fi
 
-print_conditional_success "Symlinking"
+print_conditional_success "Symlinks"

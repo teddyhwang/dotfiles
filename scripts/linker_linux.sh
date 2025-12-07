@@ -7,7 +7,7 @@ DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 
 print_progress "Symlinking config directories..."
 
-configs="atuin bat btop lazygit nvim starship.toml tinted-theming yamllint yazi"
+configs="atuin bat btop lazygit nvim starship.toml television tinted-theming yamllint yazi"
 
 for config in $configs; do
   filepath="$DOTFILES_DIR/home/config/$config"

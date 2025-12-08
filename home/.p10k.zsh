@@ -1,77 +1,86 @@
-# ============================================================================
-# SPARSE GIT SEGMENT FOR WORLD REPO
-# gitstatus doesn't work with sparse checkouts due to libgit2 limitations
-# Simple async with file cache - updates on next prompt
-# ============================================================================
+typeset -g _git_text=""
+typeset -g _git_state="LOADING"
+typeset -g _git_workspace=""
 
-typeset -gA _sparse_git_cache=()
-
-function prompt_sparse_git() {
-  [[ $PWD != */world/* ]] && return
+# Worker: runs git status asynchronously (receives dir as arg, no globals)
+_git_async() {
+  local dir=$1
+  cd "$dir" || return 1
 
   local branch=$(git symbolic-ref --short HEAD 2>/dev/null)
-  [[ -z $branch ]] && return
+  [[ -z $branch ]] && return 1
 
-  # Read cache
-  local cache_file="/tmp/.sparse_git.$$"
-  [[ -f $cache_file ]] && source $cache_file
+  local staged=0 unstaged=0 untracked=0
+  local line
+  while IFS= read -r line; do
+    [[ $line[1] == [MADRC] ]] && ((staged++))
+    [[ $line[2] == [MD] ]] && ((unstaged++))
+    [[ $line[1] == "?" ]] && ((untracked++))
+  done < <(git status --porcelain 2>/dev/null)
 
-  local staged=${_sparse_git_cache[staged]:-0}
-  local unstaged=${_sparse_git_cache[unstaged]:-0}
-  local untracked=${_sparse_git_cache[untracked]:-0}
-  local cached_dir=${_sparse_git_cache[dir]:-}
+  # Build display text with nerd font icons and counts
+  local text="$branch"
+  (( staged > 0 )) && text+=$' \uF055 '"$staged"
+  (( unstaged > 0 )) && text+=$' \uF06A '"$unstaged"
+  (( untracked > 0 )) && text+=$' \uF059 '"$untracked"
 
-  # Show segment if we have cached data for this directory
-  if [[ $cached_dir == $PWD ]]; then
-    local bg=2  # green (clean)
-    (( staged + unstaged > 0 )) && bg=3  # yellow (modified)
-
-    local text=""
-    (( $+functions[_p9k_get_icon] )) && { _p9k_get_icon '' VCS_BRANCH_ICON; text+="$_p9k__ret"; }
-    text+="$branch"
-
-    if (( staged > 0 )); then
-      (( $+functions[_p9k_get_icon] )) && _p9k_get_icon '' VCS_STAGED_ICON
-      text+=" ${_p9k__ret:-+}"
-    fi
-    if (( unstaged > 0 )); then
-      (( $+functions[_p9k_get_icon] )) && _p9k_get_icon '' VCS_UNSTAGED_ICON
-      text+=" ${_p9k__ret:-!}"
-    fi
-    if (( untracked > 0 )); then
-      (( $+functions[_p9k_get_icon] )) && _p9k_get_icon '' VCS_UNTRACKED_ICON
-      text+=" ${_p9k__ret:-?}"
-    fi
-
-    p10k segment -b $bg -f black -i 'VCS_GIT_GITHUB_ICON' -t "$text"
-  fi
-
-  # Update cache in background
-  (
-    local s=0 u=0 t=0 line
-    while IFS= read -r line; do
-      [[ $line[1] == [MADRC] ]] && ((s++))
-      [[ $line[2] == [MD] ]] && ((u++))
-      [[ $line[1] == "?" ]] && ((t++))
-    done < <(git status --porcelain 2>/dev/null)
-
-    cat > "$cache_file" <<EOF
-_sparse_git_cache[staged]=$s
-_sparse_git_cache[unstaged]=$u
-_sparse_git_cache[untracked]=$t
-_sparse_git_cache[dir]='$PWD'
-EOF
-  ) &!
+  # Output: state|text
+  # CLEAN: no changes
+  # STAGED: only staged changes (green with icon)
+  # MODIFIED: unstaged changes (yellow)
+  local state="CLEAN"
+  (( staged > 0 && unstaged == 0 )) && state="STAGED"
+  (( unstaged > 0 )) && state="MODIFIED"
+  echo "${state}|${text}"
 }
 
-function instant_prompt_sparse_git() {
-  prompt_sparse_git
+# Callback: update display variables and trigger redraw
+_git_callback() {
+  local job=$1 exit_code=$2 output=$3
+
+  if [[ $exit_code == 0 && -n $output ]]; then
+    _git_state=${output%%|*}
+    _git_text=${output#*|}
+  fi
+
+  p10k display -r
+}
+
+# Prompt segment
+prompt_git() {
+  # Initialize async worker on first use
+  if (( $+functions[async_init] )) && [[ -z $_git_workspace ]]; then
+    async_init
+    async_stop_worker _git_worker 2>/dev/null
+    async_start_worker _git_worker
+    async_unregister_callback _git_worker 2>/dev/null
+    async_register_callback _git_worker _git_callback
+  fi
+
+  local workspace
+  workspace=$(git rev-parse --show-toplevel 2>/dev/null) || return
+
+  # Reset to loading on workspace change
+  if [[ $_git_workspace != "$workspace" ]]; then
+    _git_workspace="$workspace"
+    _git_text=$(git symbolic-ref --short HEAD 2>/dev/null)
+  fi
+
+  # Always start in loading state until async completes
+  _git_state="LOADING"
+
+  async_job _git_worker _git_async "$workspace"
+
+  # Use -c conditions for dynamic state switching (from p10k issue #2471)
+  p10k segment -s LOADING -c '${(M)_git_state:#LOADING}' -et '$_git_text'
+  p10k segment -s CLEAN -c '${(M)_git_state:#CLEAN}' -et '$_git_text'
+  p10k segment -s STAGED -c '${(M)_git_state:#STAGED}' -et '$_git_text'
+  p10k segment -s MODIFIED -c '${(M)_git_state:#MODIFIED}' -et '$_git_text'
 }
 
 # ============================================================================
 # POWERLEVEL10K CONFIGURATION
 # ============================================================================
-
 POWERLEVEL9K_CHRUBY_SHOW_ENGINE=false
 POWERLEVEL9K_INSTANT_PROMPT="verbose"
 POWERLEVEL9K_MODE='nerdfont-complete'
@@ -92,12 +101,19 @@ POWERLEVEL9K_TIME_FORMAT='%D{%H:%M}'
 POWERLEVEL9K_USER_DEFAULT_BACKGROUND=yellow
 POWERLEVEL9K_USER_DEFAULT_FOREGROUND=black
 
-# VCS settings - disable gitstatus for world repo (sparse checkout)
-POWERLEVEL9K_VCS_GIT_GITHUB_ICON='\uF408 '
-POWERLEVEL9K_VCS_GIT_ICON='\uF408 '
-POWERLEVEL9K_VCS_DISABLED_WORKDIR_PATTERN='*/world/*'
-# Sparse git segment styling (colors set dynamically in function)
-POWERLEVEL9K_SPARSE_GIT_VISUAL_IDENTIFIER_EXPANSION=$'\uF408 '
+# Async git segment styling
+POWERLEVEL9K_GIT_LOADING_BACKGROUND=8
+POWERLEVEL9K_GIT_LOADING_FOREGROUND=0
+POWERLEVEL9K_GIT_LOADING_VISUAL_IDENTIFIER_EXPANSION=$'\uF408  \uF126'
+POWERLEVEL9K_GIT_CLEAN_BACKGROUND=2
+POWERLEVEL9K_GIT_CLEAN_FOREGROUND=0
+POWERLEVEL9K_GIT_CLEAN_VISUAL_IDENTIFIER_EXPANSION=$'\uF408  \uF126'
+POWERLEVEL9K_GIT_STAGED_BACKGROUND=2
+POWERLEVEL9K_GIT_STAGED_FOREGROUND=0
+POWERLEVEL9K_GIT_STAGED_VISUAL_IDENTIFIER_EXPANSION=$'\uF408  \uF126'
+POWERLEVEL9K_GIT_MODIFIED_BACKGROUND=3
+POWERLEVEL9K_GIT_MODIFIED_FOREGROUND=0
+POWERLEVEL9K_GIT_MODIFIED_VISUAL_IDENTIFIER_EXPANSION=$'\uF408  \uF126'
 
 POWERLEVEL9K_VI_MODE_BACKGROUND=green
 POWERLEVEL9K_VI_MODE_FOREGROUND=black
@@ -116,8 +132,7 @@ POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
   virtualenv
   dir_writable
   dir
-  vcs          # gitstatus for normal repos
-  sparse_git   # custom for world repo
+  git
 )
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
   status

@@ -23,6 +23,7 @@ plugins=(
   man
   rake-fast
   vi-mode
+  zsh-async
   zsh-autosuggestions
   zsh-completions
   zsh-syntax-highlighting

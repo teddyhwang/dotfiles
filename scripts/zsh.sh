@@ -15,7 +15,7 @@ fi
 
 print_conditional_success "OhMyZsh"
 
-omz_plugins="zsh-users/zsh-autosuggestions zsh-users/zsh-completions zsh-users/zsh-syntax-highlighting"
+omz_plugins="zsh-users/zsh-autosuggestions zsh-users/zsh-completions zsh-users/zsh-syntax-highlighting mafredri/zsh-async"
 
 print_progress "Installing custom zsh themes and plugins..."
 
@@ -37,6 +37,13 @@ for plugin in $omz_plugins; do
     track_change
   fi
 done
+
+# zsh-async needs a symlink for oh-my-zsh to recognize it
+if [ -d ~/.oh-my-zsh/custom/plugins/zsh-async ] && [ ! -L ~/.oh-my-zsh/custom/plugins/zsh-async/zsh-async.plugin.zsh ]; then
+  print_progress "Creating zsh-async symlink..."
+  ln -sf async.plugin.zsh ~/.oh-my-zsh/custom/plugins/zsh-async/zsh-async.plugin.zsh
+  track_change
+fi
 
 if [ -d ~/.oh-my-zsh/custom/completions ]; then
   print_info "Custom completions added"

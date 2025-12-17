@@ -21,6 +21,16 @@ return {
             size = 0.3,
           },
         },
+        tools = {
+          opencode = {
+            cmd = {
+              "sh",
+              "-c",
+              'command -v devx >/dev/null && export OPENAI_API_KEY=$(devx llm-gateway print-token --key); exec /opt/homebrew/bin/opencode "$@"',
+              "sh",
+            },
+          },
+        },
       },
     },
     config = function(_, opts)

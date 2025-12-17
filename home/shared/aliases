@@ -27,3 +27,6 @@ alias mini='ssh teddys-mac-mini.local'
 alias work='ssh teddys-shopify-macBook-pro.local'
 alias omarchy='ssh omarchy-mbp'
 alias nicole='ssh nicolepaik@nicoles-macbook-air.local'
+if command -v devx >/dev/null 2>&1; then
+  alias opencode='OPENAI_API_KEY=$(devx llm-gateway print-token --key) /opt/homebrew/bin/opencode'
+fi

@@ -146,6 +146,22 @@ y() {
   rm -f -- "$tmp"
 }
 
+how() {
+  if [[ -f /opt/dev/bin/dev ]]; then
+    curl -s https://proxy-shopify-ai.local.shop.dev/v1/chat/completions \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"model\": \"expensive-but-best\",
+        \"messages\": [
+          {\"role\": \"system\", \"content\": \"You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer. Pay attention to proper case sensitivity (uppercase/lowercase).\"},
+          {\"role\": \"user\", \"content\": \"$*\"}
+        ]
+      }" | jq -r '.choices[0].message.content'
+  else
+    claude -p "$*" --model haiku --append-system-prompt "You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer."
+  fi
+}
+
 # Tinty initialization (only run in interactive shells, not in nvim/floaterm)
 if command -v tinty &>/dev/null; then
   case $- in

@@ -20,6 +20,7 @@ return {
   -- Git
   "f-person/git-blame.nvim", -- Inline git blame at end of line
   { "linrongbin16/gitlinker.nvim", config = true }, -- Generate GitHub permalinks
+  { "Juksuu/worktrees.nvim", config = true }, -- Git worktree management
 
   -- Editing
   "mg979/vim-visual-multi", -- Multiple cursors with <C-n>

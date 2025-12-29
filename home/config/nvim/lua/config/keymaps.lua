@@ -96,6 +96,16 @@ map("n", "<leader>gY", "<cmd>GitLink!<cr>", { desc = "Open git permalink in brow
 map("n", "<leader>gv", "<cmd>GitLink blame<cr>", { desc = "Copy git blame link" })
 map("n", "<leader>gV", "<cmd>GitLink! blame<cr>", { desc = "Open git blame link in browser" })
 
+map("n", "<leader>gws", function()
+  require("snacks").picker.worktrees()
+end, { desc = "Git worktrees" })
+map("n", "<leader>gwn", function()
+  require("snacks").picker.worktrees_new()
+end, { desc = "Create new git worktree" })
+map("n", "<leader>gwd", function()
+  require("snacks").picker.worktrees_remove()
+end, { desc = "Remove git worktree" })
+
 -- Command history and registers
 map("n", "q:", "<cmd>lua require('snacks').picker.command_history()<cr>", { desc = "Command history" })
 map("n", '"', "<cmd>lua require('snacks').picker.registers()<cr>", { desc = "Show registers" })

@@ -44,9 +44,12 @@ if [[ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]]; then
   source /usr/local/opt/chruby/share/chruby/auto.sh
   chpwd_functions+=("chruby_auto")
 fi
+# Added by tec agent
+[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"
 if [[ -f /opt/dev/dev.sh ]]; then
   source /opt/dev/dev.sh
   [[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
+  eval "$(wcd --init zsh)"
 fi
 [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 
@@ -81,9 +84,6 @@ bindkey '^f' fzf-cd-widget
 [[ -f ~/.shared/aliases ]] && source ~/.shared/aliases
 [[ -f ~/.shared/init ]] && source ~/.shared/init
 [[ -f ~/.claude/local/claude ]] && alias claude="~/.claude/local/claude"
-
-# Added by tec agent
-[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"
 
 # Fix fzf ctrl-t not working when entering shadowenv environment
 __fzf_rebind_hook() {

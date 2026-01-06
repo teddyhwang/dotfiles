@@ -147,18 +147,22 @@ y() {
 }
 
 how() {
+  local input="$*"
+  local escaped_input
+  escaped_input=$(printf '%s' "$input" | jq -Rs .)
+
   if [[ -f /opt/dev/bin/dev ]]; then
     curl -s https://proxy-shopify-ai.local.shop.dev/v1/chat/completions \
       -H "Content-Type: application/json" \
-      -d "{
-        \"model\": \"expensive-but-best\",
-        \"messages\": [
-          {\"role\": \"system\", \"content\": \"You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer. Pay attention to proper case sensitivity (uppercase/lowercase).\"},
-          {\"role\": \"user\", \"content\": \"$*\"}
+      -d "$(jq -n --argjson content "$escaped_input" '{
+        "model": "expensive-but-best",
+        "messages": [
+          {"role": "system", "content": "You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer. Pay attention to proper case sensitivity (uppercase/lowercase)."},
+          {"role": "user", "content": $content}
         ]
-      }" | jq -r '.choices[0].message.content'
+      }')" | jq -r '.choices[0].message.content'
   else
-    claude -p "$*" --model haiku --append-system-prompt "You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer."
+    claude -p "$input" --model haiku --append-system-prompt "You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer."
   fi
 }
 

@@ -1,0 +1,25 @@
+#!/bin/bash
+# Tinty hook for base16-opencode theme application
+# The artifact file contains the current theme's colors
+
+THEME_FILE="$1"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/opencode.json"
+THEMES_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/themes"
+
+# Ensure themes directory exists
+mkdir -p "$THEMES_DIR"
+
+# Symlink artifact to a known name
+ln -sf "$THEME_FILE" "$THEMES_DIR/tinty-current.json"
+
+# Update opencode config to use this theme
+if [ -f "$CONFIG_FILE" ]; then
+  if command -v jq &>/dev/null; then
+    jq '.theme = "tinty-current"' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+  else
+    sed -i 's/"theme":[[:space:]]*"[^"]*"/"theme": "tinty-current"/' "$CONFIG_FILE"
+  fi
+fi
+
+# Signal opencode to reload
+killall -SIGUSR2 opencode 2>/dev/null || true

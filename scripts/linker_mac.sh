@@ -8,10 +8,10 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 print_progress "\nSymlinking binaries..."
 
-for filepath in home/bin/*; do
+for filepath in home/local/bin/*; do
   file=$(basename "$filepath")
   source="$(pwd)/$filepath"
-  target="$HOME/.bin/$file"
+  target="$HOME/.local/bin/$file"
 
   validate_and_symlink "$source" "$target"
 done

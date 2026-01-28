@@ -19,7 +19,7 @@ print_progress "Creating directories..."
 
 add_directory_in_home '.config'
 add_directory_in_home '.ssh'
-add_directory_in_home '.bin'
+add_directory_in_home '.local/bin'
 
 if ! [ -d /usr/local/bin ]; then
   print_progress "Adding directory /usr/local/bin..."

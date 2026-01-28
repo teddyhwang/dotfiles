@@ -1,0 +1,21 @@
+#!/bin/bash
+theme_file="$1"
+opencode_dir="$HOME/.config/opencode"
+themes_dir="$opencode_dir/themes"
+theme_dest="$themes_dir/tinty-current.json"
+
+mkdir -p "$themes_dir"
+rm -f "$theme_dest"
+cp "$theme_file" "$theme_dest"
+
+perl -i -pe 's/"backgroundElement": \{ "dark": "base02"/"backgroundElement": { "dark": "base01"/' "$theme_dest"
+
+if [ -f "$opencode_dir/opencode.jsonc" ]; then
+  cfg="$opencode_dir/opencode.jsonc"
+else
+  cfg="$opencode_dir/opencode.json"
+fi
+
+perl -i -pe 's/"theme": "[^"]*"/"theme": "tinty-current"/' "$cfg"
+
+killall -SIGUSR2 opencode 2>/dev/null || true

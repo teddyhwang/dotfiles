@@ -27,4 +27,4 @@ name = "base16-opencode"
 path = "https://github.com/scaryrawr/base16-opencode"
 themes-dir = "themes"
 supported-systems = ["base16", "base24"]
-hook = "mkdir -p ~/.config/opencode/themes && ln -sf %f ~/.config/opencode/themes/tinty-current.json && jq '.theme = \"tinty-current\"' ~/.config/opencode/opencode.json > ~/.config/opencode/opencode.json.tmp && mv ~/.config/opencode/opencode.json.tmp ~/.config/opencode/opencode.json; killall -SIGUSR2 opencode 2>/dev/null || true"
+hook = 'tinty-opencode-hook %f'

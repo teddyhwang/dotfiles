@@ -5,6 +5,23 @@ fi
 [[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
 
 [[ -f ~/.shared/env ]] && source ~/.shared/env
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+if [[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ]]; then
+  source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+  source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+  chpwd_functions+=("chruby_auto")
+fi
+if [[ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]]; then
+  source /usr/local/opt/chruby/share/chruby/chruby.sh
+  source /usr/local/opt/chruby/share/chruby/auto.sh
+  chpwd_functions+=("chruby_auto")
+fi
+[[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 
 DISABLE_AUTO_UPDATE=true
 DISABLE_UPDATE_PROMPT=true
@@ -33,25 +50,6 @@ plugins=(
 # if command -v starship &>/dev/null; then
 #   eval "$(starship init zsh)"
 # fi
-
-if [[ -f /opt/homebrew/opt/chruby/share/chruby/chruby.sh ]]; then
-  source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-  source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-  chpwd_functions+=("chruby_auto")
-fi
-if [[ -f /usr/local/opt/chruby/share/chruby/chruby.sh ]]; then
-  source /usr/local/opt/chruby/share/chruby/chruby.sh
-  source /usr/local/opt/chruby/share/chruby/auto.sh
-  chpwd_functions+=("chruby_auto")
-fi
-# Added by tec agent
-[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"
-if [[ -f /opt/dev/dev.sh ]]; then
-  source /opt/dev/dev.sh
-  [[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
-  eval "$(wcd --init zsh)"
-fi
-[[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 
 autoload -U compinit && compinit
 setopt AUTO_PUSHD
@@ -102,3 +100,9 @@ if typeset -f hookbook_add_hook > /dev/null; then
 fi
 
 [[ -f ~/.shared/functions ]] && . ~/.shared/functions
+[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"
+if [[ -f /opt/dev/dev.sh ]]; then
+  source /opt/dev/dev.sh
+  [[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
+  eval "$(wcd --init zsh)"
+fi

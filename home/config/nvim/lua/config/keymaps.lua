@@ -196,6 +196,9 @@ map("n", "<leader>D", "<cmd>DBUIToggle<cr>", { desc = "Toggle Dadbod UI" })
 map("n", "<leader>ac", function()
   require("sidekick.cli").toggle({ name = "claude", focus = true })
 end, { desc = "Toggle Claude" })
+map("n", "<leader>ao", function()
+  require("sidekick.cli").toggle({ name = "opencode", focus = true })
+end, { desc = "Toggle Opencode" })
 
 -- Stewardlens
 map("n", "<leader>fs", "<cmd>StewardlensBrowse<cr>", { desc = "Open file in Stewardlens" })

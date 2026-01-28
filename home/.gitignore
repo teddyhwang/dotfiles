@@ -25,3 +25,4 @@ Procfile.local
 packer_compiled.lua
 .aider*
 .claude/settings.local.json
+.sisyphus

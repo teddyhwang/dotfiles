@@ -6,7 +6,12 @@ export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
 export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {}' --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort' --multi"
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
 export FZF_TMUX_OPTS='-p 80%,60%'
-export PATH="$HOME/.cargo/bin:$PATH"
+[[ -d "$HOME/.bin" ]] && PATH="$HOME/.bin:$PATH"
+[[ -d "$HOME/.local/bin" ]] && PATH="$HOME/.local/bin:$PATH"
+[[ -d "$HOME/.local/share/nvim/mason/bin" ]] && PATH="$HOME/.local/share/nvim/mason/bin:$PATH"
+[[ -d "$HOME/go/bin" ]] && PATH="$HOME/go/bin:$PATH"
+[[ -d "$HOME/.cargo/bin" ]] && PATH="$HOME/.cargo/bin:$PATH"
+export PATH
 
 if [[ -z "$XDG_CONFIG_HOME" ]]; then
   export XDG_CONFIG_HOME="$HOME/.config"

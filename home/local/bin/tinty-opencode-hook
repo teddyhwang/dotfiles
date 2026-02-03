@@ -8,7 +8,14 @@ mkdir -p "$themes_dir"
 rm -f "$theme_dest"
 cp "$theme_file" "$theme_dest"
 
+# Change backgroundElement to darker grey for prompt area
 perl -i -pe 's/"backgroundElement": \{ "dark": "base02"/"backgroundElement": { "dark": "base01"/' "$theme_dest"
+
+# Update diff backgrounds to use direct hex colors (opencode may not support custom defs)
+perl -i -pe 's/"diffAddedBg": \{ "dark": "[^"]*"/"diffAddedBg": { "dark": "#1a2e1a"/' "$theme_dest"
+perl -i -pe 's/"diffRemovedBg": \{ "dark": "[^"]*"/"diffRemovedBg": { "dark": "#2e1a1a"/' "$theme_dest"
+perl -i -pe 's/"diffAddedLineNumberBg": \{ "dark": "[^"]*"/"diffAddedLineNumberBg": { "dark": "#1a2e1a"/' "$theme_dest"
+perl -i -pe 's/"diffRemovedLineNumberBg": \{ "dark": "[^"]*"/"diffRemovedLineNumberBg": { "dark": "#2e1a1a"/' "$theme_dest"
 
 if [ -f "$opencode_dir/opencode.jsonc" ]; then
   cfg="$opencode_dir/opencode.jsonc"

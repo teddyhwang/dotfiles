@@ -31,3 +31,7 @@ fi
 if command -v carapace &>/dev/null; then
   eval "$(carapace _carapace)"
 fi
+
+if command -v shadowenv &>/dev/null; then
+  eval "$(shadowenv init zsh 2>/dev/null)"
+fi

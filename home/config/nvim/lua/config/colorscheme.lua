@@ -88,12 +88,43 @@ return function(colors)
     end
   end
 
-  vim.api.nvim_create_autocmd("User", {
-    pattern = "TintedColorsPost",
+  vim.api.nvim_create_autocmd("ColorScheme", {
     callback = function()
-      local tinted = require("tinted-colorscheme")
-      colors = tinted.colors
+      local tinted = require("tinted-nvim")
+      colors = tinted.get_palette()
+      if not colors then
+        return
+      end
       handle_custom_highlights()
+      -- Refresh lualine with new colors
+      local ok, lualine = pcall(require, "lualine")
+      if ok then
+        local theme = {
+          normal = {
+            a = { fg = colors.base00, bg = colors.base0D, gui = "bold" },
+            b = { fg = colors.base05, bg = colors.base02 },
+            c = { fg = colors.base04, bg = colors.base01 },
+          },
+          insert = {
+            a = { fg = colors.base00, bg = colors.base0B, gui = "bold" },
+          },
+          visual = {
+            a = { fg = colors.base00, bg = colors.base0E, gui = "bold" },
+          },
+          replace = {
+            a = { fg = colors.base00, bg = colors.base08, gui = "bold" },
+          },
+          command = {
+            a = { fg = colors.base00, bg = colors.base0A, gui = "bold" },
+          },
+          inactive = {
+            a = { fg = colors.base03, bg = colors.base01 },
+            b = { fg = colors.base03, bg = colors.base01 },
+            c = { fg = colors.base03, bg = colors.base01 },
+          },
+        }
+        lualine.setup({ options = { theme = theme } })
+      end
     end,
   })
 

@@ -4,11 +4,17 @@ return {
     lazy = false,
     priority = 1000,
     config = function()
-      local tinted = require("tinted-colorscheme")
+      local tinted = require("tinted-nvim")
       local setup_colors = require("config.colorscheme")
 
-      tinted.setup()
-      setup_colors(tinted.colors)
+      tinted.setup({
+        selector = {
+          enabled = true,
+          mode = "file",
+          watch = true,
+        },
+      })
+      setup_colors(tinted.get_palette())
     end,
   },
   -- Disable LazyVim's default colorscheme

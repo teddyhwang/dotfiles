@@ -26,3 +26,14 @@ for filepath in home/config/*; do
 
   validate_and_symlink "$source" "$target"
 done
+
+print_progress "\nSymlinking pi agent config..."
+
+mkdir -p "$HOME/.pi/agent"
+for filepath in home/pi-agent/*; do
+  file=$(basename "$filepath")
+  source="$(pwd)/$filepath"
+  target="$HOME/.pi/agent/$file"
+
+  validate_and_symlink "$source" "$target"
+done

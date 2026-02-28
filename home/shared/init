@@ -35,3 +35,5 @@ fi
 if command -v shadowenv &>/dev/null; then
   eval "$(shadowenv init zsh 2>/dev/null)"
 fi
+
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

@@ -81,7 +81,6 @@ bindkey '^f' fzf-cd-widget
 
 [[ -f ~/.shared/aliases ]] && source ~/.shared/aliases
 [[ -f ~/.shared/init ]] && source ~/.shared/init
-[[ -f ~/.claude/local/claude ]] && alias claude="~/.claude/local/claude"
 
 # Fix fzf ctrl-t not working when entering shadowenv environment
 __fzf_rebind_hook() {

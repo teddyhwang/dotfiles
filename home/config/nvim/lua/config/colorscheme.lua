@@ -45,6 +45,7 @@ return function(colors)
       ["@parameter"] = { fg = colors.base08 },
       Title = { fg = colors.base09 },
       SnacksPickerInputBorder = { link = "Title" },
+      SnacksPickerDir = { link = "Comment" },
       TSFuncMacro = { link = "TSString" },
       TSType = { fg = colors.base0A },
       TSNamespace = { fg = colors.base0A },

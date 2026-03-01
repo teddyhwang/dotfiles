@@ -24,6 +24,15 @@ for filepath in home/config/*; do
   source="$(pwd)/$filepath"
   target="$HOME/.config/$file"
 
+  # Symlink individual files for configs that shouldn't have the whole dir tracked
+  if [ "$file" = "tmux" ]; then
+    mkdir -p "$target"
+    for subfile in "$source"/*; do
+      validate_and_symlink "$subfile" "$target/$(basename "$subfile")"
+    done
+    continue
+  fi
+
   validate_and_symlink "$source" "$target"
 done
 

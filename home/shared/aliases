@@ -22,6 +22,7 @@ alias rake="noglob rake"
 alias n="nvim"
 alias vi='nvim'
 alias weather='curl wttr.in'
+alias pr='npx @in-the-loop-labs/pair-review'
 
 alias mini='ssh teddys-mac-mini.local'
 alias work='ssh teddys-shopify-macBook-pro.local'

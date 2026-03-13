@@ -43,6 +43,7 @@ zvm_after_init() {
   [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
   [[ -f ~/.cache/shared_init_cache.zsh ]] && source ~/.cache/shared_init_cache.zsh
   bindkey '^[[Z' autosuggest-accept
+  zicdreplay
 }
 
 zinit ice wait lucid

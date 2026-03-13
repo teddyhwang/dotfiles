@@ -29,6 +29,27 @@ return {
         fadelevel = 0.6,
         tint = get_tint,
         enablefocusfading = true,
+        -- Override block_inactive_floats to allow neominimap floats to be faded
+        blocklist = {
+          block_inactive_floats = function(win, active)
+            if win.buf_opts.filetype == "neominimap" then
+              return false
+            end
+            return win.win_config.relative ~= ""
+              and (win ~= active or win.buf_opts.buftype == "terminal")
+              and true
+              or false
+          end,
+        },
+        -- Link neominimap windows to their parent so they fade/unfade together
+        link = {
+          neominimap = function(win, active)
+            if win.buf_opts.filetype == "neominimap" and win.win_config.relative == "win" then
+              return win.win_config.win == active.winid
+            end
+            return false
+          end,
+        },
       }
     end,
   },

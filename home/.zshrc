@@ -112,9 +112,9 @@ if typeset -f hookbook_add_hook > /dev/null; then
 fi
 
 [[ -f ~/.shared/functions ]] && . ~/.shared/functions
+[[ -x ~/.local/state/tec/profiles/base/current/global/init ]] && eval "$(~/.local/state/tec/profiles/base/current/global/init zsh)"
 if [[ -f /opt/dev/dev.sh ]]; then
   source /opt/dev/dev.sh
   [[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
   eval "$(wcd --init zsh)"
 fi
-[[ -x ~/.local/state/tec/profiles/base/current/global/init ]] && eval "$(~/.local/state/tec/profiles/base/current/global/init zsh)"

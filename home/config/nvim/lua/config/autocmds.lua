@@ -108,6 +108,27 @@ vim.api.nvim_create_autocmd("ColorScheme", {
   end,
 })
 
+-- Match minimap bg to tmux inactive pane bg on focus loss
+vim.api.nvim_create_autocmd("FocusLost", {
+  callback = function()
+    local ok, tinted = pcall(require, "tinted-nvim")
+    if not ok then return end
+    local colors = tinted.get_palette()
+    if not colors then return end
+    vim.api.nvim_set_hl(0, "Normal", { bg = colors.base01, fg = colors.base05 })
+  end,
+})
+
+vim.api.nvim_create_autocmd("FocusGained", {
+  callback = function()
+    local ok, tinted = pcall(require, "tinted-nvim")
+    if not ok then return end
+    local colors = tinted.get_palette()
+    if not colors then return end
+    vim.api.nvim_set_hl(0, "Normal", { bg = colors.base00, fg = colors.base05 })
+  end,
+})
+
 -- Dim sorbet signatures
 require("util.sorbet-dim").setup({
   opacity = 0.5,

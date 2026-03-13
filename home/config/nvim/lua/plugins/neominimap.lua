@@ -8,6 +8,7 @@ return {
         auto_enable = true,
         winopt = function(opt, _)
           opt.winblend = 40 -- 0-100, higher = more transparent
+          opt.winhighlight = "Normal:NormalNC"
         end,
       }
     end,

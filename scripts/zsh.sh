@@ -4,54 +4,25 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
-print_progress "Installing OhMyZSH..."
+print_progress "Setting up Zsh..."
 
-if ! [ -d ~/.oh-my-zsh ]; then
-  print_progress "Installing OhMyZsh..."
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
+if [ -d "$ZINIT_HOME" ]; then
+  print_info "zinit is installed"
 else
-  print_info "Oh My ZSH is installed"
-fi
-
-print_conditional_success "OhMyZsh"
-
-omz_plugins="zsh-users/zsh-autosuggestions zsh-users/zsh-completions zsh-users/zsh-syntax-highlighting mafredri/zsh-async"
-
-print_progress "Installing custom zsh themes and plugins..."
-
-if [ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ]; then
-  print_info "powerlevel10k is installed"
-else
-  print_progress "Installing powerlevel10k..."
-  git clone https://github.com/romkatv/powerlevel10k ~/.oh-my-zsh/custom/themes/powerlevel10k
+  print_progress "Installing zinit..."
+  mkdir -p "$(dirname "$ZINIT_HOME")"
+  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
   track_change
 fi
 
-for plugin in $omz_plugins; do
-  plugin_name=$(echo "$plugin" | cut -d '/' -f 2)
-  if [ -d ~/.oh-my-zsh/custom/plugins/"$plugin_name" ]; then
-    print_info "$plugin_name is installed"
-  else
-    print_progress "Installing $plugin_name..."
-    git clone "https://github.com/$plugin" ~/.oh-my-zsh/custom/plugins/"$plugin_name"
-    track_change
-  fi
-done
-
-# zsh-async needs a symlink for oh-my-zsh to recognize it
-if [ -d ~/.oh-my-zsh/custom/plugins/zsh-async ] && [ ! -L ~/.oh-my-zsh/custom/plugins/zsh-async/zsh-async.plugin.zsh ]; then
-  print_progress "Creating zsh-async symlink..."
-  ln -sf async.plugin.zsh ~/.oh-my-zsh/custom/plugins/zsh-async/zsh-async.plugin.zsh
-  track_change
-fi
-
-if [ -d ~/.oh-my-zsh/custom/completions ]; then
+if [ -d ~/.zsh/completions ]; then
   print_info "Custom completions added"
 else
   print_progress "Adding custom completions..."
-  mkdir -p ~/.oh-my-zsh/custom/completions
-  cp ./home/completions/* ~/.oh-my-zsh/custom/completions/.
+  mkdir -p ~/.zsh/completions
+  cp ./home/completions/* ~/.zsh/completions/.
   track_change
 fi
 
-print_conditional_success "Plugins"
+print_conditional_success "Zsh"

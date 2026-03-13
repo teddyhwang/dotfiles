@@ -32,24 +32,11 @@ theme() {
   fi
 }
 
-# Zsh-specific function for updating oh-my-zsh custom plugins/themes
-update_custom_oh_my_zsh() {
-  example='example'
-  custom_type=$1
-  for custom_plugin_or_theme in $ZSH/custom/$custom_type/*; do
-    if test "${custom_plugin_or_theme#*$example}" = "$custom_plugin_or_theme"; then
-      printf "Upgrading %s...\n" "$custom_plugin_or_theme"
-      cd "$custom_plugin_or_theme" && git pull --stat && cd - || return
-    fi
-  done
-}
-
-# Zsh-specific update function
 update() {
   tinty update
-  update_custom_oh_my_zsh 'plugins'
-  update_custom_oh_my_zsh 'themes'
-  omz update
+  if command -v zinit &>/dev/null; then
+    zinit update --all
+  fi
 }
 
 tmux() {

@@ -1,39 +1,70 @@
 #!/usr/bin/env bash
 
-if command -v gh &>/dev/null; then
-  if [[ -n "$BASH_VERSION" ]]; then
-    eval "$(gh completion -s bash)"
-  elif [[ -n "$ZSH_VERSION" ]]; then
-    eval "$(gh completion -s zsh)"
+if [[ -n "$ZSH_VERSION" ]]; then
+  _shared_init_cache="$HOME/.cache/shared_init_cache.zsh"
+else
+  _shared_init_cache="$HOME/.cache/shared_init_cache.bash"
+fi
+_shared_init_regen=0
+
+if [[ ! -f "$_shared_init_cache" ]]; then
+  _shared_init_regen=1
+elif [[ -n "$ZSH_VERSION" ]]; then
+  eval '_stale=( $_shared_init_cache(N.mh+24) )'
+  (( ${#_stale} )) && _shared_init_regen=1
+  unset _stale
+elif [[ -n "$BASH_VERSION" ]] && [[ $(find "$_shared_init_cache" -mmin +1440 2>/dev/null) ]]; then
+  _shared_init_regen=1
+fi
+
+if [[ "$_shared_init_regen" == "1" ]]; then
+  mkdir -p "$HOME/.cache"
+  : > "$_shared_init_cache"
+
+  if command -v gh &>/dev/null; then
+    if [[ -n "$BASH_VERSION" ]]; then
+      gh completion -s bash >> "$_shared_init_cache" 2>/dev/null
+    elif [[ -n "$ZSH_VERSION" ]]; then
+      gh completion -s zsh >> "$_shared_init_cache" 2>/dev/null
+    fi
+  fi
+
+  if command -v atuin &>/dev/null; then
+    if [[ -n "$BASH_VERSION" ]]; then
+      atuin init bash --disable-up-arrow >> "$_shared_init_cache" 2>/dev/null
+    elif [[ -n "$ZSH_VERSION" ]]; then
+      atuin init zsh --disable-up-arrow >> "$_shared_init_cache" 2>/dev/null
+    fi
+  fi
+
+  if command -v zoxide &>/dev/null; then
+    if [[ -n "$BASH_VERSION" ]]; then
+      zoxide init bash >> "$_shared_init_cache" 2>/dev/null
+    elif [[ -n "$ZSH_VERSION" ]]; then
+      zoxide init zsh >> "$_shared_init_cache" 2>/dev/null
+    fi
+  fi
+
+  if [[ -n "$ZSH_VERSION" ]]; then
+    if command -v gt &>/dev/null; then
+      gt completion >> "$_shared_init_cache" 2>/dev/null
+    fi
+
+    if command -v carapace &>/dev/null; then
+      carapace _carapace >> "$_shared_init_cache" 2>/dev/null
+    fi
+  fi
+
+  if command -v shadowenv &>/dev/null; then
+    if [[ -n "$BASH_VERSION" ]]; then
+      "$(which shadowenv)" init bash >> "$_shared_init_cache" 2>/dev/null
+    elif [[ -n "$ZSH_VERSION" ]]; then
+      "$(which shadowenv)" init zsh >> "$_shared_init_cache" 2>/dev/null
+    fi
   fi
 fi
 
-if command -v atuin &>/dev/null; then
-  if [[ -n "$BASH_VERSION" ]]; then
-    eval "$(atuin init bash --disable-up-arrow)"
-  elif [[ -n "$ZSH_VERSION" ]]; then
-    eval "$(atuin init zsh --disable-up-arrow)"
-  fi
-fi
-
-if command -v zoxide &>/dev/null; then
-  if [[ -n "$BASH_VERSION" ]]; then
-    eval "$(zoxide init bash)"
-  elif [[ -n "$ZSH_VERSION" ]]; then
-    eval "$(zoxide init zsh)"
-  fi
-fi
-
-if command -v gt &>/dev/null; then
-  eval "$(gt completion)"
-fi
-
-if command -v carapace &>/dev/null; then
-  eval "$(carapace _carapace)"
-fi
-
-if command -v shadowenv &>/dev/null; then
-  eval "$(shadowenv init zsh 2>/dev/null)"
-fi
+source "$_shared_init_cache"
+unset _shared_init_cache _shared_init_regen
 
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

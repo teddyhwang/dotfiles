@@ -108,6 +108,62 @@ vim.api.nvim_create_autocmd("ColorScheme", {
   end,
 })
 
+-- Lighten background on focus lost (for areas vimade doesn't cover)
+local focus_bg = (function()
+  local function hex_to_rgb(hex)
+    hex = hex:gsub("#", "")
+    return tonumber(hex:sub(1, 2), 16), tonumber(hex:sub(3, 4), 16), tonumber(hex:sub(5, 6), 16)
+  end
+
+  local function rgb_to_hex(r, g, b)
+    return string.format("#%02x%02x%02x", math.floor(r), math.floor(g), math.floor(b))
+  end
+
+  local function blend(fg_hex, bg_hex, alpha)
+    local fr, fg, fb = hex_to_rgb(fg_hex)
+    local br, bg, bb = hex_to_rgb(bg_hex)
+    return rgb_to_hex(fr * alpha + br * (1 - alpha), fg * alpha + bg * (1 - alpha), fb * alpha + bb * (1 - alpha))
+  end
+
+  local function get_colors()
+    local ok, tinted = pcall(require, "tinted-nvim")
+    if ok then
+      local colors = tinted.get_palette()
+      if colors then
+        return colors
+      end
+    end
+    return nil
+  end
+
+  local function set_unfocused()
+    local colors = get_colors()
+    if not colors then
+      return
+    end
+    local dimmed_bg = blend(colors.base01, colors.base00, 0.5)
+    vim.api.nvim_set_hl(0, "Normal", { bg = dimmed_bg, fg = colors.base05 })
+  end
+
+  local function set_focused()
+    local colors = get_colors()
+    if not colors then
+      return
+    end
+    vim.api.nvim_set_hl(0, "Normal", { bg = colors.base00, fg = colors.base05 })
+  end
+
+  return { set_unfocused = set_unfocused, set_focused = set_focused }
+end)()
+
+vim.api.nvim_create_autocmd("FocusLost", {
+  callback = focus_bg.set_unfocused,
+})
+
+vim.api.nvim_create_autocmd("FocusGained", {
+  callback = focus_bg.set_focused,
+})
+
 -- Dim sorbet signatures
 require("util.sorbet-dim").setup({
   opacity = 0.5,

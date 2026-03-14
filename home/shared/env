@@ -21,5 +21,10 @@ if [[ -z "$XDG_CONFIG_HOME" ]]; then
 fi
 
 if command -v vivid &>/dev/null; then
-  export LS_COLORS="$(vivid generate molokai)"
+  _vivid_cache="$HOME/.cache/vivid_ls_colors"
+  if [[ ! -f "$_vivid_cache" ]] || [[ "$(command -v vivid)" -nt "$_vivid_cache" ]]; then
+    vivid generate molokai > "$_vivid_cache" 2>/dev/null
+  fi
+  export LS_COLORS="$(< "$_vivid_cache")"
+  unset _vivid_cache
 fi

@@ -4,20 +4,6 @@ fi
 
 [[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
 
-_brew_cache="$HOME/.cache/brew_shellenv.zsh"
-if [[ -x /opt/homebrew/bin/brew ]]; then
-  _brew_bin=/opt/homebrew/bin/brew
-elif [[ -x /usr/local/bin/brew ]]; then
-  _brew_bin=/usr/local/bin/brew
-fi
-if [[ -n "$_brew_bin" ]]; then
-  if [[ ! -f "$_brew_cache" ]] || [[ "$_brew_bin" -nt "$_brew_cache" ]]; then
-    "$_brew_bin" shellenv > "$_brew_cache" 2>/dev/null
-  fi
-  source "$_brew_cache"
-fi
-unset _brew_bin _brew_cache
-
 [[ -f ~/.shared/env ]] && source ~/.shared/env
 [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 

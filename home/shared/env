@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+_brew_cache="$HOME/.cache/brew_shellenv.sh"
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  _brew_bin=/opt/homebrew/bin/brew
+elif [[ -x /usr/local/bin/brew ]]; then
+  _brew_bin=/usr/local/bin/brew
+fi
+if [[ -n "$_brew_bin" ]]; then
+  if [[ ! -f "$_brew_cache" ]] || [[ "$_brew_bin" -nt "$_brew_cache" ]]; then
+    "$_brew_bin" shellenv > "$_brew_cache" 2>/dev/null
+  fi
+  . "$_brew_cache"
+fi
+unset _brew_bin _brew_cache
+
 export EDITOR='nvim'
 export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"
 export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"

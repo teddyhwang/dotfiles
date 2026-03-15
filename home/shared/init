@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+[[ -n "$_shared_init_loaded" ]] && return
+_shared_init_loaded=1
+
 if [[ -n "$ZSH_VERSION" ]]; then
   _shared_init_cache="$HOME/.cache/shared_init_cache.zsh"
 else

@@ -6,19 +6,19 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 print_progress "Installing tmux plugins..."
 
-if ! [ -d ~/.tmux ]; then
+if ! [ -d ~/.config/tmux/plugins/tpm ]; then
   print_progress "Installing tmux plugin manager..."
-  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+  git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
   track_change
 else
   print_info "tmux plugin manager is installed"
 fi
 
-if [ ! -d ~/.tmux/plugins/base16-tmux-powerline ]; then
+if [ ! -d ~/.config/tmux/plugins/base16-tmux-powerline ]; then
   print_progress "Installing tmux plugins..."
   tmux new-session -d "sleep 1"
   sleep 0.1
-  ~/.tmux/plugins/tpm/bin/install_plugins
+  ~/.config/tmux/plugins/tpm/bin/install_plugins
   track_change
 else
   print_info "tmux plugins installed"

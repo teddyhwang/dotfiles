@@ -93,17 +93,8 @@ bindkey '^f' fzf-cd-widget
 [[ -f ~/.shared/init ]] && source ~/.shared/init
 [[ -f ~/.shared/functions ]] && . ~/.shared/functions
 
-_tec_bin="$HOME/.local/state/tec/profiles/base/current/global/init"
-_tec_cache="$HOME/.cache/tec_init_cache.zsh"
-_tec_marker="$HOME/.cache/tec_init_marker"
-if [[ -x "$_tec_bin" ]]; then
-  _tec_resolved="$(readlink -f "$_tec_bin" 2>/dev/null)"
-  if [[ ! -f "$_tec_cache" ]] || [[ "$(< "$_tec_marker" 2>/dev/null)" != "$_tec_resolved" ]]; then
-    "$_tec_bin" zsh > "$_tec_cache" 2>/dev/null
-    printf '%s' "$_tec_resolved" > "$_tec_marker"
-  fi
-  source "$_tec_cache"
-  unset _tec_resolved
+if [[ -x "$HOME/.local/state/tec/profiles/base/current/global/init" ]]; then
+  eval "$("$HOME/.local/state/tec/profiles/base/current/global/init" zsh)"
   eval "$(wcd --init zsh)"
 else
   for _chruby_dir in /opt/homebrew/opt/chruby/share/chruby /usr/local/opt/chruby/share/chruby; do
@@ -116,7 +107,6 @@ else
   done
   unset _chruby_dir
 fi
-unset _tec_bin _tec_cache _tec_marker
 
 __fzf_rebind_hook() {
   if [[ "$1" == "precmd" ]]; then

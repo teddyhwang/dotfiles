@@ -21,6 +21,9 @@ if [ -f "$opencode_dir/opencode.jsonc" ]; then
   cfg="$opencode_dir/opencode.jsonc"
 else
   cfg="$opencode_dir/opencode.json"
+  if [ ! -f "$cfg" ]; then
+    echo '{ "theme": "tinty-current" }' > "$cfg"
+  fi
 fi
 
 perl -i -pe 's/"theme": "[^"]*"/"theme": "tinty-current"/' "$cfg"

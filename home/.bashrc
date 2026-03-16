@@ -38,3 +38,5 @@ if [[ ${BLE_VERSION-} ]]; then
 fi
 
 [[ -f ~/.shared/functions ]] && source ~/.shared/functions
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash

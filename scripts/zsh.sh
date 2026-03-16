@@ -1,6 +1,7 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
@@ -21,7 +22,7 @@ if [ -d ~/.zsh/completions ]; then
 else
   print_progress "Adding custom completions..."
   mkdir -p ~/.zsh/completions
-  cp ./home/completions/* ~/.zsh/completions/.
+  cp "${DOTFILES_DIR}/home/completions"/* ~/.zsh/completions/.
   track_change
 fi
 

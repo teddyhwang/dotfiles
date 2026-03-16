@@ -129,3 +129,6 @@ if (( $+commands[shadowenv] )); then
   unset __shadowenv_force_run
 fi
 __ruby_env_hook precmd
+
+# opencode
+export PATH=/Users/teddyhwang/.opencode/bin:$PATH

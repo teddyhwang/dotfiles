@@ -58,16 +58,3 @@ if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
 else
   print_info "launch agent config files are copied"
 fi
-
-if [ -f ~/.gnupg/gpg-agent.conf ]; then
-  if cat ~/.gnupg/gpg-agent.conf | grep -q pinentry-mac; then
-    print_info "pinentry-mac is already set"
-  else
-    print_progress "Setting pinentry-mac..."
-    touch ~/.gnupg/gpg-agent.conf
-    echo "pinentry-program $(which pinentry-mac)" | tee ~/.gnupg/gpg-agent.conf
-    track_change
-  fi
-else
-  print_warning "gpg-agent not setup"
-fi

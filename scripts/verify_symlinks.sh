@@ -40,7 +40,7 @@ find "$HOME" -maxdepth 1 -name '.*' -type l 2>/dev/null | while IFS= read -r lin
 done
 
 # Check config directories
-for dir in "$HOME/.config" "$HOME/.local/bin" "$HOME/.config/hypr" "$HOME/.pi/agent"; do
+for dir in "$HOME/.config" "$HOME/.local/bin" "$HOME/.config/hypr" "$HOME/.pi/agent" "$HOME/.claude" "$HOME/.config/opencode"; do
   if [ -d "$dir" ]; then
     find "$dir" -type l 2>/dev/null | while IFS= read -r link; do
       check_broken_symlink "$link"

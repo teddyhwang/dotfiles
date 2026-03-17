@@ -25,13 +25,24 @@ for filepath in home/config/*; do
   target="$HOME/.config/$file"
 
   # Symlink individual files for configs that shouldn't have the whole dir tracked
-  if [ "$file" = "tmux" ]; then
+  if [ "$file" = "opencode" ] || [ "$file" = "tmux" ]; then
     mkdir -p "$target"
     for subfile in "$source"/*; do
       validate_and_symlink "$subfile" "$target/$(basename "$subfile")"
     done
     continue
   fi
+
+  validate_and_symlink "$source" "$target"
+done
+
+print_progress "\nSymlinking Claude config..."
+
+mkdir -p "$HOME/.claude"
+for filepath in home/claude/*; do
+  file=$(basename "$filepath")
+  source="$(pwd)/$filepath"
+  target="$HOME/.claude/$file"
 
   validate_and_symlink "$source" "$target"
 done

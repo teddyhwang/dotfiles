@@ -1,0 +1,12 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "bindings": [
+    {
+      "context": "Select",
+      "bindings": {
+        "ctrl+j": "select:next",
+        "ctrl+k": "select:previous"
+      }
+    }
+  ]
+}

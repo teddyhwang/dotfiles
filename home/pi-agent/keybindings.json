@@ -1,4 +1,6 @@
 {
   "newLine": ["shift+enter", "alt+enter"],
-  "followUp": []
+  "followUp": [],
+  "selectUp": ["up", "ctrl+k"],
+  "selectDown": ["down", "ctrl+j"]
 }

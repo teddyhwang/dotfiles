@@ -1,0 +1,6 @@
+{
+  "keybinds": {
+    "list.next": ["ctrl+j", "down"],
+    "list.prev": ["ctrl+k", "up"]
+  }
+}

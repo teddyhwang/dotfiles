@@ -24,7 +24,7 @@ else
   print_progress "Installing ble.sh..."
   TMPDIR=$(mktemp -d)
   git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git "$TMPDIR/ble.sh"
-  make -C "$TMPDIR/ble.sh" install PREFIX=~/.local
+  make -C "$TMPDIR/ble.sh" install PREFIX="$HOME/.local"
   rm -rf "$TMPDIR"
   track_change
 fi

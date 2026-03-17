@@ -5,34 +5,34 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 . "${SCRIPT_DIR}/scripts/utils.sh"
 
 print_line
-./scripts/verify_dependencies.sh
+"${SCRIPT_DIR}/scripts/verify_dependencies.sh"
 print_line
 OS="$(uname -s)"
 case "$OS" in
 Darwin)
   print_progress "Installing Mac dependencies..."
-  ./scripts/packages_mac.sh
-  ./scripts/verify_symlinks.sh
-  ./scripts/directories.sh
-  ./scripts/linker_mac.sh
-  ./scripts/zsh.sh
-  ./scripts/bash.sh
-  ./scripts/tmux.sh
-  ./scripts/git_bat.sh
+  "${SCRIPT_DIR}/scripts/packages_mac.sh"
+  "${SCRIPT_DIR}/scripts/verify_symlinks.sh"
+  "${SCRIPT_DIR}/scripts/directories.sh"
+  "${SCRIPT_DIR}/scripts/linker_mac.sh"
+  "${SCRIPT_DIR}/scripts/zsh.sh"
+  "${SCRIPT_DIR}/scripts/bash.sh"
+  "${SCRIPT_DIR}/scripts/tmux.sh"
+  "${SCRIPT_DIR}/scripts/git_bat.sh"
   ;;
 Linux)
   print_progress "Installing Linux dependencies..."
-  ./scripts/packages_linux.sh
-  ./scripts/verify_symlinks.sh
-  ./scripts/linker_linux.sh
-  ./scripts/bash.sh
-  ./scripts/tmux.sh
+  "${SCRIPT_DIR}/scripts/packages_linux.sh"
+  "${SCRIPT_DIR}/scripts/verify_symlinks.sh"
+  "${SCRIPT_DIR}/scripts/linker_linux.sh"
+  "${SCRIPT_DIR}/scripts/bash.sh"
+  "${SCRIPT_DIR}/scripts/tmux.sh"
   if command -v zsh >/dev/null 2>&1; then
-    ./scripts/zsh.sh
+    "${SCRIPT_DIR}/scripts/zsh.sh"
   fi
-  ./scripts/git_bat.sh
+  "${SCRIPT_DIR}/scripts/git_bat.sh"
   if [ -n "$SUDO_USER" ] || [ "$(id -u)" -eq 0 ]; then
-    ./scripts/macbook_t2_linux.sh
+    "${SCRIPT_DIR}/scripts/macbook_t2_linux.sh"
   else
     print_warning "Skipping T2 MacBook setup (requires sudo). Run 'sudo ./scripts/macbook_t2_linux.sh' if needed."
   fi

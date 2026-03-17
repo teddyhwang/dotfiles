@@ -16,6 +16,7 @@ Darwin)
   ./scripts/directories.sh
   ./scripts/linker_mac.sh
   ./scripts/zsh.sh
+  ./scripts/bash.sh
   ./scripts/tmux.sh
   ./scripts/git_bat.sh
   ;;
@@ -24,6 +25,7 @@ Linux)
   ./scripts/packages_linux.sh
   ./scripts/verify_symlinks.sh
   ./scripts/linker_linux.sh
+  ./scripts/bash.sh
   ./scripts/tmux.sh
   if command -v zsh >/dev/null 2>&1; then
     ./scripts/zsh.sh

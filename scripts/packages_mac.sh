@@ -5,6 +5,9 @@ DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
+# Ensure Homebrew is installed
+. "${SCRIPT_DIR}/brew.sh"
+
 if ! command -v brew >/dev/null 2>&1; then
   if [ -f "/usr/local/bin/brew" ]; then
     BREW_BIN="/usr/local/bin/brew"

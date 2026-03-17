@@ -70,4 +70,4 @@ fi
 source "$_shared_init_cache"
 unset _shared_init_cache _shared_init_regen
 
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+[ -n "$ZSH_VERSION" ] && [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

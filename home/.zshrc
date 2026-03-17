@@ -82,6 +82,7 @@ bindkey '^f' fzf-cd-widget
 if [[ -x "$HOME/.local/state/tec/profiles/base/current/global/init" ]]; then
   eval "$("$HOME/.local/state/tec/profiles/base/current/global/init" zsh)"
   eval "$(wcd --init zsh)"
+  [[ -f ~/.shared/shopify ]] && . ~/.shared/shopify
 else
   for _chruby_dir in /opt/homebrew/opt/chruby/share/chruby /usr/local/opt/chruby/share/chruby; do
     if [[ -f "$_chruby_dir/chruby.sh" ]]; then

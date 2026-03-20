@@ -1,6 +1,15 @@
 {
-  "newLine": ["shift+enter", "alt+enter"],
-  "followUp": [],
-  "selectUp": ["up", "ctrl+k"],
-  "selectDown": ["down", "ctrl+j"]
+  "tui.input.newLine": [
+    "shift+enter",
+    "alt+enter"
+  ],
+  "tui.select.up": [
+    "up",
+    "ctrl+k"
+  ],
+  "tui.select.down": [
+    "down",
+    "ctrl+j"
+  ],
+  "app.message.followUp": []
 }

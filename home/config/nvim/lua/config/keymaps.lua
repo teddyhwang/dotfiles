@@ -199,6 +199,9 @@ end, { desc = "Toggle Claude" })
 map("n", "<leader>ao", function()
   require("sidekick.cli").toggle({ name = "opencode", focus = true })
 end, { desc = "Toggle Opencode" })
+map("n", "<leader>ap", function()
+  require("sidekick.cli").toggle({ name = "pi", focus = true })
+end, { desc = "Toggle Pi" })
 
 -- Stewardlens
 map("n", "<leader>fs", "<cmd>StewardlensBrowse<cr>", { desc = "Open file in Stewardlens" })

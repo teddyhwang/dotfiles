@@ -12,6 +12,9 @@ for filepath in home/.[!.]*; do
   source="$(pwd)/$filepath"
   target="$HOME/$file"
 
+  # Skip mac-only dotfiles
+  [ "$file" = ".hammerspoon" ] && continue
+
   validate_and_symlink "$source" "$target"
 done
 

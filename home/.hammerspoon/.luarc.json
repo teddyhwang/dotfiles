@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "Lua.globals": ["hs", "spoon"],
+  "Lua.workspace.library": [
+    "/Applications/Hammerspoon.app/Contents/Resources/extensions/hs/"
+  ],
+  "Lua.runtime.version": "LuaJIT",
+  "Lua.diagnostics.globals": ["hs", "spoon"]
+}

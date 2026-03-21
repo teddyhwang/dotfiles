@@ -6,6 +6,10 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 . "${SCRIPT_DIR}/linker.sh"
 
+print_progress "\nSymlinking Hammerspoon config..."
+
+validate_and_symlink "$DOTFILES_DIR/home/.hammerspoon" "$HOME/.hammerspoon"
+
 print_progress "\nSymlinking binaries..."
 
 for filepath in home/local/bin/*; do

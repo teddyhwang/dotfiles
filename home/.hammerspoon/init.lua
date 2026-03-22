@@ -1,5 +1,7 @@
 require("hs.ipc")
 
+hs.allowAppleScript(true)
+
 -- Move apps to screen 2 and reevaluate Amethyst after display changes (including display wake)
 
 local apps = { "Messages", "Discord", "Ghostty" }
@@ -79,5 +81,7 @@ function RestartWaveLink()
 		end)
 	end)
 end
+
+hs.hotkey.bind({ "cmd", "shift" }, "W", MoveAppsToScreen2)
 
 hs.alert.show("Hammerspoon loaded")

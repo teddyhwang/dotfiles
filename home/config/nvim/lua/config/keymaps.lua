@@ -69,8 +69,17 @@ map("n", "<C-b>", "<cmd>lua require('snacks').picker.buffers()<cr>", { desc = "F
 map("n", "<C-t>", "<cmd>lua require('snacks').picker.smart()<cr>", { desc = "Smart picker" })
 map("n", "<leader>fb", "<cmd>lua require('snacks').picker.buffers()<cr>", { desc = "Buffers list" })
 map("n", "<leader>fh", "<cmd>lua require('snacks').picker.help()<cr>", { desc = "Nvim help" })
-map("n", "<leader>fg", "<cmd>lua require('snacks').picker.grep()<cr>", { desc = "Grep" })
-map("n", ",ff", "<cmd>lua require('snacks').picker.grep_word({ hidden = true })<cr>", { desc = "Grep word" })
+map("n", "<leader>ff", function()
+  require("fff").find_files()
+end, { desc = "Find files (fff)" })
+map("n", "<leader>fg", function()
+  require("fff").live_grep()
+end, { desc = "Live grep (fff)" })
+map("n", ",ff", function()
+  require("fff").live_grep({ query = vim.fn.expand("<cword>") })
+end, { desc = "Grep word (fff)" })
+-- map("n", "<leader>fg", "<cmd>lua require('snacks').picker.grep()<cr>", { desc = "Grep" }) -- replaced by fff.nvim
+-- map("n", ",ff", "<cmd>lua require('snacks').picker.grep_word({ hidden = true })<cr>", { desc = "Grep word" }) -- replaced by fff.nvim
 
 -- Search with prompt
 map("n", "<C-f>", function()

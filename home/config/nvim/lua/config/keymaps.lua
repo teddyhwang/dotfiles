@@ -75,11 +75,9 @@ end, { desc = "Find files (fff)" })
 map("n", "<leader>fg", function()
   require("fff").live_grep()
 end, { desc = "Live grep (fff)" })
-map("n", ",ff", function()
-  require("fff").live_grep({ query = vim.fn.expand("<cword>") })
-end, { desc = "Grep word (fff)" })
+map("n", ",ff", "<cmd>lua require('snacks').picker.grep_word({ hidden = true })<cr>", { desc = "Grep word" }) -- replaced by fff.nvim
+-- map("n", ",ff", function() require("fff").live_grep({ query = vim.fn.expand("<cword>") }) end, { desc = "Grep word (fff)" })
 -- map("n", "<leader>fg", "<cmd>lua require('snacks').picker.grep()<cr>", { desc = "Grep" }) -- replaced by fff.nvim
--- map("n", ",ff", "<cmd>lua require('snacks').picker.grep_word({ hidden = true })<cr>", { desc = "Grep word" }) -- replaced by fff.nvim
 
 -- Search with prompt
 map("n", "<C-f>", function()

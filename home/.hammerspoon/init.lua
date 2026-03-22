@@ -18,7 +18,16 @@ function MoveAppsToScreen2()
 		if app then
 			local windows = app:allWindows()
 			for _, win in ipairs(windows) do
-				win:moveToScreen(targetScreen)
+				if appName == "Messages" then
+					local frame = win:frame()
+					win:moveToScreen(targetScreen, false, false, 0)
+					local movedFrame = win:frame()
+					movedFrame.w = frame.w
+					movedFrame.h = frame.h
+					win:setFrame(movedFrame)
+				else
+					win:moveToScreen(targetScreen, false, false, 0)
+				end
 			end
 		end
 	end
@@ -33,11 +42,20 @@ local function debouncedMove()
 	if debounceTimer then
 		debounceTimer:stop()
 	end
-	debounceTimer = hs.timer.doAfter(5, MoveAppsToScreen2)
+	debounceTimer = hs.timer.doAfter(1, MoveAppsToScreen2)
 end
 
 local screenWatcher = hs.screen.watcher.new(debouncedMove)
 screenWatcher:start()
+
+-- Also trigger on display wake (e.g. coming back from display sleep or KVM switch)
+local caffeinateWatcher = hs.caffeinate.watcher.new(function(event)
+	if event == hs.caffeinate.watcher.screensDidWake or event == hs.caffeinate.watcher.systemDidWake then
+		-- Screens need extra time to be fully ready after wake
+		hs.timer.doAfter(3, debouncedMove)
+	end
+end)
+caffeinateWatcher:start()
 
 -- Restart Elgato Wave Link and close its window
 function RestartWaveLink()

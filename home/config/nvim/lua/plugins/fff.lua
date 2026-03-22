@@ -7,6 +7,9 @@ return {
     end,
     lazy = false,
     opts = {
+      layout = {
+        prompt_position = "top",
+      },
       keymaps = {
         close = { "<Esc>", "<C-c>" },
         move_up = { "<Up>", "<C-k>", "<C-p>" },

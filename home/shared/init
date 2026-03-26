@@ -73,6 +73,10 @@ if [[ "$_shared_init_regen" == "1" ]]; then
       "$(which shadowenv)" init zsh >>"$_shared_init_cache" 2>/dev/null
     fi
   fi
+
+  if command -v try &>/dev/null; then
+    try init >>"$_shared_init_cache" 2>/dev/null
+  fi
 fi
 
 source "$_shared_init_cache"

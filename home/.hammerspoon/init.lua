@@ -4,7 +4,7 @@ hs.allowAppleScript(true)
 
 -- Move apps to screen 2 and reevaluate Amethyst after display changes (including display wake)
 
-local apps = { "Messages", "Discord", "Ghostty" }
+local apps = { "Discord", "Ghostty" }
 
 function MoveAppsToScreen2()
 	local screens = hs.screen.allScreens()
@@ -20,16 +20,7 @@ function MoveAppsToScreen2()
 		if app then
 			local windows = app:allWindows()
 			for _, win in ipairs(windows) do
-				if appName == "Messages" then
-					local frame = win:frame()
-					win:moveToScreen(targetScreen, false, false, 0)
-					local movedFrame = win:frame()
-					movedFrame.w = frame.w
-					movedFrame.h = frame.h
-					win:setFrame(movedFrame)
-				else
-					win:moveToScreen(targetScreen, false, false, 0)
-				end
+				win:moveToScreen(targetScreen, false, false, 0)
 			end
 		end
 	end

@@ -26,6 +26,7 @@ export BUN_INSTALL="$HOME/.bun"
 [[ -d "$HOME/.local/share/nvim/mason/bin" ]] && PATH="$HOME/.local/share/nvim/mason/bin:$PATH"
 [[ -d "$HOME/go/bin" ]] && PATH="$HOME/go/bin:$PATH"
 [[ -d "$HOME/.cargo/bin" ]] && PATH="$HOME/.cargo/bin:$PATH"
+[[ -d "$HOME/.opencode/bin" ]] && PATH="$HOME/.opencode/bin:$PATH"
 [[ -d $BUN_INSTALL ]] && PATH="$BUN_INSTALL/bin:$PATH"
 [[ -d "$HOME/.gem/ruby/4.0.0/bin" ]] && PATH="$HOME/.gem/ruby/4.0.0/bin:$PATH"
 

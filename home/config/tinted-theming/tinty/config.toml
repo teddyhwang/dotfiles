@@ -23,6 +23,13 @@ supported-systems = ["base16"]
 hook = "command ln -snf %f ~/.config/btop/themes/current.theme && pkill -SIGUSR2 btop"
 
 [[items]]
+name = "tinted-shell"
+path = "https://github.com/tinted-theming/tinted-shell"
+themes-dir = "scripts"
+supported-systems = ["base16", "base24"]
+hook = ". %f"
+
+[[items]]
 name = "base16-opencode"
 path = "https://github.com/scaryrawr/base16-opencode"
 themes-dir = "themes"

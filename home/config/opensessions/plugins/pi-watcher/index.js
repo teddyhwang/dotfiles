@@ -224,6 +224,9 @@ class PiWatcher {
   start(ctx) {
     this.ctx = ctx;
     this.scan();
+    // Re-scan shortly after start so the sidebar picks up agents
+    // even if the UI wasn't ready for the first emit
+    setTimeout(() => this.scan(), 500);
     this.timer = setInterval(() => this.scan(), POLL_MS);
   }
 

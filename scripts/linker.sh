@@ -28,7 +28,7 @@ for filepath in home/config/*; do
   target="$HOME/.config/$file"
 
   # Symlink individual files for configs that shouldn't have the whole dir tracked
-  if [ "$file" = "opencode" ] || [ "$file" = "tmux" ]; then
+  if [ "$file" = "opencode" ] || [ "$file" = "tmux" ] || [ "$file" = "opensessions" ]; then
     mkdir -p "$target"
     for subfile in "$source"/*; do
       validate_and_symlink "$subfile" "$target/$(basename "$subfile")"

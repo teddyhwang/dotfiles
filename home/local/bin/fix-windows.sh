@@ -1,4 +1,4 @@
 #!/bin/bash
 
-# Move Messages, Discord, and Ghostty to screen 2 via Hammerspoon
+# Move Discord and Ghostty to screen 2 via Hammerspoon
 /opt/homebrew/bin/hs -c "MoveAppsToScreen2()"

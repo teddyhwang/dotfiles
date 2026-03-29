@@ -131,5 +131,29 @@ if (( $+commands[shadowenv] )); then
 fi
 __ruby_env_hook precmd
 
-# opencode
-export PATH=/Users/teddyhwang/.opencode/bin:$PATH
+tinty_source_shell_theme() {
+  tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
+
+  if [ "$1" = "init" ]; then
+    command tinty $@
+    while read -r script; do
+      . "$script"
+    done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh")
+  elif [ "$1" = "apply" ]; then
+    newer_file=$(mktemp)
+    command tinty $@
+    while read -r script; do
+      . "$script"
+    done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh" -newer "$newer_file")
+    rm -f "$newer_file"
+  else
+    command tinty $@
+  fi
+
+  unset tinty_data_dir
+}
+
+if (( $+commands[tinty] )); then
+  alias tinty=tinty_source_shell_theme
+  tinty_source_shell_theme "init" > /dev/null
+fi

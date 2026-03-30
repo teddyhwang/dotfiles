@@ -20,66 +20,55 @@ elif [[ -n "$BASH_VERSION" ]] && [[ $(find "$_shared_init_cache" -mmin +1440 2>/
   _shared_init_regen=1
 fi
 
-if [[ "$_shared_init_regen" == "1" ]]; then
-  mkdir -p "$HOME/.cache"
-  : >"$_shared_init_cache"
+_shared_init_regen_cache() {
+  local _cache="$1" _shell="$2"
+  local _tmp="${_cache}.tmp.$$"
+  : >"$_tmp"
 
   if command -v gh &>/dev/null; then
-    if [[ -n "$BASH_VERSION" ]]; then
-      gh completion -s bash >>"$_shared_init_cache" 2>/dev/null
-    elif [[ -n "$ZSH_VERSION" ]]; then
-      gh completion -s zsh >>"$_shared_init_cache" 2>/dev/null
-    fi
+    gh completion -s "$_shell" >>"$_tmp" 2>/dev/null
   fi
-
   if command -v atuin &>/dev/null; then
-    if [[ -n "$BASH_VERSION" ]]; then
-      atuin init bash --disable-up-arrow >>"$_shared_init_cache" 2>/dev/null
-    elif [[ -n "$ZSH_VERSION" ]]; then
-      atuin init zsh --disable-up-arrow >>"$_shared_init_cache" 2>/dev/null
-    fi
+    atuin init "$_shell" --disable-up-arrow >>"$_tmp" 2>/dev/null
   fi
-
   if command -v zoxide &>/dev/null; then
-    if [[ -n "$BASH_VERSION" ]]; then
-      zoxide init bash >>"$_shared_init_cache" 2>/dev/null
-    elif [[ -n "$ZSH_VERSION" ]]; then
-      zoxide init zsh >>"$_shared_init_cache" 2>/dev/null
-    fi
+    zoxide init "$_shell" >>"$_tmp" 2>/dev/null
   fi
-
-  if [[ -n "$ZSH_VERSION" ]]; then
-    if command -v gt &>/dev/null; then
-      gt completion >>"$_shared_init_cache" 2>/dev/null
-    fi
-
-    if command -v carapace &>/dev/null; then
-      carapace _carapace >>"$_shared_init_cache" 2>/dev/null
-    fi
+  if [[ "$_shell" == "zsh" ]]; then
+    command -v gt &>/dev/null && gt completion >>"$_tmp" 2>/dev/null
+    command -v carapace &>/dev/null && carapace _carapace >>"$_tmp" 2>/dev/null
   fi
-
   if command -v tv &>/dev/null; then
-    if [[ -n "$BASH_VERSION" ]]; then
-      tv init bash >>"$_shared_init_cache" 2>/dev/null
-    elif [[ -n "$ZSH_VERSION" ]]; then
-      tv init zsh >>"$_shared_init_cache" 2>/dev/null
-    fi
+    tv init "$_shell" >>"$_tmp" 2>/dev/null
   fi
-
   if command -v shadowenv &>/dev/null; then
-    if [[ -n "$BASH_VERSION" ]]; then
-      "$(which shadowenv)" init bash >>"$_shared_init_cache" 2>/dev/null
-    elif [[ -n "$ZSH_VERSION" ]]; then
-      "$(which shadowenv)" init zsh >>"$_shared_init_cache" 2>/dev/null
-    fi
+    "$(which shadowenv)" init "$_shell" >>"$_tmp" 2>/dev/null
   fi
-
   if command -v try &>/dev/null; then
-    command try init >>"$_shared_init_cache" 2>/dev/null
+    command try init >>"$_tmp" 2>/dev/null
   fi
-fi
 
-source "$_shared_init_cache"
+  mv -f "$_tmp" "$_cache"
+}
+
+if [[ "$_shared_init_regen" == "1" ]]; then
+  mkdir -p "$HOME/.cache"
+  local _shell
+  [[ -n "$ZSH_VERSION" ]] && _shell=zsh || _shell=bash
+
+  if [[ -f "$_shared_init_cache" ]]; then
+    # Stale cache exists — use it now, regen in background for next shell
+    source "$_shared_init_cache"
+    _shared_init_regen_cache "$_shared_init_cache" "$_shell" &!
+  else
+    # No cache at all — must regen synchronously
+    _shared_init_regen_cache "$_shared_init_cache" "$_shell"
+    source "$_shared_init_cache"
+  fi
+  unset _shell
+else
+  source "$_shared_init_cache"
+fi
 unset _shared_init_cache _shared_init_regen
 
 [ -n "$ZSH_VERSION" ] && [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"

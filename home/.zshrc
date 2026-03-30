@@ -80,8 +80,14 @@ bindkey '^f' fzf-cd-widget
 [[ -f ~/.shared/functions ]] && . ~/.shared/functions
 
 if [[ -x "$HOME/.local/state/tec/profiles/base/current/global/init" ]]; then
-  eval "$("$HOME/.local/state/tec/profiles/base/current/global/init" zsh)"
-  eval "$(wcd --init zsh)"
+  _tec_init="$HOME/.local/state/tec/profiles/base/current/global/init"
+  _tec_cache="$HOME/.cache/tec_init_cache.zsh"
+  if [[ ! -f "$_tec_cache" ]] || [[ "$_tec_init" -nt "$_tec_cache" ]]; then
+    "$_tec_init" zsh >"$_tec_cache" 2>/dev/null
+    wcd --init zsh >>"$_tec_cache" 2>/dev/null
+  fi
+  . "$_tec_cache"
+  unset _tec_init _tec_cache
   [[ -f ~/.shared/shopify ]] && . ~/.shared/shopify
 else
   for _chruby_dir in /opt/homebrew/opt/chruby/share/chruby /usr/local/opt/chruby/share/chruby; do
@@ -155,5 +161,5 @@ tinty_source_shell_theme() {
 
 if (( $+commands[tinty] )); then
   alias tinty=tinty_source_shell_theme
-  tinty_source_shell_theme "init" > /dev/null
+  tinty_source_shell_theme "init" &> /dev/null
 fi

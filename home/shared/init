@@ -28,9 +28,6 @@ _shared_init_regen_cache() {
   if command -v gh &>/dev/null; then
     gh completion -s "$_shell" >>"$_tmp" 2>/dev/null
   fi
-  if command -v atuin &>/dev/null; then
-    atuin init "$_shell" --disable-up-arrow >>"$_tmp" 2>/dev/null
-  fi
   if command -v zoxide &>/dev/null; then
     zoxide init "$_shell" >>"$_tmp" 2>/dev/null
   fi
@@ -40,6 +37,9 @@ _shared_init_regen_cache() {
   fi
   if command -v tv &>/dev/null; then
     tv init "$_shell" >>"$_tmp" 2>/dev/null
+  fi
+  if command -v atuin &>/dev/null; then
+    atuin init "$_shell" --disable-up-arrow >>"$_tmp" 2>/dev/null
   fi
   if command -v shadowenv &>/dev/null; then
     "$(which shadowenv)" init "$_shell" >>"$_tmp" 2>/dev/null

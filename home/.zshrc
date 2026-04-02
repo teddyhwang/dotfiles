@@ -79,6 +79,7 @@ bindkey '^f' fzf-cd-widget
 [[ -f ~/.shared/init ]] && source ~/.shared/init
 [[ -f ~/.shared/functions ]] && . ~/.shared/functions
 
+# Added by tec agent
 if [[ -x "$HOME/.local/state/tec/profiles/base/current/global/init" ]]; then
   _tec_init="$HOME/.local/state/tec/profiles/base/current/global/init"
   _tec_cache="$HOME/.cache/tec_init_cache.zsh"

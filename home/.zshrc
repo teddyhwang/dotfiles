@@ -80,8 +80,8 @@ bindkey '^f' fzf-cd-widget
 [[ -f ~/.shared/functions ]] && . ~/.shared/functions
 
 # Added by tec agent
-if [[ -x "$HOME/.local/state/tec/profiles/base/current/global/init" ]]; then
-  _tec_init="$HOME/.local/state/tec/profiles/base/current/global/init"
+if [[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]]; then
+  _tec_init="/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init"
   _tec_cache="$HOME/.cache/tec_init_cache.zsh"
   if [[ ! -f "$_tec_cache" ]] || [[ "$_tec_init" -nt "$_tec_cache" ]]; then
     "$_tec_init" zsh >"$_tec_cache" 2>/dev/null

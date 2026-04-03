@@ -127,9 +127,30 @@ __ruby_env_hook() {
   fi
 }
 
+__sync_tmux_ssh_env_hook() {
+  [[ "$1" == "precmd" ]] || return
+  [[ -n "$TMUX" ]] || return
+  (( $+commands[tmux] )) || return
+
+  local name line value
+  for name in SSH_AUTH_SOCK SSH_CONNECTION SSH_CLIENT SSH_TTY; do
+    line=$(tmux show-environment -g "$name" 2>/dev/null) || line=""
+    case "$line" in
+      "$name="*)
+        value=${line#*=}
+        export "$name=$value"
+        ;;
+      "-$name"|"")
+        unset "$name"
+        ;;
+    esac
+  done
+}
+
 if typeset -f hookbook_add_hook > /dev/null; then
   hookbook_add_hook __fzf_rebind_hook
   hookbook_add_hook __ruby_env_hook
+  hookbook_add_hook __sync_tmux_ssh_env_hook
 fi
 
 if (( $+commands[shadowenv] )); then
@@ -137,6 +158,7 @@ if (( $+commands[shadowenv] )); then
   unset __shadowenv_force_run
 fi
 __ruby_env_hook precmd
+__sync_tmux_ssh_env_hook precmd
 
 tinty_source_shell_theme() {
   tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"

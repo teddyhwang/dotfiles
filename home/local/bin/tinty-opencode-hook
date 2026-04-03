@@ -1,31 +1,44 @@
 #!/bin/bash
-theme_file="$1"
+set -euo pipefail
+
+theme_file="${1:-}"
 opencode_dir="$HOME/.config/opencode"
 themes_dir="$opencode_dir/themes"
 theme_dest="$themes_dir/tinty-current.json"
 
+auto_cleanup() {
+  [[ -n "${tmp_theme:-}" && -e "$tmp_theme" ]] && rm -f "$tmp_theme"
+  return 0
+}
+trap auto_cleanup EXIT
+
+[[ -n "$theme_file" && -f "$theme_file" ]] || exit 0
+
 mkdir -p "$themes_dir"
-rm -f "$theme_dest"
-cp "$theme_file" "$theme_dest"
+tmp_theme="$(mktemp "$themes_dir/.tinty-current.XXXXXX.json")"
+cp "$theme_file" "$tmp_theme"
 
 # Change backgroundElement to darker grey for prompt area
-perl -i -pe 's/"backgroundElement": \{ "dark": "base02"/"backgroundElement": { "dark": "base01"/' "$theme_dest"
+perl -i -pe 's/"backgroundElement": \{ "dark": "base02"/"backgroundElement": { "dark": "base01"/' "$tmp_theme"
 
 # Update diff backgrounds to use direct hex colors (opencode may not support custom defs)
-perl -i -pe 's/"diffAddedBg": \{ "dark": "[^"]*"/"diffAddedBg": { "dark": "#1a2e1a"/' "$theme_dest"
-perl -i -pe 's/"diffRemovedBg": \{ "dark": "[^"]*"/"diffRemovedBg": { "dark": "#2e1a1a"/' "$theme_dest"
-perl -i -pe 's/"diffAddedLineNumberBg": \{ "dark": "[^"]*"/"diffAddedLineNumberBg": { "dark": "#1a2e1a"/' "$theme_dest"
-perl -i -pe 's/"diffRemovedLineNumberBg": \{ "dark": "[^"]*"/"diffRemovedLineNumberBg": { "dark": "#2e1a1a"/' "$theme_dest"
+perl -i -pe 's/"diffAddedBg": \{ "dark": "[^"]*"/"diffAddedBg": { "dark": "#1a2e1a"/' "$tmp_theme"
+perl -i -pe 's/"diffRemovedBg": \{ "dark": "[^"]*"/"diffRemovedBg": { "dark": "#2e1a1a"/' "$tmp_theme"
+perl -i -pe 's/"diffAddedLineNumberBg": \{ "dark": "[^"]*"/"diffAddedLineNumberBg": { "dark": "#1a2e1a"/' "$tmp_theme"
+perl -i -pe 's/"diffRemovedLineNumberBg": \{ "dark": "[^"]*"/"diffRemovedLineNumberBg": { "dark": "#2e1a1a"/' "$tmp_theme"
+
+mv -f "$tmp_theme" "$theme_dest"
 
 if [ -f "$opencode_dir/opencode.jsonc" ]; then
   cfg="$opencode_dir/opencode.jsonc"
 else
   cfg="$opencode_dir/opencode.json"
-  if [ ! -f "$cfg" ]; then
-    echo '{ "theme": "tinty-current" }' > "$cfg"
-  fi
 fi
 
-perl -i -pe 's/"theme": "[^"]*"/"theme": "tinty-current"/' "$cfg"
+if [ ! -s "$cfg" ]; then
+  echo '{ "theme": "tinty-current" }' > "$cfg"
+else
+  perl -0pi -e 'if (/"theme"\s*:/) { s/"theme"\s*:\s*"[^"]*"/"theme": "tinty-current"/ }' "$cfg"
+fi
 
 killall -SIGUSR2 opencode 2>/dev/null || true

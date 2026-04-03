@@ -40,3 +40,6 @@ fi
 [[ -f ~/.shared/functions ]] && source ~/.shared/functions
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+# Added by tec agent
+[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && [[ $- == *i* ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init bash)"

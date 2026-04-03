@@ -164,3 +164,6 @@ if (( $+commands[tinty] )); then
   alias tinty=tinty_source_shell_theme
   tinty_source_shell_theme "init" &> /dev/null
 fi
+
+# Added by tec agent
+[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init zsh)"

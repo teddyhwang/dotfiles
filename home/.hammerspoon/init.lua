@@ -43,12 +43,28 @@ screenWatcher:start()
 
 -- Also trigger on display wake (e.g. coming back from display sleep or KVM switch)
 local caffeinateWatcher = hs.caffeinate.watcher.new(function(event)
-	if event == hs.caffeinate.watcher.screensDidWake or event == hs.caffeinate.watcher.systemDidWake then
+	if
+		event == hs.caffeinate.watcher.screensDidWake
+		or event == hs.caffeinate.watcher.systemDidWake
+		or event == hs.caffeinate.watcher.screensDidUnlock
+	then
 		-- Screens need extra time to be fully ready after wake
 		hs.timer.doAfter(3, debouncedMove)
+		-- Second pass in case the first was too early
+		hs.timer.doAfter(7, debouncedMove)
 	end
 end)
 caffeinateWatcher:start()
+
+-- Poll for screen changes as a fallback (catches cases watchers miss)
+local lastScreenCount = #hs.screen.allScreens()
+local screenPollTimer = hs.timer.doEvery(5, function()
+	local currentCount = #hs.screen.allScreens()
+	if currentCount ~= lastScreenCount then
+		lastScreenCount = currentCount
+		debouncedMove()
+	end
+end)
 
 -- Restart Elgato Wave Link and close its window
 function RestartWaveLink()

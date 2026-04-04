@@ -4,7 +4,7 @@ hs.allowAppleScript(true)
 
 -- Move apps to screen 2 and reevaluate Amethyst after display changes (including display wake)
 
-local apps = { "Discord", "Ghostty" }
+local apps = { "Discord", "Ghostty", "Spotify" }
 
 function MoveAppsToScreen2()
 	local screens = hs.screen.allScreens()

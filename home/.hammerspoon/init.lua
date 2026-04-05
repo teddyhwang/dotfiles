@@ -42,14 +42,16 @@ local screenWatcher = hs.screen.watcher.new(debouncedMove)
 screenWatcher:start()
 
 -- Also trigger on display wake (e.g. coming back from display sleep or KVM switch)
+-- Use all caffeinate events that could indicate screens coming back
 local caffeinateWatcher = hs.caffeinate.watcher.new(function(event)
 	if
 		event == hs.caffeinate.watcher.screensDidWake
 		or event == hs.caffeinate.watcher.systemDidWake
 		or event == hs.caffeinate.watcher.screensDidUnlock
 	then
-		-- Staggered retries — screens may not be fully ready right away
-		for _, delay in ipairs({ 2, 5, 10 }) do
+		-- Staggered retries with longer delays — screens need time to be
+		-- fully recognized by macOS after wake
+		for _, delay in ipairs({ 3, 7, 12, 20 }) do
 			hs.timer.doAfter(delay, MoveAppsToScreen2)
 		end
 	end
@@ -76,7 +78,38 @@ local screenPollTimer = hs.timer.doEvery(3, function()
 		lastFingerprint = fp
 		-- Staggered retries for layout changes too
 		MoveAppsToScreen2()
-		hs.timer.doAfter(3, MoveAppsToScreen2)
+		hs.timer.doAfter(5, MoveAppsToScreen2)
+	end
+end)
+
+-- Also check if any target app windows are on the wrong screen
+-- This catches cases where screens wake but the fingerprint doesn't change
+local windowCheckTimer = hs.timer.doEvery(10, function()
+	local screens = hs.screen.allScreens()
+	if #screens < 2 then
+		return
+	end
+
+	local targetScreen = screens[2]
+	local needsMove = false
+
+	for _, appName in ipairs(apps) do
+		local app = hs.application.find(appName)
+		if app then
+			for _, win in ipairs(app:allWindows()) do
+				if win:screen() and win:screen():id() ~= targetScreen:id() then
+					needsMove = true
+					break
+				end
+			end
+		end
+		if needsMove then
+			break
+		end
+	end
+
+	if needsMove then
+		MoveAppsToScreen2()
 	end
 end)
 

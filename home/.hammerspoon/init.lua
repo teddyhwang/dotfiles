@@ -9,107 +9,74 @@ local apps = { "Discord", "Ghostty", "Spotify" }
 function MoveAppsToScreen2()
 	local screens = hs.screen.allScreens()
 	if #screens < 2 then
-		hs.alert.show("Only one screen detected")
 		return
 	end
 
 	local targetScreen = screens[2]
 
+	local movedAny = false
 	for _, appName in ipairs(apps) do
 		local app = hs.application.find(appName)
 		if app then
-			local windows = app:allWindows()
-			for _, win in ipairs(windows) do
-				win:moveToScreen(targetScreen, false, false, 0)
+			for _, win in ipairs(app:allWindows()) do
+				local ws = win:screen()
+				if ws and ws:id() ~= targetScreen:id() then
+					win:moveToScreen(targetScreen, false, false, 0)
+					movedAny = true
+				end
 			end
 		end
 	end
 
-	-- Force Amethyst to reevaluate windows (Option+Shift+Z)
-	hs.eventtap.keyStroke({ "alt", "shift" }, "z")
-end
-
-local debounceTimer = nil
-
-local function debouncedMove()
-	if debounceTimer then
-		debounceTimer:stop()
+	-- Delay Amethyst reevaluate so it doesn't undo the moves
+	if movedAny then
+		hs.timer.doAfter(2, function()
+			hs.eventtap.keyStroke({ "alt", "shift" }, "z")
+		end)
 	end
-	debounceTimer = hs.timer.doAfter(1, MoveAppsToScreen2)
 end
 
-local screenWatcher = hs.screen.watcher.new(debouncedMove)
-screenWatcher:start()
+-- Screen watcher for display reconfiguration (global to prevent GC)
+ScreenWatcher = hs.screen.watcher.new(function()
+	for _, delay in ipairs({ 1, 3, 7 }) do
+		hs.timer.doAfter(delay, MoveAppsToScreen2)
+	end
+end)
+ScreenWatcher:start()
 
--- Also trigger on display wake (e.g. coming back from display sleep or KVM switch)
--- Use all caffeinate events that could indicate screens coming back
-local caffeinateWatcher = hs.caffeinate.watcher.new(function(event)
+-- Caffeinate watcher for wake/unlock events (global to prevent GC)
+CaffeinateWatcher = hs.caffeinate.watcher.new(function(event)
 	if
 		event == hs.caffeinate.watcher.screensDidWake
 		or event == hs.caffeinate.watcher.systemDidWake
 		or event == hs.caffeinate.watcher.screensDidUnlock
+		or event == hs.caffeinate.watcher.sessionDidBecomeActive
 	then
-		-- Staggered retries with longer delays — screens need time to be
-		-- fully recognized by macOS after wake
 		for _, delay in ipairs({ 3, 7, 12, 20 }) do
 			hs.timer.doAfter(delay, MoveAppsToScreen2)
 		end
 	end
 end)
-caffeinateWatcher:start()
+CaffeinateWatcher:start()
 
--- Poll for screen layout changes as a fallback (catches cases watchers miss)
--- Tracks screen IDs + frames, not just count, so it detects monitor wake even
--- when the number of screens doesn't change
-local function screenFingerprint()
-	local parts = {}
-	for _, s in ipairs(hs.screen.allScreens()) do
-		local f = s:frame()
-		table.insert(parts, string.format("%s:%d,%d,%d,%d", s:id(), f.x, f.y, f.w, f.h))
-	end
-	table.sort(parts)
-	return table.concat(parts, "|")
-end
-
-local lastFingerprint = screenFingerprint()
-local screenPollTimer = hs.timer.doEvery(3, function()
-	local fp = screenFingerprint()
-	if fp ~= lastFingerprint then
-		lastFingerprint = fp
-		-- Staggered retries for layout changes too
-		MoveAppsToScreen2()
-		hs.timer.doAfter(5, MoveAppsToScreen2)
-	end
-end)
-
--- Also check if any target app windows are on the wrong screen
--- This catches cases where screens wake but the fingerprint doesn't change
-local windowCheckTimer = hs.timer.doEvery(10, function()
+-- Poll every 5 seconds for misplaced windows as a fallback (global to prevent GC)
+WindowPollTimer = hs.timer.doEvery(5, function()
 	local screens = hs.screen.allScreens()
 	if #screens < 2 then
 		return
 	end
 
 	local targetScreen = screens[2]
-	local needsMove = false
-
 	for _, appName in ipairs(apps) do
 		local app = hs.application.find(appName)
 		if app then
 			for _, win in ipairs(app:allWindows()) do
 				if win:screen() and win:screen():id() ~= targetScreen:id() then
-					needsMove = true
-					break
+					MoveAppsToScreen2()
+					return
 				end
 			end
 		end
-		if needsMove then
-			break
-		end
-	end
-
-	if needsMove then
-		MoveAppsToScreen2()
 	end
 end)
 

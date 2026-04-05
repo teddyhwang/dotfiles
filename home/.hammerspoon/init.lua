@@ -48,21 +48,35 @@ local caffeinateWatcher = hs.caffeinate.watcher.new(function(event)
 		or event == hs.caffeinate.watcher.systemDidWake
 		or event == hs.caffeinate.watcher.screensDidUnlock
 	then
-		-- Screens need extra time to be fully ready after wake
-		hs.timer.doAfter(3, debouncedMove)
-		-- Second pass in case the first was too early
-		hs.timer.doAfter(7, debouncedMove)
+		-- Staggered retries — screens may not be fully ready right away
+		for _, delay in ipairs({ 2, 5, 10 }) do
+			hs.timer.doAfter(delay, MoveAppsToScreen2)
+		end
 	end
 end)
 caffeinateWatcher:start()
 
--- Poll for screen changes as a fallback (catches cases watchers miss)
-local lastScreenCount = #hs.screen.allScreens()
-local screenPollTimer = hs.timer.doEvery(5, function()
-	local currentCount = #hs.screen.allScreens()
-	if currentCount ~= lastScreenCount then
-		lastScreenCount = currentCount
-		debouncedMove()
+-- Poll for screen layout changes as a fallback (catches cases watchers miss)
+-- Tracks screen IDs + frames, not just count, so it detects monitor wake even
+-- when the number of screens doesn't change
+local function screenFingerprint()
+	local parts = {}
+	for _, s in ipairs(hs.screen.allScreens()) do
+		local f = s:frame()
+		table.insert(parts, string.format("%s:%d,%d,%d,%d", s:id(), f.x, f.y, f.w, f.h))
+	end
+	table.sort(parts)
+	return table.concat(parts, "|")
+end
+
+local lastFingerprint = screenFingerprint()
+local screenPollTimer = hs.timer.doEvery(3, function()
+	local fp = screenFingerprint()
+	if fp ~= lastFingerprint then
+		lastFingerprint = fp
+		-- Staggered retries for layout changes too
+		MoveAppsToScreen2()
+		hs.timer.doAfter(3, MoveAppsToScreen2)
 	end
 end)
 

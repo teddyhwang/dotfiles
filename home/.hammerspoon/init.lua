@@ -4,7 +4,8 @@ hs.allowAppleScript(true)
 
 -- Move apps to screen 2 and reevaluate Amethyst after display changes (including display wake)
 
-local apps = { "Discord", "Tico Dashboard", "Spotify" }
+local screen2Apps = { "Discord", "Tico Dashboard", "Spotify" }
+local screen1Apps = { "Ghostty" }
 
 function MoveAppsToScreen2()
 	local screens = hs.screen.allScreens()
@@ -12,16 +13,29 @@ function MoveAppsToScreen2()
 		return
 	end
 
-	local targetScreen = screens[2]
+	local screen1 = screens[1]
+	local screen2 = screens[2]
 
 	local movedAny = false
-	for _, appName in ipairs(apps) do
+	for _, appName in ipairs(screen2Apps) do
 		local app = hs.application.find(appName)
 		if app then
 			for _, win in ipairs(app:allWindows()) do
 				local ws = win:screen()
-				if ws and ws:id() ~= targetScreen:id() then
-					win:moveToScreen(targetScreen, false, false, 0)
+				if ws and ws:id() ~= screen2:id() then
+					win:moveToScreen(screen2, false, false, 0)
+					movedAny = true
+				end
+			end
+		end
+	end
+	for _, appName in ipairs(screen1Apps) do
+		local app = hs.application.find(appName)
+		if app then
+			for _, win in ipairs(app:allWindows()) do
+				local ws = win:screen()
+				if ws and ws:id() ~= screen1:id() then
+					win:moveToScreen(screen1, false, false, 0)
 					movedAny = true
 				end
 			end
@@ -41,6 +55,7 @@ ScreenWatcher = hs.screen.watcher.new(function()
 	for _, delay in ipairs({ 1, 3, 7 }) do
 		hs.timer.doAfter(delay, MoveAppsToScreen2)
 	end
+	StartWindowPolling()
 end)
 ScreenWatcher:start()
 
@@ -55,30 +70,59 @@ CaffeinateWatcher = hs.caffeinate.watcher.new(function(event)
 		for _, delay in ipairs({ 3, 7, 12, 20 }) do
 			hs.timer.doAfter(delay, MoveAppsToScreen2)
 		end
+		StartWindowPolling()
 	end
 end)
 CaffeinateWatcher:start()
 
--- Poll every 5 seconds for misplaced windows as a fallback (global to prevent GC)
-WindowPollTimer = hs.timer.doEvery(5, function()
-	local screens = hs.screen.allScreens()
-	if #screens < 2 then
-		return
-	end
+-- Poll every 5 seconds for misplaced windows, but only for 60 seconds after wake/display change
+WindowPollTimer = nil
+WindowPollStopTimer = nil
 
-	local targetScreen = screens[2]
-	for _, appName in ipairs(apps) do
-		local app = hs.application.find(appName)
-		if app then
-			for _, win in ipairs(app:allWindows()) do
-				if win:screen() and win:screen():id() ~= targetScreen:id() then
-					MoveAppsToScreen2()
-					return
+function StartWindowPolling()
+	if WindowPollStopTimer then
+		WindowPollStopTimer:stop()
+	end
+	if not WindowPollTimer then
+		WindowPollTimer = hs.timer.doEvery(5, function()
+			local screens = hs.screen.allScreens()
+			if #screens < 2 then
+				return
+			end
+
+			local screen1 = screens[1]
+			local screen2 = screens[2]
+			for _, appName in ipairs(screen2Apps) do
+				local app = hs.application.find(appName)
+				if app then
+					for _, win in ipairs(app:allWindows()) do
+						if win:screen() and win:screen():id() ~= screen2:id() then
+							MoveAppsToScreen2()
+							return
+						end
+					end
 				end
 			end
-		end
+			for _, appName in ipairs(screen1Apps) do
+				local app = hs.application.find(appName)
+				if app then
+					for _, win in ipairs(app:allWindows()) do
+						if win:screen() and win:screen():id() ~= screen1:id() then
+							MoveAppsToScreen2()
+							return
+						end
+					end
+				end
+			end
+		end)
 	end
-end)
+	WindowPollStopTimer = hs.timer.doAfter(60, function()
+		if WindowPollTimer then
+			WindowPollTimer:stop()
+			WindowPollTimer = nil
+		end
+	end)
+end
 
 -- Restart Elgato Wave Link and close its window
 function RestartWaveLink()

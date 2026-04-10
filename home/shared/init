@@ -53,7 +53,7 @@ _shared_init_regen_cache() {
 
 if [[ "$_shared_init_regen" == "1" ]]; then
   mkdir -p "$HOME/.cache"
-  local _shell
+  _shell=
   [[ -n "$ZSH_VERSION" ]] && _shell=zsh || _shell=bash
 
   if [[ -f "$_shared_init_cache" ]]; then

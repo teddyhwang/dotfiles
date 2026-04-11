@@ -24,17 +24,18 @@ return {
       },
       notes_subdir = ".",
       new_notes_location = "notes_subdir",
-      -- Don't manage frontmatter since pi memory files are plain markdown
-      disable_frontmatter = true,
-      -- Wiki-style links work with pi's [[link]] syntax
-      wiki_link_func = "use_alias_only",
-      -- Use pi memory's tag format (#tag)
+      legacy_commands = false,
+      frontmatter = {
+        enabled = false,
+      },
+      link = {
+        style = "wiki",
+      },
+      checkbox = {
+        order = { " ", "x" },
+      },
       ui = {
         enable = true,
-        checkboxes = {
-          [" "] = { char = "󰄱", hl_group = "ObsidianTodo" },
-          ["x"] = { char = "", hl_group = "ObsidianDone" },
-        },
       },
     },
   },

@@ -21,6 +21,7 @@ export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-ran
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
 export FZF_TMUX_OPTS='-p 80%,60%'
 export BUN_INSTALL="$HOME/.bun"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 
 [[ -d "$HOME/.local/bin" ]] && PATH="$HOME/.local/bin:$PATH"
 [[ -d "$HOME/.local/share/nvim/mason/bin" ]] && PATH="$HOME/.local/share/nvim/mason/bin:$PATH"
@@ -28,6 +29,7 @@ export BUN_INSTALL="$HOME/.bun"
 [[ -d "$HOME/.cargo/bin" ]] && PATH="$HOME/.cargo/bin:$PATH"
 [[ -d "$HOME/.opencode/bin" ]] && PATH="$HOME/.opencode/bin:$PATH"
 [[ -d $BUN_INSTALL ]] && PATH="$BUN_INSTALL/bin:$PATH"
+[[ -d "$PNPM_HOME" ]] && PATH="$PNPM_HOME:$PATH"
 [[ -d "$HOME/.gem/ruby/4.0.0/bin" ]] && PATH="$HOME/.gem/ruby/4.0.0/bin:$PATH"
 
 export PATH

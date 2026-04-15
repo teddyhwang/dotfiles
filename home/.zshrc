@@ -32,6 +32,13 @@ zvm_after_init() {
 
 zinit ice wait lucid
 zinit light jeffreytse/zsh-vi-mode
+zvm_after_init_commands+=('
+  function zvm_vi_yank() {
+    zvm_yank
+    printf %s "${CUTBUFFER}" | pbcopy
+    zvm_exit_visual_mode
+  }
+')
 
 zinit ice wait lucid atload'_zsh_autosuggest_start'
 zinit light zsh-users/zsh-autosuggestions

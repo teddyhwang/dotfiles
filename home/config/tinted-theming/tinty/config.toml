@@ -35,3 +35,10 @@ path = "https://github.com/scaryrawr/base16-opencode"
 themes-dir = "themes"
 supported-systems = ["base16", "base24"]
 hook = 'tinty-opencode-hook %f'
+
+[[items]]
+name = "tinted-zed"
+path = "https://github.com/tinted-theming/tinted-zed"
+themes-dir = "themes"
+supported-systems = ["base16", "base24"]
+hook = "cp -f \"$TINTY_THEME_FILE_PATH\" ~/.config/zed/themes/"

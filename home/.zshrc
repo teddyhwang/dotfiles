@@ -52,12 +52,21 @@ zinit light zsh-users/zsh-completions
 zinit light mafredri/zsh-async
 
 fpath=(~/.zsh/completions $fpath)
-autoload -U compinit
-if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
-  compinit
-else
-  compinit -C
-fi
+autoload -Uz compinit
+# Run a full compinit at most once per day; otherwise use cached dump.
+# NOTE: the (#qN.mh+24) glob qualifier requires extended_glob — without it the
+# test always evaluates to true and full compinit runs on every shell startup
+# (~437ms in the shopify monorepo). Scope the option locally so we don't leak it.
+() {
+  emulate -L zsh
+  setopt extended_glob
+  local zcd=${ZDOTDIR:-$HOME}/.zcompdump
+  if [[ -n $zcd(#qN.mh+24) ]]; then
+    compinit -i -d $zcd
+  else
+    compinit -C -d $zcd
+  fi
+}
 setopt AUTO_PUSHD
 
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
@@ -122,12 +131,17 @@ __ruby_env_hook() {
   if [[ "$1" != "precmd" || "$__ruby_env_last_pwd" == "$PWD" ]]; then return; fi
   __ruby_env_last_pwd="$PWD"
   if [[ -z "$RUBY_ENGINE" ]] && (( $+commands[ruby] )); then
-    local dir="$PWD/"
+    local dir="$PWD/" rbv
     while [[ -n "$dir" ]]; do
       dir="${dir%/*}"
       if [[ -f "$dir/.ruby-version" ]]; then
         RUBY_ENGINE=ruby
-        RUBY_VERSION="${$(ruby -e 'print RUBY_VERSION' 2>/dev/null):-unknown}"
+        # Read .ruby-version directly instead of forking `ruby -e ...` (saves
+        # ~40ms warm / ~130ms cold per cd into a Ruby project, e.g. shopify).
+        rbv="$(<"$dir/.ruby-version")"
+        rbv="${rbv//[[:space:]]/}"
+        rbv="${rbv#ruby-}"
+        RUBY_VERSION="${rbv:-unknown}"
         return
       fi
     done
@@ -139,19 +153,19 @@ __sync_tmux_ssh_env_hook() {
   [[ -n "$TMUX" ]] || return
   (( $+commands[tmux] )) || return
 
-  local name line value
-  for name in SSH_AUTH_SOCK SSH_CONNECTION SSH_CLIENT SSH_TTY; do
-    line=$(tmux show-environment -g "$name" 2>/dev/null) || line=""
+  # One tmux call instead of four — saves ~20ms per precmd.
+  local env_data line
+  env_data=$(tmux show-environment -g 2>/dev/null) || return
+  while IFS= read -r line; do
     case "$line" in
-      "$name="*)
-        value=${line#*=}
-        export "$name=$value"
+      SSH_AUTH_SOCK=*|SSH_CONNECTION=*|SSH_CLIENT=*|SSH_TTY=*)
+        export "$line"
         ;;
-      "-$name"|"")
-        unset "$name"
+      -SSH_AUTH_SOCK|-SSH_CONNECTION|-SSH_CLIENT|-SSH_TTY)
+        unset "${line#-}"
         ;;
     esac
-  done
+  done <<< "$env_data"
 }
 
 if typeset -f hookbook_add_hook > /dev/null; then

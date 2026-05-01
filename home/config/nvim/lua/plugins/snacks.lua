@@ -5,15 +5,7 @@ return {
       scroll = { enabled = false },
       indent = { enabled = true },
       explorer = { enabled = true },
-      bigfile = {
-        enabled = true,
-        setup = function(ctx)
-          -- Exclude graphql files from bigfile detection
-          if vim.bo[ctx.buf].filetype == "graphql" then
-            return false
-          end
-        end,
-      },
+      bigfile = { enabled = true },
       -- Add custom toggle for autoformat
       toggle = {
         format = {

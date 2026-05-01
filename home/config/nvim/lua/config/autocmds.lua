@@ -92,6 +92,19 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Layer vim regex syntax on top of treesitter for graphql.
+-- The bkegley/tree-sitter-graphql parser doesn't handle string escape sequences
+-- (\n, \", \\, etc.) so anywhere a description string contains an escape, the
+-- treesitter parse cascades into ERROR nodes for the rest of the file. Vim's
+-- regex syntax/graphql.vim handles strings correctly, so loading it alongside
+-- treesitter fills in the gaps.
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "graphql",
+  callback = function(args)
+    vim.bo[args.buf].syntax = "graphql"
+  end,
+})
+
 -- Reduce indent line opacity
 local indent_opacity = require("util.indent-opacity")
 

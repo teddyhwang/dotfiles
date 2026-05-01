@@ -29,8 +29,6 @@ opt.listchars = {
 
 opt.foldenable = false
 opt.foldlevel = 2
-opt.foldmethod = "expr"
-opt.foldexpr = "nvim_treesitter#foldexpr()"
 opt.foldnestmax = 10
 
 opt.iskeyword:append("-")

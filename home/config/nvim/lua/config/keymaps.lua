@@ -64,7 +64,17 @@ map("n", "<leader>ft", function()
 end, { desc = "Toggle terminal" })
 
 -- Find/Search operations using LazyVim's pickers
-map("n", "<C-p>", "<cmd>lua require('snacks').picker.files({ hidden = true })<cr>", { desc = "Find files" })
+-- In the shopify monorepo (~168k files even with gitignore), snacks.picker is
+-- slow because it has to enumerate the whole tree on every invocation. Use
+-- fff.nvim instead: it maintains a watched Rust-side file index, so subsequent
+-- picks are basically instant. Elsewhere keep snacks (nicer UX for small repos).
+map("n", "<C-p>", function()
+  if vim.fn.getcwd():match("/world/trees/[^/]+/src") then
+    require("fff").find_files()
+  else
+    require("snacks").picker.files({ hidden = true })
+  end
+end, { desc = "Find files" })
 map("n", "<C-b>", "<cmd>lua require('snacks').picker.buffers()<cr>", { desc = "Find buffers" })
 map("n", "<C-t>", "<cmd>lua require('snacks').picker.smart()<cr>", { desc = "Smart picker" })
 map("n", "<leader>fb", "<cmd>lua require('snacks').picker.buffers()<cr>", { desc = "Buffers list" })

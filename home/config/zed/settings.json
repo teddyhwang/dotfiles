@@ -7,6 +7,18 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "agent_servers": {
+    "codex-acp": {
+      "type": "registry"
+    },
+    "claude-acp": {
+      "type": "registry"
+    }
+  },
   "buffer_font_family": "JetBrainsMonoNL Nerd Font Propo",
   "vim_mode": true,
   "project_panel": {
@@ -17,8 +29,16 @@
     "font_size": 12.0,
     "font_family": "JetBrainsMonoNL Nerd Font"
   },
-  "icon_theme": "Zed (Default)",
+  "icon_theme": {
+    "mode": "light",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
   "ui_font_size": 16.0,
   "buffer_font_size": 13.0,
-  "theme": "Base16 Seti UI",
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Base16 Seti UI"
+  },
 }

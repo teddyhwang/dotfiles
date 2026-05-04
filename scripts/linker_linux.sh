@@ -10,21 +10,21 @@ DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 print_progress "\nSymlinking hypr config..."
 
 for filepath in home/hypr/*; do
-  file=$(basename "$filepath")
-  source="$(pwd)/$filepath"
-  target="$HOME/.config/hypr/$file"
+  entry_name=$(basename "$filepath")
+  src_path="$DOTFILES_DIR/$filepath"
+  dst_path="$HOME/.config/hypr/$entry_name"
 
-  validate_and_symlink "$source" "$target"
+  validate_and_symlink "$src_path" "$dst_path"
 done
 
 print_progress "\nSymlinking binaries..."
 
 for filepath in home/local/bin/*; do
-  file=$(basename "$filepath")
-  source="$(pwd)/$filepath"
-  target="$HOME/.local/bin/$file"
+  entry_name=$(basename "$filepath")
+  src_path="$DOTFILES_DIR/$filepath"
+  dst_path="$HOME/.local/bin/$entry_name"
 
-  validate_and_symlink "$source" "$target"
+  validate_and_symlink "$src_path" "$dst_path"
 done
 
 print_progress "\nSymlinking keyd config..."

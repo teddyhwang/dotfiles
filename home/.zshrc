@@ -22,6 +22,7 @@ zinit light romkatv/powerlevel10k
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSH_AUTOSUGGEST_USE_ASYNC='true'
+ZVM_INIT_MODE=sourcing
 
 zvm_after_init() {
   [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
@@ -200,10 +201,47 @@ tinty_source_shell_theme() {
     command tinty $@
   fi
 
+  _tinty_rebuild_cache 2>/dev/null
+
   unset tinty_data_dir
+}
+
+_tinty_rebuild_cache() {
+  local cache="$HOME/.cache/tinty_init_cache.zsh"
+  local data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
+  : >| "$cache"
+  for script in "$data_dir"/*.sh(N); do
+    printf '. %q\n' "$script" >> "$cache"
+  done
+  zcompile "$cache" 2>/dev/null
 }
 
 if (( $+commands[tinty] )); then
   alias tinty=tinty_source_shell_theme
-  tinty_source_shell_theme "init" &> /dev/null
+  () {
+    emulate -L zsh
+    setopt extended_glob
+    local cache="$HOME/.cache/tinty_init_cache.zsh"
+    local data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
+    local newer=($data_dir/*.sh(Ne:'[[ $REPLY -nt $cache ]]':))
+    if [[ -f $cache && ${#newer} -eq 0 ]]; then
+      source $cache
+    else
+      tinty_source_shell_theme "init" &> /dev/null
+    fi
+  }
 fi
+
+() {
+  emulate -L zsh
+  setopt extended_glob
+  local f
+  for f in \
+    "${HOME}/.zshrc" \
+    "${HOME}/.p10k.zsh" \
+    "${HOME}/.cache/shared_init_cache.zsh" \
+    "${HOME}/.cache/tec_init_cache.zsh" \
+    "${HOME}/.cache/tinty_init_cache.zsh"; do
+    [[ -f $f && ( ! -f ${f}.zwc || $f -nt ${f}.zwc ) ]] && zcompile $f 2>/dev/null
+  done
+}

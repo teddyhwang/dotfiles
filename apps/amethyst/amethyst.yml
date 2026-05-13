@@ -1,0 +1,122 @@
+# Amethyst config — symlinked to ~/.amethyst.yml by scripts/packages_mac.sh.
+# Amethyst reads this on launch; values here override the GUI/plist for any
+# key defined below. Restart Amethyst after editing.
+#
+# ⚠️ KEYBINDINGS AND MOD DEFINITIONS ARE INTENTIONALLY OMITTED.
+#   Defining mod1/mod2/mod3/mod4 here triggers a bug in Amethyst where every
+#   command not explicitly bound in this file gets override=true and has its
+#   KeyboardShortcuts_* entry wiped on launch. Source:
+#     Amethyst/Preferences/UserConfiguration.swift constructCommand() lines 446-452
+#   Keep keybindings in the GUI / KeyboardShortcuts_* plist entries instead.
+#
+# Verified against Amethyst source (UserConfiguration.swift, HotKeyManager.swift).
+# ─── Layouts (in cycle order) ────────────────────────────────────────────
+layouts:
+  - middle-wide
+  - tall
+  - wide
+  - fullscreen
+  - floating
+  - bsp
+  - widescreen-tall
+  - widescreen-tall-right
+  - column
+  - row
+  - 4column-left
+  - 4column-right
+  - two-pane
+  - uniform-columns        # custom layout from apps/amethyst/uniform-columns.js
+
+# ─── Global behaviour ────────────────────────────────────────────────────
+ignore-menu-bar: true
+new-windows-to-main: true
+mouse-resizes-windows: true
+enables-layout-hud: true
+enables-layout-hud-on-space-change: false
+window-margins: false
+smart-window-margins: false
+window-margin-size: 1
+window-resize-step: 1
+float-small-windows: true
+small-window-size: 500
+restore-layouts-on-launch: true
+follow-space-thrown-windows: true
+
+# ─── Floating list (whitelist mode: tile only these apps) ────────────────
+# floating-is-blacklist: false  →  apps below TILE, everything else FLOATS
+floating-is-blacklist: false
+floating:
+  - id: com.google.Chrome
+    # Whitelist mode: titles listed here TILE; titles that don't match FLOAT.
+    # The negative-lookahead regex tiles every Chrome window EXCEPT those
+    # whose title starts with "Meet - " (Google Meet's popped-out window).
+    # Caveat: any Chrome window currently showing a Meet tab will float,
+    # since Amethyst can only see window titles, not which tab is popped out.
+    window-titles:
+      - "^(?!Meet - ).*"
+  - id: com.googlecode.iterm2
+    window-titles: []
+  - id: com.tinyspeck.slackmacgap
+    window-titles: []
+  - id: com.apple.Safari
+    window-titles: []
+  - id: org.mozilla.firefox
+    window-titles: []
+  - id: com.mailplaneapp.Mailplane3
+    window-titles: []
+  - id: io.alacritty
+    window-titles: []
+  - id: com.github.atom
+    window-titles: []
+  - id: com.microsoft.VSCode
+    window-titles: []
+  - id: net.cozic.joplin-desktop
+    window-titles: []
+  - id: com.basecamp.basecamp3
+    window-titles: []
+  - id: com.electron.fellow
+    window-titles: []
+  - id: com.apple.Photos
+    window-titles: []
+  - id: com.apple.iCal
+    window-titles: []
+  - id: com.apple.AppStore
+    window-titles: []
+  - id: md.obsidian
+    window-titles: []
+  - id: com.todesktop.230313mzl4w4u92
+    window-titles: []
+  - id: org.alacritty
+    window-titles: []
+  - id: com.mitchellh.ghostty
+    window-titles: []
+  - id: com.postmanlabs.mac
+    window-titles: []
+  - id: dev.zed.Zed
+    window-titles: []
+  # Chrome PWAs
+  - id: com.google.Chrome.app.jmhnjadodelkehjlnlddaldfcipngnib
+    window-titles: []
+  - id: com.google.Chrome.app.fmgjjmmmlfnkbppncabfkddbjimcfncm
+    window-titles: []
+  - id: com.google.Chrome.app.kjbdgfilnfhdoflbpgamdcdgpehopbep
+    window-titles: []
+  - id: com.google.Chrome.app.kcpnojapahaloddngcgcipjcmgilicab
+    window-titles: []
+  - id: com.google.Chrome.app.pbfnijeaandcecgknghggmdkaklbccjd
+    window-titles: []
+
+# ─── Keybindings (managed via plist, not YAML) ───────────────────────────
+# Reference of current bindings (live in KeyboardShortcuts_* plist entries):
+#   cycle-layout            ⌥⇧space         cycle-layout-backward   ⌃⌥⇧space
+#   select-tall-layout      ⌥⇧a             select-middle-wide      ⌥⇧s
+#   select-fullscreen       ⌥⇧d             select-floating         ⌥⇧f
+#   select-bsp-layout       ⌥⇧g             select-uniform-columns  ⌥⇧a (!collision)
+#   shrink-main             ⌥⇧j             expand-main             ⌥⇧k
+#   focus-cw                ⌥⇧h             focus-ccw               ⌥⇧l
+#   swap-cw                 ⇧⌘h             swap-ccw                ⇧⌘l
+#   swap-main               ⇧⌘↩             swap-screen-cw          ⌃⌥⇧l
+#   swap-screen-ccw         ⌃⌥⇧h            throw-screen-1          ⇧⌘1
+#   throw-screen-2          ⇧⌘2             throw-space-1..10       ⌃⌥⇧1..0
+#   throw-space-left        ⌃⌥⇧←            throw-space-right       ⌃⌥⇧→
+#   reevaluate-windows      ⌥⇧z             relaunch-amethyst       ⌥⇧r

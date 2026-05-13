@@ -37,6 +37,9 @@ if [ -d ~/Library/Application\ Support/Amethyst/ ]; then
   else
     print_info "Amethyst custom layout file is copied"
   fi
+
+  print_progress "Symlinking Amethyst YAML config..."
+  validate_and_symlink "${DOTFILES_DIR}/apps/amethyst/amethyst.yml" "$HOME/.amethyst.yml"
 else
   print_warning "Amethyst not installed"
 fi

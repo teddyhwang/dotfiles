@@ -58,6 +58,10 @@ floating:
     window-titles: []
   - id: com.tinyspeck.slackmacgap
     window-titles: []
+  - id: com.hnc.Discord
+    window-titles: []
+  - id: com.spotify.client
+    window-titles: []
   - id: com.apple.Safari
     window-titles: []
   - id: org.mozilla.firefox

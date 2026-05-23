@@ -124,29 +124,34 @@ function StartWindowPolling()
 	end)
 end
 
--- Restart Elgato Wave Link and close its window
-function RestartWaveLink()
-	local app = hs.application.find("Wave Link")
-	if app then
-		app:kill()
+hs.hotkey.bind({ "cmd", "shift" }, "W", MoveAppsToScreen2)
+
+-- Workaround for Wave Link 3.1.x bug: app periodically re-activates itself to foreground.
+-- Auto-hide it whenever it activates, unless the user just launched/clicked it.
+WaveLinkUserActivatedAt = 0
+
+WaveLinkWatcher = hs.application.watcher.new(function(appName, eventType, app)
+	if appName ~= "Wave Link" and appName ~= "Elgato Wave Link" then
+		return
 	end
-
-	hs.timer.doAfter(2, function()
-		hs.application.open("Elgato Wave Link")
-
-		-- Wait for it to launch, then close the window
-		hs.timer.doAfter(3, function()
-			local waveApp = hs.application.find("Wave Link")
-			if waveApp then
-				local windows = waveApp:allWindows()
-				for _, win in ipairs(windows) do
-					win:close()
-				end
+	if eventType == hs.application.watcher.activated then
+		-- If user activated it within the last 5s, leave it alone
+		if hs.timer.secondsSinceEpoch() - WaveLinkUserActivatedAt < 5 then
+			return
+		end
+		hs.timer.doAfter(0.1, function()
+			if app and app:isFrontmost() then
+				app:hide()
 			end
 		end)
-	end)
-end
+	end
+end)
+WaveLinkWatcher:start()
 
-hs.hotkey.bind({ "cmd", "shift" }, "W", MoveAppsToScreen2)
+-- Hotkey to actually bring Wave Link forward when you want it (cmd+shift+L)
+hs.hotkey.bind({ "cmd", "shift" }, "L", function()
+	WaveLinkUserActivatedAt = hs.timer.secondsSinceEpoch()
+	hs.application.launchOrFocus("Elgato Wave Link")
+end)
 
 hs.alert.show("Hammerspoon loaded")

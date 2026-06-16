@@ -105,7 +105,17 @@ if [[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]]
     wcd --init zsh >>"$_tec_cache" 2>/dev/null
   fi
   . "$_tec_cache"
-  unset _tec_init _tec_cache
+
+  # tec's generated init only adds its bootstrap paths when they are missing.
+  # Long-lived shells/tmux can inherit stale copies after Homebrew, so force the
+  # canonical tec profile paths back ahead of Homebrew for dev's PATH-order check.
+  for _tec_path in \
+    "$HOME/.local/state/tec/profiles/base/current/global/bin" \
+    "$HOME/.local/state/nix/profiles/tec/bin"; do
+    [[ -d "$_tec_path" ]] && path=("$_tec_path" ${path:#$_tec_path})
+  done
+
+  unset _tec_init _tec_cache _tec_path
   [[ -f ~/.shared/shopify ]] && . ~/.shared/shopify
 else
   for _chruby_dir in /opt/homebrew/opt/chruby/share/chruby /usr/local/opt/chruby/share/chruby; do

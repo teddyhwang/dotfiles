@@ -7,6 +7,7 @@ local M = {}
 local config = {
   opacity = 0.5, -- 0.0 = invisible, 1.0 = normal
   delay = 200, -- ms delay for debounced updates
+  priority = (vim.hl and vim.hl.priorities and vim.hl.priorities.user or 200) + 10,
 }
 
 -- Namespace for our highlights
@@ -165,7 +166,7 @@ local function dim_sorbet_node(bufnr, node)
         end_row = node_end_row,
         end_col = node_end_col,
         hl_group = dimmed_hl,
-        priority = 150, -- Higher than default syntax
+        priority = config.priority,
       })
     end
   end
@@ -260,25 +261,36 @@ function M.setup(opts)
   -- Create autocommands
   local group = vim.api.nvim_create_augroup("SorbetDim", { clear = true })
 
-  -- Full update on buffer enter and initial load
-  vim.api.nvim_create_autocmd("BufEnter", {
+  -- Full update on buffer enter/filetype detection. Use filetype instead of
+  -- filename patterns so this also works for .rbi files, Gemfiles, Rakefiles,
+  -- or buffers opened before their final path is known.
+  vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     group = group,
-    pattern = "*.rb",
-    callback = update_visible_incremental, -- Use incremental since cache is per-buffer
+    callback = function()
+      if vim.bo.filetype == "ruby" then
+        update_visible_incremental() -- Use incremental since cache is per-buffer
+      end
+    end,
   })
 
   -- Full update when content changes
   vim.api.nvim_create_autocmd({ "BufWritePost", "TextChanged", "TextChangedI" }, {
     group = group,
-    pattern = "*.rb",
-    callback = update_visible_full,
+    callback = function()
+      if vim.bo.filetype == "ruby" then
+        update_visible_full()
+      end
+    end,
   })
 
   -- Incremental update on scroll/cursor movement (debounced)
   vim.api.nvim_create_autocmd({ "CursorMoved", "InsertLeave" }, {
     group = group,
-    pattern = "*.rb",
-    callback = update_debounced,
+    callback = function()
+      if vim.bo.filetype == "ruby" then
+        update_debounced()
+      end
+    end,
   })
 
   -- Full refresh on colorscheme change
@@ -300,11 +312,18 @@ function M.setup(opts)
   -- Clean up cache when buffer is deleted
   vim.api.nvim_create_autocmd("BufDelete", {
     group = group,
-    pattern = "*.rb",
     callback = function(args)
       sig_cache[args.buf] = nil
     end,
   })
+
+  -- If setup runs after a Ruby buffer is already current (for example when
+  -- LazyVim defers user autocmds until VeryLazy), don't wait for another event.
+  vim.schedule(function()
+    if vim.bo.filetype == "ruby" then
+      update_visible_full()
+    end
+  end)
 end
 
 return M

@@ -18,10 +18,6 @@ return {
         folder = "daily",
         date_format = "%Y-%m-%d",
       },
-      completion = {
-        nvim_cmp = false,
-        blink = true,
-      },
       notes_subdir = ".",
       new_notes_location = "notes_subdir",
       legacy_commands = false,

@@ -35,15 +35,16 @@ return {
         end,
       })
 
-      -- Use fff.nvim for the dashboard "Find File" action instead of the snacks
-      -- picker. Patch the action in place so LazyVim's default icons/keys stay
-      -- intact (avoids hardcoding nerd-font glyphs).
       local keys = vim.tbl_get(opts, "dashboard", "preset", "keys")
       if keys then
         for _, k in ipairs(keys) do
           if k.key == "f" then
             k.action = function()
-              require("fff").find_files()
+              if vim.fn.getcwd():match("/world/trees/[^/]+/src") then
+                require("fff").find_files()
+              else
+                require("snacks").picker.files({ hidden = true })
+              end
             end
           end
         end

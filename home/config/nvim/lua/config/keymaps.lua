@@ -80,10 +80,18 @@ map("n", "<C-t>", "<cmd>lua require('snacks').picker.smart()<cr>", { desc = "Sma
 map("n", "<leader>fb", "<cmd>lua require('snacks').picker.buffers()<cr>", { desc = "Buffers list" })
 map("n", "<leader>fh", "<cmd>lua require('snacks').picker.help()<cr>", { desc = "Nvim help" })
 map("n", "<leader>ff", function()
-  require("fff").find_files()
+  if vim.fn.getcwd():match("/world/trees/[^/]+/src") then
+    require("snacks").picker.files({ hidden = true })
+  else
+    require("fff").find_files()
+  end
 end, { desc = "Find files (fff)" })
 map("n", "<leader>fg", function()
-  require("fff").live_grep()
+  if vim.fn.getcwd():match("/world/trees/[^/]+/src") then
+    require("fff").live_grep()
+  else
+    require("snacks").picker.grep()
+  end
 end, { desc = "Live grep (fff)" })
 map("n", ",ff", "<cmd>lua require('snacks').picker.grep_word({ hidden = true })<cr>", { desc = "Grep word" }) -- replaced by fff.nvim
 -- map("n", ",ff", function() require("fff").live_grep({ query = vim.fn.expand("<cword>") }) end, { desc = "Grep word (fff)" })

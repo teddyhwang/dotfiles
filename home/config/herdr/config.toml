@@ -1,0 +1,92 @@
+onboarding = false
+
+[experimental]
+switch_ascii_input_source_in_prefix = false
+
+pane_history = true
+[ui]
+show_agent_labels_on_pane_borders = true
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[ui.toast]
+delivery = "herdr"
+
+# Keybindings mirroring my tmux config (prefix C-a).
+[keys]
+prefix = "ctrl+a"
+
+# Panes
+split_horizontal = "prefix+minus"  # tmux: bind - split-window -v (top/bottom)
+split_vertical = "prefix+|"         # tmux: bind | split-window -h (side by side)
+copy_mode = "prefix+esc"            # tmux: bind Escape copy-mode
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
+swap_pane_left = "prefix+shift+h"
+swap_pane_down = "prefix+shift+j"
+swap_pane_up = "prefix+shift+k"
+swap_pane_right = "prefix+shift+l"
+cycle_pane_next = "prefix+o"        # tmux default: select next pane
+last_pane = "prefix+tab"            # tmux: bind Tab last-pane
+close_pane = "prefix+q"             # tmux: bind q killp
+zoom = "prefix+z"
+resize_mode = "prefix+e"            # tmux: bind e switch-client -T resize
+edit_scrollback = ""                 # free prefix+e for tmux resize mode
+rename_pane = ""                     # free prefix+P for tmux paste-buffer
+toggle_sidebar = ""                  # free prefix+b for tmux popup shell
+
+# Tabs / windows
+new_tab = "prefix+c"                # tmux: bind c new-window
+rename_tab = "prefix+shift+a"        # tmux: bind A rename-window
+previous_tab = "prefix+p"
+next_tab = "prefix+n"
+switch_tab = "prefix+1..9"
+close_tab = "prefix+ampersand"       # tmux default: prefix+&
+
+# Workspaces / sessions
+goto = "prefix+s"                    # closest equivalent to tmux choose-tree
+workspace_picker = "prefix+w"       # tmux: bind w choose-tree -Zs
+rename_workspace = "prefix+$"        # tmux default: rename-session
+previous_workspace = "prefix+("      # tmux default: switch-client -p
+next_workspace = "prefix+)"          # tmux default: switch-client -n
+
+# Misc
+settings = "prefix+shift+c"          # tmux default: customize-mode
+open_notification_target = "prefix+~"  # tmux default: show-messages
+detach = "prefix+d"                 # tmux default: prefix+d
+reload_config = "prefix+r"          # tmux: bind r source-file
+help = "prefix+?"
+
+# tmux default: prefix+! break-pane
+[[keys.command]]
+key = "prefix+!"
+type = "shell"
+command = 'herdr pane move "$HERDR_ACTIVE_PANE_ID" --new-tab --focus'
+
+# tmux: bind T break-pane
+[[keys.command]]
+key = "prefix+shift+t"
+type = "shell"
+command = 'herdr pane move "$HERDR_ACTIVE_PANE_ID" --new-tab --focus'
+
+# tmux default: prefix+x kill-pane
+[[keys.command]]
+key = "prefix+x"
+type = "shell"
+command = 'herdr pane close "$HERDR_ACTIVE_PANE_ID"'
+
+# tmux: bind P paste-buffer
+[[keys.command]]
+key = "prefix+shift+p"
+type = "shell"
+command = 'herdr pane send-text "$HERDR_ACTIVE_PANE_ID" "$(pbpaste)"'
+
+# tmux: bind b display-popup -E
+[[keys.command]]
+key = "prefix+b"
+type = "pane"
+command = '${SHELL:-/bin/sh}'

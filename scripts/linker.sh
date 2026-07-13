@@ -28,7 +28,7 @@ for filepath in home/config/*; do
   dst_path="$HOME/.config/$entry_name"
 
   # Symlink individual files for configs that shouldn't have the whole dir tracked
-  if [ "$entry_name" = "opencode" ] || [ "$entry_name" = "tmux" ] || [ "$entry_name" = "opensessions" ] || [ "$entry_name" = "zed" ]; then
+  if [ "$entry_name" = "opencode" ] || [ "$entry_name" = "tmux" ] || [ "$entry_name" = "opensessions" ] || [ "$entry_name" = "zed" ] || [ "$entry_name" = "herdr" ]; then
     mkdir -p "$dst_path"
     for subfile in "$src_path"/*; do
       subfile_dst="$dst_path/$(basename "$subfile")"

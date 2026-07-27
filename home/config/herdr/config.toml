@@ -50,8 +50,9 @@ switch_tab = ""
 close_tab = "prefix+ampersand"      # tmux default: prefix+&
 
 # Workspaces / sessions
-goto = "prefix+s"                   # closest equivalent to tmux choose-tree
+goto = "prefix+shift+s"             # tmux: bind S sessions + windows popup
 workspace_picker = "prefix+w"       # tmux: bind w choose-tree -Zs
+switch_workspace = "prefix+shift+1..9"
 rename_workspace = "prefix+$"       # tmux default: rename-session
 previous_workspace = "prefix+("     # tmux default: switch-client -p
 next_workspace = "prefix+)"         # tmux default: switch-client -n
@@ -63,100 +64,142 @@ detach = "prefix+d"                 # tmux default: prefix+d
 reload_config = "prefix+r"          # tmux: bind r source-file
 help = "prefix+?"
 
-# tmux-style zero-based window/tab selection: prefix+0 selects the first tab.
 [[keys.command]]
 key = "prefix+0"
 type = "shell"
+description = "select tab 0"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[0].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+1"
 type = "shell"
+description = "select tab 1"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[1].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+2"
 type = "shell"
+description = "select tab 2"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[2].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+3"
 type = "shell"
+description = "select tab 3"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[3].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+4"
 type = "shell"
+description = "select tab 4"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[4].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+5"
 type = "shell"
+description = "select tab 5"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[5].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+6"
 type = "shell"
+description = "select tab 6"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[6].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+7"
 type = "shell"
+description = "select tab 7"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[7].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+8"
 type = "shell"
+description = "select tab 8"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[8].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 [[keys.command]]
 key = "prefix+9"
 type = "shell"
+description = "select tab 9"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[9].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
-# tmux default: prefix+! break-pane
 [[keys.command]]
-key = "prefix+!"
+key = "prefix+shift+v"
+type = "popup"
+description = "join pane"
+width = "70%"
+height = "50%"
+command = '''
+pid=$(herdr pane list | jq -r '.result.panes[]|select(.focused)|.pane_id')
+[ -n "$pid" ] && [ "$pid" != "$HERDR_ACTIVE_PANE_ID" ] && herdr pane rename "$pid" "join pane" >/dev/null 2>&1 || true
+TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
+[ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
+sel=$(herdr pane list | jq -r --arg ws "$HERDR_ACTIVE_WORKSPACE_ID" --arg tab "$HERDR_ACTIVE_TAB_ID" '.result.panes[] | select(.workspace_id == $ws and .tab_id != $tab) | "\(.pane_id)\t\(.agent // "shell")\t\(.cwd)"' | fzf --delimiter='\t' --with-nth=2.. --reverse --prompt='join pane> ' | cut -f1)
+[ -n "$sel" ] && herdr pane move "$sel" --tab "$HERDR_ACTIVE_TAB_ID" --split right --focus >/dev/null 2>&1
+'''
+
+[[keys.command]]
+key = "prefix+s"
+type = "popup"
+description = "switch workspace"
+width = "70%"
+height = "50%"
+command = '''
+pid=$(herdr pane list | jq -r '.result.panes[]|select(.focused)|.pane_id')
+[ -n "$pid" ] && [ "$pid" != "$HERDR_ACTIVE_PANE_ID" ] && herdr pane rename "$pid" "switch workspace" >/dev/null 2>&1 || true
+TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
+[ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
+sel=$(herdr workspace list | jq -r '.result.workspaces[] | "\(.workspace_id)\t\(if .focused then "\u2192" else " " end) \(.label)  \(.tab_count) tab\(if .tab_count == 1 then "" else "s" end), \(.pane_count) pane\(if .pane_count == 1 then "" else "s" end)\(if .agent_status == "unknown" then "" else "  " + .agent_status end)"' | fzf --delimiter='\t' --with-nth=2.. --reverse --no-sort --prompt='workspace> ' | cut -f1)
+[ -n "$sel" ] && herdr workspace focus "$sel" >/dev/null 2>&1
+'''
+
+[[keys.command]]
+key = "prefix+shift+b"
 type = "shell"
+description = "break pane to new tab"
 command = 'herdr pane move "$HERDR_ACTIVE_PANE_ID" --new-tab --focus'
 
-# tmux: bind T break-pane
 [[keys.command]]
 key = "prefix+shift+t"
 type = "shell"
+description = "break pane to new tab"
 command = 'herdr pane move "$HERDR_ACTIVE_PANE_ID" --new-tab --focus'
 
-# tmux default: prefix+x kill-pane
 [[keys.command]]
 key = "prefix+x"
 type = "shell"
+description = "kill pane"
 command = 'herdr pane close "$HERDR_ACTIVE_PANE_ID"'
 
-# tmux: bind P paste-buffer
 [[keys.command]]
 key = "prefix+shift+p"
 type = "shell"
+description = "paste buffer"
 command = 'herdr pane send-text "$HERDR_ACTIVE_PANE_ID" "$(pbpaste)"'
 
-# tmux: bind b display-popup -E
 [[keys.command]]
 key = "prefix+b"
 type = "pane"
+description = "popup shell"
 command = '${SHELL:-/bin/sh}'
 
 [[keys.command]]
 key = "ctrl+h"
 type = "plugin_action"
+description = "navigate left"
 command = "herdr-splits.nav-left"
 
 [[keys.command]]
 key = "ctrl+l"
 type = "plugin_action"
+description = "navigate right"
 command = "herdr-splits.nav-right"
 
 [[keys.command]]
 key = "ctrl+j"
 type = "shell"
+description = "navigate down"
 command = '''
 pane="$HERDR_ACTIVE_PANE_ID"
 if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv|pi|opencode|claude)$"))' >/dev/null 2>&1; then
@@ -169,6 +212,7 @@ fi
 [[keys.command]]
 key = "ctrl+k"
 type = "shell"
+description = "navigate up"
 command = '''
 pane="$HERDR_ACTIVE_PANE_ID"
 if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv|pi|opencode|claude)$"))' >/dev/null 2>&1; then
@@ -181,27 +225,31 @@ fi
 [[keys.command]]
 key = "ctrl+alt+h"
 type = "plugin_action"
+description = "resize left"
 command = "herdr-splits.resize-left"
 
 [[keys.command]]
 key = "ctrl+alt+j"
 type = "plugin_action"
+description = "resize down"
 command = "herdr-splits.resize-down"
 
 [[keys.command]]
 key = "ctrl+alt+k"
 type = "plugin_action"
+description = "resize up"
 command = "herdr-splits.resize-up"
 
 [[keys.command]]
 key = "ctrl+alt+l"
 type = "plugin_action"
+description = "resize right"
 command = "herdr-splits.resize-right"
 
-# tmux: bind -n C-x if-shell "$is_vim" "send-keys C-x" "send-keys C-l"
 [[keys.command]]
 key = "ctrl+x"
 type = "shell"
+description = "clear screen"
 command = '''
 pane="$HERDR_ACTIVE_PANE_ID"
 if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then

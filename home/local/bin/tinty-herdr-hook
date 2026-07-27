@@ -1,0 +1,51 @@
+#!/bin/bash
+set -uo pipefail
+
+# Replays a tinted-shell theme at every herdr tty.
+#
+# tinted-shell writes OSC 4/10/11 to $TTY. Under tmux those are DCS-wrapped and
+# allow-passthrough forwards them to the host terminal, which repaints
+# everything at once. herdr has no passthrough: each pane is its own emulator
+# holding a palette snapshot from when it was created, and the sequences never
+# reach Ghostty, so nothing outside the invoking pane updates.
+#
+# Writing to a tty device reaches the emulator without injecting keystrokes, so
+# this is safe against panes running agents or editors.
+
+theme_file="${1:-}"
+
+[[ -n "$theme_file" && -f "$theme_file" ]] || exit 0
+command -v herdr >/dev/null 2>&1 || exit 0
+command -v jq >/dev/null 2>&1 || exit 0
+
+repaint() {
+  [[ -n "$1" && -w "$1" ]] || return 0
+  (
+    set +u
+    TTY="$1"
+    TMUX=""            # else tinted-shell picks its DCS branch, which herdr keeps
+    TERM=xterm-256color
+    # shellcheck disable=SC1090
+    . "$theme_file" >/dev/null 2>&1
+  ) || true
+}
+
+panes="$(herdr pane list 2>/dev/null | jq -r '.result.panes[].pane_id' || true)"
+while read -r pane; do
+  [[ -n "$pane" ]] || continue
+  shell_pid="$(herdr pane process-info --pane "$pane" 2>/dev/null |
+    jq -r '.result.process_info.shell_pid // empty' || true)"
+  [[ -n "$shell_pid" ]] || continue
+  pane_tty="$(ps -o tty= -p "$shell_pid" 2>/dev/null | tr -d ' ' || true)"
+  if [[ -n "$pane_tty" ]]; then repaint "/dev/$pane_tty"; fi
+done <<< "$panes"
+
+# The sidebar and the padding around the window are drawn with the terminal's
+# default background, so they follow the host terminal. The herdr client is a
+# normal process whose controlling tty belongs to Ghostty -- repainting there
+# is what allow-passthrough did under tmux.
+client_tty="$(ps -eo pid=,tty=,command= |
+  awk '$2 != "??" && $3 ~ /herdr$/ && $4 == "" {print $2; exit}' || true)"
+if [[ -n "$client_tty" ]]; then repaint "/dev/$client_tty"; fi
+
+exit 0

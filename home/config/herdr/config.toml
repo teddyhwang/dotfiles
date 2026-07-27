@@ -44,7 +44,9 @@ new_tab = "prefix+c"                # tmux: bind c new-window
 rename_tab = "prefix+shift+a"        # tmux: bind A rename-window
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
-switch_tab = "prefix+1..9"
+# Herdr's native indexed binding only supports 1..9. Custom commands below
+# provide tmux-style zero-based tab selection with prefix+0 through prefix+9.
+switch_tab = ""
 close_tab = "prefix+ampersand"       # tmux default: prefix+&
 
 # Workspaces / sessions
@@ -60,6 +62,57 @@ open_notification_target = "prefix+~"  # tmux default: show-messages
 detach = "prefix+d"                 # tmux default: prefix+d
 reload_config = "prefix+r"          # tmux: bind r source-file
 help = "prefix+?"
+
+# tmux-style zero-based window/tab selection: prefix+0 selects the first tab.
+[[keys.command]]
+key = "prefix+0"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[0].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+1"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[1].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+2"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[2].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+3"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[3].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+4"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[4].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+5"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[5].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+6"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[6].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+7"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[7].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+8"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[8].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+9"
+type = "shell"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[9].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
 
 # tmux default: prefix+! break-pane
 [[keys.command]]

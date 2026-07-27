@@ -131,8 +131,6 @@ description = "join pane"
 width = "70%"
 height = "50%"
 command = '''
-pid=$(herdr pane list | jq -r '.result.panes[]|select(.focused)|.pane_id')
-[ -n "$pid" ] && [ "$pid" != "$HERDR_ACTIVE_PANE_ID" ] && herdr pane rename "$pid" "join pane" >/dev/null 2>&1 || true
 TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
 [ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
 sel=$(herdr pane list | jq -r --arg ws "$HERDR_ACTIVE_WORKSPACE_ID" --arg tab "$HERDR_ACTIVE_TAB_ID" '.result.panes[] | select(.workspace_id == $ws and .tab_id != $tab) | "\(.pane_id)\t\(.agent // "shell")\t\(.cwd)"' | fzf --delimiter='\t' --with-nth=2.. --reverse --prompt='join pane> ' | cut -f1)
@@ -146,8 +144,6 @@ description = "switch workspace"
 width = "70%"
 height = "50%"
 command = '''
-pid=$(herdr pane list | jq -r '.result.panes[]|select(.focused)|.pane_id')
-[ -n "$pid" ] && [ "$pid" != "$HERDR_ACTIVE_PANE_ID" ] && herdr pane rename "$pid" "switch workspace" >/dev/null 2>&1 || true
 TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
 [ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
 sel=$(herdr workspace list | jq -r '.result.workspaces[] | "\(.workspace_id)\t\(if .focused then "\u2192" else " " end) \(.label)  \(.tab_count) tab\(if .tab_count == 1 then "" else "s" end), \(.pane_count) pane\(if .pane_count == 1 then "" else "s" end)\(if .agent_status == "unknown" then "" else "  " + .agent_status end)"' | fzf --delimiter='\t' --with-nth=2.. --reverse --no-sort --prompt='workspace> ' | cut -f1)

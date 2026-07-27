@@ -20,8 +20,8 @@ prefix = "ctrl+a"
 
 # Panes
 split_horizontal = "prefix+minus"  # tmux: bind - split-window -v (top/bottom)
-split_vertical = "prefix+|"         # tmux: bind | split-window -h (side by side)
-copy_mode = "prefix+esc"            # tmux: bind Escape copy-mode
+split_vertical = "prefix+|"        # tmux: bind | split-window -h (side by side)
+copy_mode = "prefix+["             # tmux: bind [ copy-mode
 focus_pane_left = "prefix+h"
 focus_pane_down = "prefix+j"
 focus_pane_up = "prefix+k"
@@ -35,29 +35,29 @@ last_pane = "prefix+tab"            # tmux: bind Tab last-pane
 close_pane = "prefix+q"             # tmux: bind q killp
 zoom = "prefix+z"
 resize_mode = "prefix+e"            # tmux: bind e switch-client -T resize
-edit_scrollback = ""                 # free prefix+e for tmux resize mode
-rename_pane = ""                     # free prefix+P for tmux paste-buffer
-toggle_sidebar = ""                  # free prefix+b for tmux popup shell
+edit_scrollback = "prefix+shift+e"
+rename_pane = ""                    # free prefix+P for tmux paste-buffer
+toggle_sidebar = ""                 # free prefix+b for tmux popup shell
 
 # Tabs / windows
 new_tab = "prefix+c"                # tmux: bind c new-window
-rename_tab = "prefix+shift+a"        # tmux: bind A rename-window
+rename_tab = "prefix+shift+a"       # tmux: bind A rename-window
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
 # Herdr's native indexed binding only supports 1..9. Custom commands below
 # provide tmux-style zero-based tab selection with prefix+0 through prefix+9.
 switch_tab = ""
-close_tab = "prefix+ampersand"       # tmux default: prefix+&
+close_tab = "prefix+ampersand"      # tmux default: prefix+&
 
 # Workspaces / sessions
-goto = "prefix+s"                    # closest equivalent to tmux choose-tree
+goto = "prefix+s"                   # closest equivalent to tmux choose-tree
 workspace_picker = "prefix+w"       # tmux: bind w choose-tree -Zs
-rename_workspace = "prefix+$"        # tmux default: rename-session
-previous_workspace = "prefix+("      # tmux default: switch-client -p
-next_workspace = "prefix+)"          # tmux default: switch-client -n
+rename_workspace = "prefix+$"       # tmux default: rename-session
+previous_workspace = "prefix+("     # tmux default: switch-client -p
+next_workspace = "prefix+)"         # tmux default: switch-client -n
 
 # Misc
-settings = "prefix+shift+c"          # tmux default: customize-mode
+settings = "prefix+shift+c"         # tmux default: customize-mode
 open_notification_target = "prefix+~"  # tmux default: show-messages
 detach = "prefix+d"                 # tmux default: prefix+d
 reload_config = "prefix+r"          # tmux: bind r source-file
@@ -143,3 +143,70 @@ command = 'herdr pane send-text "$HERDR_ACTIVE_PANE_ID" "$(pbpaste)"'
 key = "prefix+b"
 type = "pane"
 command = '${SHELL:-/bin/sh}'
+
+[[keys.command]]
+key = "ctrl+h"
+type = "plugin_action"
+command = "herdr-splits.nav-left"
+
+[[keys.command]]
+key = "ctrl+l"
+type = "plugin_action"
+command = "herdr-splits.nav-right"
+
+[[keys.command]]
+key = "ctrl+j"
+type = "shell"
+command = '''
+pane="$HERDR_ACTIVE_PANE_ID"
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv|pi|opencode|claude)$"))' >/dev/null 2>&1; then
+  herdr pane send-keys "$pane" ctrl+j
+else
+  herdr plugin action invoke herdr-splits.nav-down >/dev/null 2>&1
+fi
+'''
+
+[[keys.command]]
+key = "ctrl+k"
+type = "shell"
+command = '''
+pane="$HERDR_ACTIVE_PANE_ID"
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv|pi|opencode|claude)$"))' >/dev/null 2>&1; then
+  herdr pane send-keys "$pane" ctrl+k
+else
+  herdr plugin action invoke herdr-splits.nav-up >/dev/null 2>&1
+fi
+'''
+
+[[keys.command]]
+key = "ctrl+alt+h"
+type = "plugin_action"
+command = "herdr-splits.resize-left"
+
+[[keys.command]]
+key = "ctrl+alt+j"
+type = "plugin_action"
+command = "herdr-splits.resize-down"
+
+[[keys.command]]
+key = "ctrl+alt+k"
+type = "plugin_action"
+command = "herdr-splits.resize-up"
+
+[[keys.command]]
+key = "ctrl+alt+l"
+type = "plugin_action"
+command = "herdr-splits.resize-right"
+
+# tmux: bind -n C-x if-shell "$is_vim" "send-keys C-x" "send-keys C-l"
+[[keys.command]]
+key = "ctrl+x"
+type = "shell"
+command = '''
+pane="$HERDR_ACTIVE_PANE_ID"
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
+  herdr pane send-keys "$pane" ctrl+x
+else
+  herdr pane send-keys "$pane" ctrl+l
+fi
+'''

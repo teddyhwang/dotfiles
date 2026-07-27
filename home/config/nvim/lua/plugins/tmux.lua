@@ -2,6 +2,7 @@ return {
   -- Seamless navigation between tmux panes and vim splits
   {
     "christoomey/vim-tmux-navigator",
+    cond = vim.env.HERDR_ENV ~= "1",
     lazy = false,
     keys = {
       { "<C-h>", "<cmd>TmuxNavigateLeft<cr>", desc = "Navigate left" },

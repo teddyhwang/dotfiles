@@ -89,6 +89,10 @@ zstyle ':completion:*' completer _complete _match _approximate
 zstyle ':completion:*:match:*' original only
 zstyle ':completion:*:approximate:*' max-errors 1 numeric
 
+scroll-and-clear-screen() { printf '\n%.0s' {1..$LINES}; zle clear-screen }
+zle -N scroll-and-clear-screen
+
+bindkey '^L' scroll-and-clear-screen
 bindkey '^[[Z' autosuggest-accept
 bindkey '^f' fzf-cd-widget
 

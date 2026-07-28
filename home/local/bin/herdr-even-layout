@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""Give every pane in a Herdr tab an equal share, like tmux's select-layout even-*.
+
+Herdr has no even-layout action and no CLI for split ratios, so this talks to
+the socket API directly: layout.export to read the split tree, then
+layout.set_split_ratio per split node. Each node's ratio becomes
+leaves(first) / leaves(node), which makes every leaf the same size whatever
+the nesting looks like.
+"""
+import json
+import os
+import socket
+import sys
+
+SOCKET = os.environ.get(
+    "HERDR_SOCKET_PATH", os.path.expanduser("~/.config/herdr/herdr.sock")
+)
+
+
+def call(method, params):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+        s.connect(SOCKET)
+        s.sendall((json.dumps({"id": "even", "method": method, "params": params}) + "\n").encode())
+        buf = b""
+        while not buf.endswith(b"\n"):
+            chunk = s.recv(65536)
+            if not chunk:
+                break
+            buf += chunk
+    reply = json.loads(buf.decode().splitlines()[0])
+    if "error" in reply:
+        raise SystemExit(f"herdr-even-layout: {reply['error'].get('message', reply['error'])}")
+    return reply["result"]
+
+
+def leaves(node):
+    if node.get("type") == "pane":
+        return 1
+    return leaves(node["first"]) + leaves(node["second"])
+
+
+def plan(node, path, out):
+    """Collect (path, ratio) for every split, deepest last."""
+    if node.get("type") == "pane":
+        return
+    first, second = node["first"], node["second"]
+    out.append((path, leaves(first) / (leaves(first) + leaves(second))))
+    plan(first, path + [False], out)
+    plan(second, path + [True], out)
+
+
+def main():
+    params = {}
+    tab_id = os.environ.get("HERDR_ACTIVE_TAB_ID")
+    if tab_id:
+        params["tab_id"] = tab_id
+
+    root = call("layout.export", params)["layout"]["root"]
+    if root.get("type") == "pane":
+        return  # single pane, nothing to even out
+
+    changes = []
+    plan(root, [], changes)
+    for path, ratio in changes:
+        call("layout.set_split_ratio", dict(params, path=path, ratio=ratio))
+
+    if "--verbose" in sys.argv:
+        for path, ratio in changes:
+            print(f"path={path} ratio={ratio:.4f}")
+
+
+if __name__ == "__main__":
+    main()

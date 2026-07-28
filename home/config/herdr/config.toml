@@ -140,6 +140,12 @@ sel=$(herdr pane list | jq -r --arg ws "$HERDR_ACTIVE_WORKSPACE_ID" --arg tab "$
 '''
 
 [[keys.command]]
+key = "prefix+="
+type = "shell"
+description = "even out pane sizes"
+command = 'herdr-even-layout'
+
+[[keys.command]]
 key = "prefix+a"
 type = "popup"
 description = "switch agent"

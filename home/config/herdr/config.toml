@@ -52,10 +52,10 @@ close_tab = "prefix+ampersand"      # tmux default: prefix+&
 # Workspaces / sessions
 goto = "prefix+shift+s"             # tmux: bind S sessions + windows popup
 workspace_picker = "prefix+w"       # tmux: bind w choose-tree -Zs
-switch_workspace = "prefix+shift+1..9"
+switch_workspace = ""
 rename_workspace = "prefix+$"       # tmux default: rename-session
 previous_workspace = "prefix+("     # tmux default: switch-client -p
-next_workspace = "prefix+)"         # tmux default: switch-client -n
+next_workspace = "prefix+alt+n"
 
 # Misc
 settings = "prefix+shift+c"         # tmux default: customize-mode
@@ -123,6 +123,30 @@ key = "prefix+9"
 type = "shell"
 description = "select tab 9"
 command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r ".result.tabs | sort_by(.number) | .[9].tab_id // empty"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+)"
+type = "shell"
+description = "select workspace 0"
+command = 'ws_id=$(herdr workspace list | jq -r ".result.workspaces | sort_by(.number) | .[0].workspace_id // empty"); [ -z "$ws_id" ] || herdr workspace focus "$ws_id"'
+
+[[keys.command]]
+key = "prefix+!"
+type = "shell"
+description = "select workspace 1"
+command = 'ws_id=$(herdr workspace list | jq -r ".result.workspaces | sort_by(.number) | .[1].workspace_id // empty"); [ -z "$ws_id" ] || herdr workspace focus "$ws_id"'
+
+[[keys.command]]
+key = "prefix+@"
+type = "shell"
+description = "select workspace 2"
+command = 'ws_id=$(herdr workspace list | jq -r ".result.workspaces | sort_by(.number) | .[2].workspace_id // empty"); [ -z "$ws_id" ] || herdr workspace focus "$ws_id"'
+
+[[keys.command]]
+key = "prefix+#"
+type = "shell"
+description = "select workspace 3"
+command = 'ws_id=$(herdr workspace list | jq -r ".result.workspaces | sort_by(.number) | .[3].workspace_id // empty"); [ -z "$ws_id" ] || herdr workspace focus "$ws_id"'
 
 [[keys.command]]
 key = "prefix+shift+v"

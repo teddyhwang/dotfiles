@@ -1,13 +1,30 @@
 typeset -g _git_text=""
-typeset -g _git_state="LOADING"
+typeset -g _git_state=""
 typeset -g _git_workspace=""
+typeset -g _git_worker_init=""
+typeset -g _git_root=""
+typeset -g _git_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/p10k-git"
+[[ -d $_git_cache_dir ]] || mkdir -p -- "$_git_cache_dir" 2>/dev/null
+
+# Locate the repo root by walking up from $PWD in pure zsh (no forks).
+# Handles worktrees/submodules where .git is a file. Result in $_git_root.
+_git_find_root() {
+  local dir=$PWD
+  _git_root=""
+  while :; do
+    [[ -e $dir/.git ]] && { _git_root=$dir; return 0 }
+    [[ $dir == / || -z $dir ]] && return 1
+    dir=${dir:h}
+  done
+}
 
 # Worker: runs git status asynchronously (receives dir as arg, no globals)
 _git_async() {
   local dir=$1
-  cd "$dir" || return 1
+  cd -q -- "$dir" || return 1
 
   local branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+  [[ -z $branch ]] && branch=$(git rev-parse --short HEAD 2>/dev/null)
   [[ -z $branch ]] && return 1
 
   local staged=0 unstaged=0 untracked=0
@@ -37,25 +54,41 @@ _git_async() {
   local state="CLEAN"
   (( staged > 0 && unstaged == 0 )) && state="STAGED"
   (( unstaged > 0 )) && state="MODIFIED"
-  echo "${state}|${text}"
+
+  # Persist so future shells can render the segment instantly (atomic write)
+  local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/p10k-git/${dir//\//%}"
+  { print -r -- "${state}|${text}" > "${cache_file}.$$" &&
+      mv -f -- "${cache_file}.$$" "$cache_file" } 2>/dev/null
+
+  # Output: dir|state|text
+  print -r -- "${dir}|${state}|${text}"
 }
 
-# Callback: update display variables and trigger redraw
+# Callback: update display variables and trigger redraw (only if changed)
 _git_callback() {
   local job=$1 exit_code=$2 output=$3
+  [[ $exit_code == 0 && -n $output ]] || return 0
 
-  if [[ $exit_code == 0 && -n $output ]]; then
-    _git_state=${output%%|*}
-    _git_text=${output#*|}
-  fi
+  local dir=${output%%|*}
+  local rest=${output#*|}
+  local state=${rest%%|*}
+  local text=${rest#*|}
 
+  # Ignore late results for a repo we've navigated away from
+  [[ $dir == "$_git_workspace" ]] || return 0
+  # Only repaint when something actually changed — no flicker otherwise
+  [[ $state == "$_git_state" && $text == "$_git_text" ]] && return 0
+
+  _git_state=$state
+  _git_text=$text
   p10k display -r
 }
 
 # Prompt segment
 prompt_git() {
   # Initialize async worker on first use
-  if (( $+functions[async_init] )) && [[ -z $_git_workspace ]]; then
+  if [[ -z $_git_worker_init ]] && (( $+functions[async_init] )); then
+    _git_worker_init=1
     async_init
     async_stop_worker _git_worker 2>/dev/null
     async_start_worker _git_worker
@@ -63,25 +96,40 @@ prompt_git() {
     async_register_callback _git_worker _git_callback
   fi
 
-  local workspace
-  workspace=$(git rev-parse --show-toplevel 2>/dev/null) || return
+  _git_find_root || { _git_workspace=""; return }
 
-  # Reset to loading on workspace change
-  if [[ $_git_workspace != "$workspace" ]]; then
-    _git_workspace="$workspace"
-    _git_text=$(git symbolic-ref --short HEAD 2>/dev/null)
+  # On workspace change (or new shell), seed from the persisted cache so the
+  # first render already looks final; async refresh corrects it if stale.
+  if [[ $_git_workspace != "$_git_root" ]]; then
+    _git_workspace=$_git_root
+    local cache_file=$_git_cache_dir/${_git_root//\//%}
+    local cached=""
+    [[ -r $cache_file ]] && cached=$(<$cache_file)
+    if [[ -n $cached ]]; then
+      _git_state=${cached%%|*}
+      _git_text=${cached#*|}
+    else
+      # First visit ever: minimal branch display while async fills in
+      _git_state="LOADING"
+      _git_text=$(git symbolic-ref --short HEAD 2>/dev/null)
+    fi
   fi
 
-  # Always start in loading state until async completes
-  _git_state="LOADING"
-
-  async_job _git_worker _git_async "$workspace"
+  (( $+functions[async_job] )) && async_job _git_worker _git_async "$_git_workspace"
 
   # Use -c conditions for dynamic state switching (from p10k issue #2471)
   p10k segment -s LOADING -c '${(M)_git_state:#LOADING}' -et '$_git_text'
   p10k segment -s CLEAN -c '${(M)_git_state:#CLEAN}' -et '$_git_text'
   p10k segment -s STAGED -c '${(M)_git_state:#STAGED}' -et '$_git_text'
   p10k segment -s MODIFIED -c '${(M)_git_state:#MODIFIED}' -et '$_git_text'
+}
+
+# Bake the last known git segment into p10k's per-directory instant prompt so
+# it's visible from the very first frame instead of popping in after zshrc
+# loads. Captured literally at dump time (hermetic); async corrects it later.
+instant_prompt_git() {
+  [[ -n $_git_state && -n $_git_text ]] || return
+  p10k segment -s "$_git_state" -t "${_git_text//\%/%%}"
 }
 
 # ============================================================================

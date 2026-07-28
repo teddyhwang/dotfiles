@@ -138,6 +138,19 @@ sel=$(herdr pane list | jq -r --arg ws "$HERDR_ACTIVE_WORKSPACE_ID" --arg tab "$
 '''
 
 [[keys.command]]
+key = "prefix+a"
+type = "popup"
+description = "switch agent"
+width = "70%"
+height = "50%"
+command = '''
+TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
+[ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
+sel=$(jq -rn --argjson ws "$(herdr workspace list | jq -c '.result.workspaces')" --argjson ag "$(herdr agent list | jq -c '.result.agents')" '($ws | map({key: .workspace_id, value: .label}) | from_entries) as $labels | $ag[] | "\(.pane_id)\t\(if .focused then "\u2192" else " " end) \($labels[.workspace_id] // .workspace_id)  \(.agent)  \(.agent_status)  \(.terminal_title_stripped // "")"' | fzf --delimiter='\t' --with-nth=2.. --reverse --no-sort --prompt='agent> ' | cut -f1)
+[ -n "$sel" ] && herdr agent focus "$sel" >/dev/null 2>&1
+'''
+
+[[keys.command]]
 key = "prefix+s"
 type = "popup"
 description = "switch workspace"

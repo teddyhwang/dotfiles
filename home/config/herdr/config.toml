@@ -213,7 +213,7 @@ type = "shell"
 description = "navigate down"
 command = '''
 pane="$HERDR_ACTIVE_PANE_ID"
-if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv|pi|opencode|claude)$"))' >/dev/null 2>&1; then
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv)$"))' >/dev/null 2>&1; then
   herdr pane send-keys "$pane" ctrl+j
 else
   herdr plugin action invoke herdr-splits.nav-down >/dev/null 2>&1
@@ -226,7 +226,7 @@ type = "shell"
 description = "navigate up"
 command = '''
 pane="$HERDR_ACTIVE_PANE_ID"
-if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv|pi|opencode|claude)$"))' >/dev/null 2>&1; then
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv)$"))' >/dev/null 2>&1; then
   herdr pane send-keys "$pane" ctrl+k
 else
   herdr plugin action invoke herdr-splits.nav-up >/dev/null 2>&1

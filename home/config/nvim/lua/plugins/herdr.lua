@@ -7,6 +7,8 @@ return {
     config = function()
       require("herdr-splits").setup({
         auto_sync_herdr = true,
+        at_edge = "stop",
+        nav_at_edge = "stop",
         resize_keys = {
           left = "<C-M-h>",
           down = "<C-M-j>",

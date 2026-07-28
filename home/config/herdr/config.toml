@@ -37,7 +37,7 @@ zoom = "prefix+z"
 resize_mode = "prefix+e"            # tmux: bind e switch-client -T resize
 edit_scrollback = "prefix+shift+e"
 rename_pane = ""                    # free prefix+P for tmux paste-buffer
-toggle_sidebar = ""                 # free prefix+b for tmux popup shell
+toggle_sidebar = 'prefix+\'
 
 # Tabs / windows
 new_tab = "prefix+c"                # tmux: bind c new-window

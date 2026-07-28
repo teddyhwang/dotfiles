@@ -7,6 +7,7 @@ return {
     config = function()
       require("herdr-splits").setup({
         auto_sync_herdr = true,
+        default_amount = 0.01,
         at_edge = "stop",
         nav_at_edge = "stop",
         resize_keys = {

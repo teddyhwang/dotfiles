@@ -241,27 +241,55 @@ fi
 
 [[keys.command]]
 key = "ctrl+alt+h"
-type = "plugin_action"
+type = "shell"
 description = "resize left"
-command = "herdr-splits.resize-left"
+command = '''
+pane="$HERDR_ACTIVE_PANE_ID"
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
+  herdr pane send-keys "$pane" ctrl+alt+h
+else
+  herdr pane resize --pane "$pane" --direction left --amount 0.01 >/dev/null 2>&1
+fi
+'''
 
 [[keys.command]]
 key = "ctrl+alt+j"
-type = "plugin_action"
+type = "shell"
 description = "resize down"
-command = "herdr-splits.resize-down"
+command = '''
+pane="$HERDR_ACTIVE_PANE_ID"
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
+  herdr pane send-keys "$pane" ctrl+alt+j
+else
+  herdr pane resize --pane "$pane" --direction down --amount 0.01 >/dev/null 2>&1
+fi
+'''
 
 [[keys.command]]
 key = "ctrl+alt+k"
-type = "plugin_action"
+type = "shell"
 description = "resize up"
-command = "herdr-splits.resize-up"
+command = '''
+pane="$HERDR_ACTIVE_PANE_ID"
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
+  herdr pane send-keys "$pane" ctrl+alt+k
+else
+  herdr pane resize --pane "$pane" --direction up --amount 0.01 >/dev/null 2>&1
+fi
+'''
 
 [[keys.command]]
 key = "ctrl+alt+l"
-type = "plugin_action"
+type = "shell"
 description = "resize right"
-command = "herdr-splits.resize-right"
+command = '''
+pane="$HERDR_ACTIVE_PANE_ID"
+if herdr pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
+  herdr pane send-keys "$pane" ctrl+alt+l
+else
+  herdr pane resize --pane "$pane" --direction right --amount 0.01 >/dev/null 2>&1
+fi
+'''
 
 [[keys.command]]
 key = "ctrl+x"

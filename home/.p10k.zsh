@@ -143,6 +143,32 @@ instant_prompt_node_version() { prompt_node_version }
 instant_prompt_virtualenv() { [[ -n $VIRTUAL_ENV ]] || return; prompt_virtualenv }
 instant_prompt_chruby() { [[ -n $RUBY_ENGINE ]] || return; prompt_chruby }
 
+# Right side: ram and disk_usage are filled in by p10k's internal worker via
+# display-time expansion of globals ($_p9k__ram_free etc.), but the instant
+# prompt is (e)-expanded at replay before any p10k state exists, so those
+# expand to empty and the segments pop in. Bake last-known literal values
+# instead, mirroring each segment's colors/icon. Skipped harmlessly if the
+# worker hasn't reported yet at dump time (self-heals on the next dump).
+instant_prompt_ram() {
+  [[ -n $_p9k__ram_free ]] || return
+  local icon=''
+  (( $+functions[_p9k_get_icon] )) && { _p9k_get_icon prompt_ram RAM_ICON; icon=$_p9k__ret }
+  p10k segment -b yellow -f "${_p9k_color1:-0}" -i "$icon" -t "${_p9k__ram_free//\%/%%}"
+}
+
+instant_prompt_disk_usage() {
+  [[ -n $_p9k__disk_usage_pct ]] || return
+  local bg=${_p9k_color1:-0} fg=yellow
+  if [[ -n $_p9k__disk_usage_critical ]]; then
+    bg=red fg=white
+  elif [[ -n $_p9k__disk_usage_warning ]]; then
+    bg=yellow fg=${_p9k_color1:-0}
+  fi
+  local icon=''
+  (( $+functions[_p9k_get_icon] )) && { _p9k_get_icon prompt_disk_usage DISK_ICON; icon=$_p9k__ret }
+  p10k segment -b "$bg" -f "$fg" -i "$icon" -t "${_p9k__disk_usage_pct}%%"
+}
+
 # ============================================================================
 # POWERLEVEL10K CONFIGURATION
 # ============================================================================

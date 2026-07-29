@@ -258,4 +258,8 @@ fi
     "${HOME}/.cache/tinty_init_cache.zsh"; do
     [[ -f $f && ( ! -f ${f}.zwc || $f -nt ${f}.zwc ) ]] && zcompile $f 2>/dev/null
   done
+  # When everything is already compiled the last [[ ]] above evaluates false
+  # (status 1), which the first prompt's status segment would report as a
+  # failed "previous command". Leave $? clean.
+  return 0
 }

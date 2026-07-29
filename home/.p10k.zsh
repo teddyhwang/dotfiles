@@ -132,6 +132,17 @@ instant_prompt_git() {
   p10k segment -s "$_git_state" -t "${_git_text//\%/%%}"
 }
 
+# Same trick for the version segments: p10k doesn't define instant_prompt_*
+# for these, so they pop in only after zshrc finishes loading (~400ms). Their
+# prompt functions are cheap (stat-keyed cache / env vars) and emit literal
+# (hermetic) content, so we can bake them at dump time like p10k does for dir.
+# The instant path skips display conditions, so guard with the same conditions
+# their _init functions use ($VIRTUAL_ENV / $RUBY_ENGINE); node_version
+# self-guards via its package.json upglob.
+instant_prompt_node_version() { prompt_node_version }
+instant_prompt_virtualenv() { [[ -n $VIRTUAL_ENV ]] || return; prompt_virtualenv }
+instant_prompt_chruby() { [[ -n $RUBY_ENGINE ]] || return; prompt_chruby }
+
 # ============================================================================
 # POWERLEVEL10K CONFIGURATION
 # ============================================================================

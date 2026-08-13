@@ -2,8 +2,15 @@ onboarding = false
 
 [experimental]
 switch_ascii_input_source_in_prefix = false
-
+# Save recent pane screen history across full server restarts.
 pane_history = true
+
+[advanced]
+# Per-pane scrollback buffer in bytes (default 10MB, Ghostty parity).
+# Raised to 100MB so long agent sessions keep their full history and
+# can scroll back to the top without dropping early output.
+scrollback_limit_bytes = 104857600
+
 [ui]
 show_agent_labels_on_pane_borders = true
 

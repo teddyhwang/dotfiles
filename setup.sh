@@ -24,6 +24,7 @@ Linux)
   print_progress "Installing Linux dependencies..."
   "${SCRIPT_DIR}/scripts/packages_linux.sh"
   "${SCRIPT_DIR}/scripts/verify_symlinks.sh"
+  "${SCRIPT_DIR}/scripts/directories.sh"
   "${SCRIPT_DIR}/scripts/linker_linux.sh"
   "${SCRIPT_DIR}/scripts/bash.sh"
   "${SCRIPT_DIR}/scripts/tmux.sh"

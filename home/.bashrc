@@ -8,11 +8,15 @@ set -o vi
 
 # All the default Omarchy aliases and functions
 # (don't mess with these directly, just overwrite them here!)
-if [[ -f ~/.local/share/omarchy/default/bash/rc ]]; then
-  source ~/.local/share/omarchy/default/bash/rc
+# Omarchy 4 ships these under /usr/share/omarchy; ~/.local/share/omarchy is
+# only a back-compat symlink to it.
+_omarchy_bash_rc="${OMARCHY_PATH:-/usr/share/omarchy}/default/bash/rc"
+if [[ -f $_omarchy_bash_rc ]]; then
+  source "$_omarchy_bash_rc"
 else
   command -v starship &> /dev/null && eval "$(starship init bash)"
 fi
+unset _omarchy_bash_rc
 
 [[ -f ~/.shared/env ]] && source ~/.shared/env
 if [[ -n "$DESKTOP_SESSION" ]]; then

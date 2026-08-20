@@ -6,7 +6,8 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 print_progress "Installing custom packages..."
 
-packages="atuin bash-preexec carapace-bin claude-code git-delta google-chrome keychain keyd lsof rust seahorse tig tmux ttf-firacode-nerd ttf-meslo-nerd yazi zellij zsh"
+# socat backs home/local/bin/trackpad-auto-toggle, which reads Hyprland's event socket.
+packages="atuin bash-preexec carapace-bin claude-code git-delta google-chrome keychain keyd lsof rust seahorse socat tig tmux ttf-firacode-nerd ttf-meslo-nerd yazi zellij zsh"
 
 packages_to_install=""
 package_count=0

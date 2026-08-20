@@ -25,6 +25,13 @@ _shared_init_regen_cache() {
   local _tmp="${_cache}.tmp.$$"
   : >"$_tmp"
 
+  # Several of the generators below are mise shims. A shim that has to install
+  # its tool first prints progress on stdout, which lands in the cache and is
+  # then sourced as a command by every later shell. Keep mise silent so only
+  # the completion/init scripts are captured.
+  local MISE_QUIET=1 MISE_YES=1
+  export MISE_QUIET MISE_YES
+
   if command -v gh &>/dev/null; then
     gh completion -s "$_shell" >>"$_tmp" 2>/dev/null
   fi

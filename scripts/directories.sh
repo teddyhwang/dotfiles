@@ -8,7 +8,7 @@ add_directory_in_home() {
   directory="$1"
   if ! [ -d "$HOME/$directory" ]; then
     print_success "Creating $directory folder..."
-    mkdir "$HOME/$directory"
+    mkdir -p "$HOME/$directory"
     track_change
   else
     print_info "$directory exists"
@@ -29,12 +29,15 @@ else
   print_info "/usr/local/bin/ exists"
 fi
 
-if ! [ -d ~/Library/Application\ Support/lazygit ]; then
-  print_progress "Adding directory ~/Library/Application Support/lazygit..."
-  sudo mkdir ~/Library/Application\ Support/lazygit
-  track_change
-else
-  print_info "$HOME/Library/Application Support/lazygit exists"
+# macOS-only: ~/Library does not exist on Linux.
+if [ "$(uname -s)" = "Darwin" ]; then
+  if ! [ -d ~/Library/Application\ Support/lazygit ]; then
+    print_progress "Adding directory ~/Library/Application Support/lazygit..."
+    mkdir -p ~/Library/Application\ Support/lazygit
+    track_change
+  else
+    print_info "$HOME/Library/Application Support/lazygit exists"
+  fi
 fi
 
 if ! [ -d "$HOME/.config/ghostty/themes" ]; then
@@ -43,6 +46,15 @@ if ! [ -d "$HOME/.config/ghostty/themes" ]; then
   track_change
 else
   print_info "$HOME/.config/ghostty/themes exists"
+fi
+
+# The tinty theme-set hook copies generated themes into these.
+if ! [ -d "$HOME/.config/zed/themes" ]; then
+  print_progress "Adding directory $HOME/.config/zed/themes..."
+  mkdir -p "$HOME/.config/zed/themes"
+  track_change
+else
+  print_info "$HOME/.config/zed/themes exists"
 fi
 
 if ! [ -d "$HOME"/.config/btop/themes ]; then

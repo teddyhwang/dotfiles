@@ -1,49 +1,50 @@
 #!/bin/sh
+# Disable the touchpad while a terminal is focused (palm rejection while
+# typing) and re-enable it for browsers.
+#
+# Omarchy 4 notes:
+#   - Driven by Hyprland's event socket instead of the old 0.2s poll loop.
+#   - `hyprctl keyword "device[...]:enabled"` was removed ("keyword can't work
+#     with non-legacy parsers. Use eval."), so this goes through hl.device().
+#   - The device name comes from omarchy-hw-touchpad rather than being hardcoded.
 
-DEVICE="apple-inc.-apple-internal-keyboard-/-trackpad-1"
-STATE_FILE="/tmp/trackpad-auto-state"
-LAST_CLASS_FILE="/tmp/trackpad-last-class"
+command -v socat >/dev/null 2>&1 || exit 0
 
-# Function to enable trackpad
-enable_trackpad() {
-  CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "0")
-  if [ "$CURRENT" != "1" ]; then
-    hyprctl keyword "device[$DEVICE]:enabled" true >/dev/null 2>&1
-    echo "1" > "$STATE_FILE"
-  fi
+DEVICE=$(omarchy-hw-touchpad 2>/dev/null)
+[ -n "$DEVICE" ] || exit 0
+
+SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+[ -S "$SOCKET" ] || exit 0
+
+# Written by omarchy-toggle-touchpad. When it exists the touchpad was turned
+# off by hand, so leave it alone rather than fighting the user.
+MANUAL_OFF="$HOME/.local/state/omarchy/toggles/hypr/touchpad-disabled.lua"
+
+state=""
+
+set_touchpad() {
+  [ "$state" = "$1" ] && return
+  [ -f "$MANUAL_OFF" ] && return
+  state="$1"
+  hyprctl eval "hl.device({ name = \"$DEVICE\", enabled = $1 })" >/dev/null 2>&1
 }
 
-# Function to disable trackpad
-disable_trackpad() {
-  CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "1")
-  if [ "$CURRENT" != "0" ]; then
-    hyprctl keyword "device[$DEVICE]:enabled" false >/dev/null 2>&1
-    echo "0" > "$STATE_FILE"
-  fi
-}
+socat -U - UNIX-CONNECT:"$SOCKET" 2>/dev/null | while IFS= read -r line; do
+  case "$line" in
+    activewindow'>>'*) ;;
+    *) continue ;;
+  esac
 
-# Main loop - check active window periodically
-while true; do
-  # Get the active window class (try jq first, fallback to grep)
-  CLASS=$(hyprctl activewindow -j 2>/dev/null | jq -r '.class' 2>/dev/null || hyprctl activewindow -j 2>/dev/null | grep -o '"class": "[^"]*"' | cut -d'"' -f4)
+  class=${line#activewindow>>}
+  class=${class%%,*}
 
-    # Only process if class changed
-    LAST_CLASS=$(cat "$LAST_CLASS_FILE" 2>/dev/null || echo "")
-    if [ "$CLASS" != "$LAST_CLASS" ]; then
-      echo "$CLASS" > "$LAST_CLASS_FILE"
-
-        # Check if it's a terminal window
-        case "$CLASS" in
-          *terminal*|*kitty*|*alacritty*|*wezterm*|*foot*|*konsole*|*xterm*|*ghostty*)
-            disable_trackpad
-            ;;
-            # Check if it's a browser window
-            *firefox*|*chromium*|*chrome*|*brave*|*edge*|*webkit*|*navigator*|*browser*)
-            enable_trackpad
-            ;;
-        esac
-    fi
-
-    # Sleep for a short interval
-    sleep 0.2
-  done
+  case "$class" in
+    # Keep in sync with $OMARCHY_PATH/default/hypr/apps/terminals.lua.
+    Alacritty | kitty | com.mitchellh.ghostty | foot | org.codeberg.dnkl.foot | wezterm | org.omarchy.* | TUI.*)
+      set_touchpad false
+      ;;
+    *chrome* | *chromium* | *Chrome* | *Chromium* | *firefox* | *Firefox* | *brave* | *edge* | zen | librewolf | Vivaldi-stable)
+      set_touchpad true
+      ;;
+  esac
+done

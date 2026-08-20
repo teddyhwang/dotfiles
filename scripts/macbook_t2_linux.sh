@@ -27,36 +27,9 @@ if [ "$(id -u)" -ne 0 ] && [ -z "$SUDO_USER" ]; then
   exit 1
 fi
 
-# Get the actual user (not root)
-ACTUAL_USER="${SUDO_USER:-$USER}"
-ACTUAL_HOME=$(eval echo ~"$ACTUAL_USER")
-
-# Create the lid suspend script
-LID_SCRIPT="$ACTUAL_HOME/.local/bin/lid-suspend.sh"
-if [ ! -f "$LID_SCRIPT" ] || ! grep -q "Smart lid suspend script for Hyprland" "$LID_SCRIPT" 2>/dev/null; then
-  mkdir -p "$ACTUAL_HOME/.local/bin"
-  cat > "$LID_SCRIPT" << 'EOF'
-#!/bin/bash
-# Smart lid suspend script for Hyprland
-# Only suspends if lid is actually closed (not on resume when lid opens)
-
-lid_state=$(cat /proc/acpi/button/lid/LID0/state 2>/dev/null | awk '{print $2}')
-
-logger -t lid-suspend "Lid switch triggered, state: $lid_state"
-
-if [ "$lid_state" = "closed" ]; then
-  logger -t lid-suspend "Lid is closed, initiating suspend"
-  systemctl suspend
-else
-  logger -t lid-suspend "Lid is open, not suspending"
-fi
-EOF
-  chmod 755 "$LID_SCRIPT"
-  chown "$ACTUAL_USER:$ACTUAL_USER" "$LID_SCRIPT"
-  print_success "  ✓ Installed lid suspend script"
-else
-  print_info "  → Lid suspend script already exists, skipping"
-fi
+# Lid handling is no longer installed here. Omarchy 4 binds the lid switch to
+# omarchy-system-lid-close (lock + suspend) and omarchy-hyprland-monitor-clamshell
+# (display reconciliation) in default/hypr/bindings/utilities.lua.
 
 # Create the Touch Bar restart helper script
 TOUCHBAR_SCRIPT="/usr/local/bin/restart-tiny-dfr-when-ready.sh"
@@ -138,25 +111,6 @@ if ! systemctl is-enabled suspend-fix-t2.service >/dev/null 2>&1; then
   print_success "  ✓ Enabled systemd service"
 else
   print_info "  → Systemd service already enabled"
-fi
-
-# Add Hyprland binding if not already present
-HYPR_BINDINGS="$ACTUAL_HOME/.config/hypr/bindings.conf"
-if [ -f "$HYPR_BINDINGS" ]; then
-  if ! grep -q "lid-suspend.sh" "$HYPR_BINDINGS"; then
-    {
-      echo ""
-      echo "# Lid switch - smart suspend that only triggers when lid is actually closed"
-      echo "bindl = , switch:Lid Switch, exec, ~/.local/bin/lid-suspend.sh"
-    } >> "$HYPR_BINDINGS"
-    chown "$ACTUAL_USER:$ACTUAL_USER" "$HYPR_BINDINGS"
-    print_success "  ✓ Added lid switch binding to Hyprland config"
-    print_info "  → Reload Hyprland config with: hyprctl reload"
-  else
-    print_info "  → Hyprland lid switch binding already present"
-  fi
-else
-  print_warning "  → $HYPR_BINDINGS not found, skipping Hyprland binding"
 fi
 
 print_success "T2 suspend/resume fix configured successfully!"

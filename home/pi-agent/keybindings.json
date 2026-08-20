@@ -11,5 +11,6 @@
     "down",
     "ctrl+j"
   ],
+  "tui.altScreen.search": "ctrl+shift+s",
   "app.message.followUp": []
 }

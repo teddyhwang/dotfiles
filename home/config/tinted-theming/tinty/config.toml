@@ -5,7 +5,15 @@ default-scheme = "base16-seti"
 path = "https://github.com/tinted-theming/tinted-terminal"
 name = "tinted-terminal"
 themes-dir = "themes/ghostty"
-hook = "command cp -f %f ~/.config/ghostty/themes/tinted-theming && killall -SIGUSR2 ghostty"
+# `tinty init` runs for every new interactive shell. Reload Ghostty only when
+# the generated theme actually changed, rather than on every terminal startup.
+hook = '''
+destination="$HOME/.config/ghostty/themes/tinted-theming"
+if ! cmp -s "$TINTY_THEME_FILE_PATH" "$destination"; then
+  command cp -f "$TINTY_THEME_FILE_PATH" "$destination"
+  killall -SIGUSR2 ghostty 2>/dev/null || true
+fi
+'''
 supported-systems = ["base16", "base24"]
 
 [[items]]

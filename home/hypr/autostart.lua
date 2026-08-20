@@ -3,6 +3,10 @@
 -- Palm rejection: touchpad off in terminals, on in browsers.
 o.exec_on_start(os.getenv("HOME") .. "/.local/bin/trackpad-auto-toggle")
 
+-- Name Herdr tabs after the agent's topic instead of leaving them numbered.
+-- Idles until a Herdr server exists, so starting it at login is free.
+o.exec_on_start(os.getenv("HOME") .. "/.local/bin/herdr-tab-autoname")
+
 o.launch_on_start("google-chrome-stable")
 o.launch_on_start("xdg-terminal-exec")
 o.launch_on_start("google-chrome-stable --app=https://discord.com/channels/@me")

@@ -64,3 +64,16 @@ if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
 else
   print_info "launch agent config files are copied"
 fi
+
+# Herdr tab auto-naming. hypr/autostart.lua starts this on Linux; launchd is the
+# equivalent here. Reload whenever the plist changes so edits take effect.
+herdr_agent=~/Library/LaunchAgents/herdr-tab-autoname.plist
+if ! cmp -s "${DOTFILES_DIR}/apps/herdr-tab-autoname.plist" "$herdr_agent"; then
+  print_progress "Installing herdr-tab-autoname launch agent..."
+  cp "${DOTFILES_DIR}/apps/herdr-tab-autoname.plist" "$herdr_agent"
+  launchctl unload "$herdr_agent" 2>/dev/null
+  launchctl load "$herdr_agent"
+  track_change
+else
+  print_info "herdr-tab-autoname launch agent is installed"
+fi

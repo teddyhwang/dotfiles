@@ -14,6 +14,12 @@ scrollback_limit_bytes = 104857600
 [ui]
 show_agent_labels_on_pane_borders = true
 
+# Tab labels are filled in by home/local/bin/herdr-tab-autoname (started from
+# hypr/autostart.lua on Linux, apps/herdr-tab-autoname.plist on macOS): agent
+# topic when the agent reports one, else repo and branch. Naming a tab by hand
+# -- at the new-tab prompt or with prefix+A -- opts that tab out; renaming it
+# back to a bare number opts it back in.
+
 [theme]
 name = "terminal"
 auto_switch = false

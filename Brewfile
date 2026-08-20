@@ -42,6 +42,7 @@ brew "git-standup"
 brew "gnupg"
 brew "go"
 brew "graphviz"
+brew "herdr"
 brew "node", link: false
 brew "http-server"
 brew "httpie"

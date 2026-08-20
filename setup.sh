@@ -15,6 +15,7 @@ Darwin)
   "${SCRIPT_DIR}/scripts/verify_symlinks.sh"
   "${SCRIPT_DIR}/scripts/directories.sh"
   "${SCRIPT_DIR}/scripts/linker_mac.sh"
+  "${SCRIPT_DIR}/scripts/herdr.sh"
   "${SCRIPT_DIR}/scripts/zsh.sh"
   "${SCRIPT_DIR}/scripts/bash.sh"
   "${SCRIPT_DIR}/scripts/tmux.sh"
@@ -26,6 +27,7 @@ Linux)
   "${SCRIPT_DIR}/scripts/verify_symlinks.sh"
   "${SCRIPT_DIR}/scripts/directories.sh"
   "${SCRIPT_DIR}/scripts/linker_linux.sh"
+  "${SCRIPT_DIR}/scripts/herdr.sh"
   "${SCRIPT_DIR}/scripts/bash.sh"
   "${SCRIPT_DIR}/scripts/tmux.sh"
   if command -v zsh >/dev/null 2>&1; then

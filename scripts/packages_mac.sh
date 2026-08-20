@@ -15,10 +15,22 @@ if ! command -v brew >/dev/null 2>&1; then
     BREW_BIN="/opt/homebrew/bin/brew"
   fi
   print_progress "Installing Brew packages..."
-  $BREW_BIN bundle
-  "$($BREW_BIN --prefix)/opt/fzf/install" --all
+  "$BREW_BIN" bundle
+  "$("$BREW_BIN" --prefix)/opt/fzf/install" --all
 else
+  BREW_BIN=$(command -v brew)
   print_info "Brew bundled"
+fi
+
+# setup.sh depends on Herdr after this script. `brew bundle` above only runs
+# during a fresh Homebrew install, so also enforce this formula on existing
+# Homebrew installations.
+if ! "$BREW_BIN" list --formula herdr >/dev/null 2>&1; then
+  print_progress "Installing Herdr..."
+  "$BREW_BIN" install herdr
+  track_change
+else
+  print_info "Herdr is installed"
 fi
 
 if [ -d ~/Library/Application\ Support/Amethyst/ ]; then

@@ -316,3 +316,17 @@ else
   herdr pane send-keys "$pane" ctrl+l
 fi
 '''
+
+# Cycle tabs with wraparound: past the last tab lands on the first and vice
+# versa. Herdr's native previous_tab/next_tab stop at the ends.
+[[keys.command]]
+key = "prefix+ctrl+h"
+type = "shell"
+description = "previous tab (wrapping)"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r "[.result.tabs[] | select(.workspace_id == \"$HERDR_ACTIVE_WORKSPACE_ID\")] | sort_by(.number) | if length == 0 then empty else (index(map(select(.focused)) | .[0]) // 0) as \$i | .[\$i - 1].tab_id end"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
+
+[[keys.command]]
+key = "prefix+ctrl+l"
+type = "shell"
+description = "next tab (wrapping)"
+command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r "[.result.tabs[] | select(.workspace_id == \"$HERDR_ACTIVE_WORKSPACE_ID\")] | sort_by(.number) | if length == 0 then empty else (index(map(select(.focused)) | .[0]) // 0) as \$i | .[(\$i + 1) % length].tab_id end"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'

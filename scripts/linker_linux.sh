@@ -37,7 +37,18 @@ fi
 
 if [ -n "$OMARCHY_PATH" ]; then
   print_progress "\nSymlinking Omarchy..."
+  mkdir -p "$HOME/.config/omarchy/hooks" "$HOME/.config/omarchy/plugins"
   validate_and_symlink "$DOTFILES_DIR/home/omarchy/hooks/theme-set" "$HOME/.config/omarchy/hooks/theme-set"
+  validate_and_symlink "$DOTFILES_DIR/home/omarchy/plugins/teddyhwang.menu" "$HOME/.config/omarchy/plugins/teddyhwang.menu"
+
+  # The menu clone adds Vim-style Ctrl+J/K navigation. Enabling it replaces
+  # the built-in menu while preserving its stable omarchy.menu IPC target.
+  if omarchy-shell shell rescanPlugins >/dev/null 2>&1; then
+    omarchy plugin enable teddyhwang.menu >/dev/null
+    omarchy restart shell >/dev/null
+  else
+    print_warning "Omarchy shell is not running; enable teddyhwang.menu after login."
+  fi
 fi
 
 print_conditional_success "Symlinks"

@@ -20,6 +20,7 @@ show_agent_labels_on_pane_borders = true
 # -- at the new-tab prompt or with prefix+A -- opts that tab out; renaming it
 # back to a bare number opts it back in.
 
+agent_panel_sort = "spaces"
 [theme]
 name = "terminal"
 auto_switch = false

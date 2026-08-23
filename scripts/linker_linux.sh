@@ -37,7 +37,8 @@ fi
 
 if [ -n "$OMARCHY_PATH" ]; then
   print_progress "\nSymlinking Omarchy..."
-  mkdir -p "$HOME/.config/omarchy/hooks" "$HOME/.config/omarchy/plugins"
+  mkdir -p "$HOME/.config/omarchy/extensions" "$HOME/.config/omarchy/hooks" "$HOME/.config/omarchy/plugins"
+  validate_and_symlink "$DOTFILES_DIR/home/omarchy/extensions/omarchy-menu.jsonc" "$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
   validate_and_symlink "$DOTFILES_DIR/home/omarchy/hooks/theme-set" "$HOME/.config/omarchy/hooks/theme-set"
   validate_and_symlink "$DOTFILES_DIR/home/omarchy/plugins/teddyhwang.menu" "$HOME/.config/omarchy/plugins/teddyhwang.menu"
 

@@ -1,0 +1,4 @@
+{
+  // Use Omasnap for Capture → Screenshot in the Omarchy menu.
+  "trigger.capture.screenshot": {"action":"omasnap"},
+}

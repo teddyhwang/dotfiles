@@ -34,10 +34,19 @@ o.bind("SUPER + SHIFT + S", "Browser", { omarchy = "browser" })
 hl.unbind("SUPER + SHIFT + W") -- was: Omawrite
 o.bind("SUPER + SHIFT + W", "Typora", { launch = "typora --enable-wayland-ime" })
 
--- macOS-style screenshot keys. code:13 is the "4" key.
-hl.unbind("SUPER + CTRL + code:13") -- was: Bar panel 4
-o.bind("SUPER + CTRL + code:13", "Screenshot", "omarchy-capture-screenshot")
-o.bind("SUPER + SHIFT + CTRL + code:13", "Screenshot to clipboard", "omarchy-capture-screenshot smart copy")
+-- Use Omasnap for the stock Print key and an alternate screenshot shortcut.
+-- code:13 is the "4" key.
+hl.unbind("PRINT") -- was: Omarchy screenshot
+o.bind("PRINT", "Screenshot", "omasnap")
+o.bind("ALT + SHIFT + code:13", "Screenshot", "omasnap")
+o.bind("SUPER + SHIFT + CTRL + code:13", "Screenshot to clipboard", "omasnap --copy")
+
+-- Keep Omasnap's layer-shell overlay instant and free of compositor animations.
+hl.layer_rule({
+  match = { namespace = "^omasnap$" },
+  no_anim = true,
+  animation = "none",
+})
 
 -- Manual touchpad toggle (automatic palm rejection lives in input.lua).
 o.bind_toggle("SUPER + ALT + M", "Toggle touchpad", "touchpad")

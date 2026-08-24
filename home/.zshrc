@@ -62,7 +62,12 @@ autoload -Uz compinit
   emulate -L zsh
   setopt extended_glob
   local zcd=${ZDOTDIR:-$HOME}/.zcompdump
-  if [[ -n $zcd(#qN.mh+24) ]]; then
+  local zinit_completions=${ZINIT[COMPLETIONS_DIR]:-${XDG_DATA_HOME:-$HOME/.local/share}/zinit/completions}
+  local -a stale_completions=( "$zinit_completions"/*(-@N) )
+
+  (( $#stale_completions )) && command rm -f -- $stale_completions
+
+  if (( $#stale_completions )) || [[ -n $zcd(#qN.mh+24) ]]; then
     compinit -i -d $zcd
   else
     compinit -C -d $zcd

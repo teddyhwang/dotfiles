@@ -69,6 +69,10 @@ return function(colors)
       HighlightedyankRegion = { bg = colors.base03 },
       WinSeparator = { fg = colors.base03 },
       MatchParen = { bg = blend_colors(colors.base02, colors.base00, 0.30) },
+      -- Keep LSP word references visible without obscuring syntax colors
+      LspReferenceText = { bg = colors.base01 },
+      LspReferenceRead = { link = "LspReferenceText" },
+      LspReferenceWrite = { link = "LspReferenceText" },
       -- Fix lualine section backgrounds to use StatusLine bg
       StatusLine = { bg = colors.base01, fg = colors.base04 },
       lualine_c_normal = { bg = colors.base01 },

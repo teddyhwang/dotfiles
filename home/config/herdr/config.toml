@@ -58,6 +58,8 @@ new_tab = "prefix+c"                # tmux: bind c new-window
 rename_tab = "prefix+shift+a"       # tmux: bind A rename-window
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
+move_tab_previous = "prefix+shift+comma"   # prefix+<: move tab left
+move_tab_next = "prefix+shift+period"      # prefix+>: move tab right
 switch_tab = "prefix+1..9"
 close_tab = "prefix+ampersand"      # tmux default: prefix+&
 

@@ -27,8 +27,5 @@ alias critique='bunx critique'
 
 alias mini='ssh teddys-mac-mini.local'
 alias work='ssh teddys-shopify-macBook-pro.local'
-# Omarchy 4 ships an `omarchy` CLI; only claim the name where it isn't one.
-if ! command -v omarchy >/dev/null 2>&1; then
-  alias omarchy='ssh omarchy-mbp'
-fi
+alias mbp='ssh omarchy-mbp'
 alias nicole='ssh nicolepaik@nicoles-macbook-air.local'

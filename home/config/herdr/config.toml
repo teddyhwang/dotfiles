@@ -2,6 +2,11 @@ onboarding = false
 
 [experimental]
 switch_ascii_input_source_in_prefix = false
+# Pi emits Kitty graphics when it detects the outer Ghostty terminal. Herdr
+# must decode and render those images instead of consuming the payload.
+# Herdr 0.8.2 clients read this only at startup; detach and reattach after
+# enabling it for the first time.
+kitty_graphics = true
 # Save recent pane screen history across full server restarts.
 pane_history = true
 

@@ -59,5 +59,15 @@ for filepath in home/pi-agent/*; do
   src_path="$DOTFILES_DIR/$filepath"
   dst_path="$HOME/.pi/agent/$entry_name"
 
+  # Herdr and pi packages install their own extensions into this directory.
+  # Link our entries individually so setup never replaces those managed files.
+  if [ "$entry_name" = "extensions" ]; then
+    mkdir -p "$dst_path"
+    for extension in "$src_path"/*; do
+      validate_and_symlink "$extension" "$dst_path/$(basename "$extension")"
+    done
+    continue
+  fi
+
   validate_and_symlink "$src_path" "$dst_path"
 done

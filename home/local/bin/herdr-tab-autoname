@@ -48,7 +48,7 @@ CONFIG_DIRS = [
 ]
 CLIENT_SOCKET_SUFFIX = "-client.sock"
 
-MAX_LABEL = 24
+MAX_LABEL = 32
 
 # Branch display follows the prompt in home/.p10k.zsh: the Nerd Font branch
 # glyph, and nothing at all on the trunk, where the branch says nothing.
@@ -323,8 +323,16 @@ class Session:
 
         # Herdr generates the label from the tab's position at creation, which
         # need not match tab.number once earlier tabs close, so any all-digit
-        # label counts as unclaimed.
+        # label counts as unclaimed. The Pi session-name extension can win the
+        # race with this daemon and rename the tab directly; adopt that exact
+        # terminal-title-derived label instead of mistaking it for a hand edit.
         if label and not label.isdigit() and label != self.assigned.get(tab_id):
+            pi_label = pi_session_label_for(panes)
+            if label == pi_label:
+                self.assigned[tab_id] = label
+                log(f"{tab_id}: adopted Pi session label {label!r}")
+                return
+
             # Named by hand. Forget our claim so it stays named by hand.
             if self.assigned.pop(tab_id, None) is not None:
                 log(f"{tab_id} renamed by hand to {label!r}; leaving it alone")
@@ -350,6 +358,10 @@ class Session:
             return None
 
         ordered = sorted(panes, key=pane_order)
+        pi_label = pi_session_label_for(ordered)
+        if pi_label:
+            return pi_label
+
         for pane in ordered:
             if not pane.get("agent"):
                 continue
@@ -381,12 +393,39 @@ def pane_order(pane: dict) -> tuple:
         return (1, pane_id)
 
 
+def pi_session_name_from_title(pane: dict) -> str | None:
+    """Extract NAME from Pi's terminal title: ``π - NAME - cwd``."""
+    title = pane.get("terminal_title_stripped") or pane.get("terminal_title") or ""
+    title = " ".join(title.split())
+    cwd = pane.get("cwd") or ""
+    basename = os.path.basename(cwd.rstrip("/"))
+    prefix = "π - "
+    suffix = f" - {basename}"
+    if not basename or not title.startswith(prefix):
+        return None
+    if not title.casefold().endswith(suffix.casefold()):
+        return None
+    name = title[len(prefix) : len(title) - len(suffix)].strip()
+    return name or None
+
+
+def pi_session_label_for(panes: list[dict]) -> str | None:
+    """Return the first explicit Pi session name, formatted as a tab label."""
+    for pane in sorted(panes, key=pane_order):
+        if pane.get("agent") != "pi":
+            continue
+        name = pi_session_name_from_title(pane)
+        if name:
+            return truncate(name)
+    return None
+
+
 def topic_from_title(pane: dict) -> str | None:
     """The work the agent reports, or None when the title only names the agent."""
     title = pane.get("terminal_title_stripped") or pane.get("terminal_title") or ""
     # Agents prefix a spinner or status glyph: "◐ ", "✳ ", "✻ ". Drop leading
-    # symbols, but keep letters, so pi's "π - dotfiles" stays recognizable to
-    # the restates-the-location check below.
+    # symbols, but keep letters, so pi's generic "π - dotfiles" can still be
+    # rejected as a restatement of the location below.
     while title and not (title[0].isalnum() or title[0] in "\"'#"):
         title = title[1:]
     title = " ".join(title.split())

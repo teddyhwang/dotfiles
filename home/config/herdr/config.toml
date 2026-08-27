@@ -56,8 +56,10 @@ toggle_sidebar = 'prefix+\'
 # Tabs / windows
 new_tab = "prefix+c"                # tmux: bind c new-window
 rename_tab = "prefix+shift+a"       # tmux: bind A rename-window
-previous_tab = "prefix+p"
-next_tab = "prefix+n"
+# Keep frequent tab navigation native: shell-backed bindings add noticeable
+# cold-start latency before the first switch.
+previous_tab = ["prefix+p", "prefix+ctrl+h"]
+next_tab = ["prefix+n", "prefix+ctrl+l"]
 move_tab_previous = "prefix+shift+comma"   # prefix+<: move tab left
 move_tab_next = "prefix+shift+period"      # prefix+>: move tab right
 switch_tab = "prefix+1..9"
@@ -257,17 +259,3 @@ else
   herdr pane send-keys "$pane" ctrl+l
 fi
 '''
-
-# Cycle tabs with wraparound: past the last tab lands on the first and vice
-# versa. Herdr's native previous_tab/next_tab stop at the ends.
-[[keys.command]]
-key = "prefix+ctrl+h"
-type = "shell"
-description = "previous tab (wrapping)"
-command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r "[.result.tabs[] | select(.workspace_id == \"$HERDR_ACTIVE_WORKSPACE_ID\")] | sort_by(.number) | if length == 0 then empty else (index(map(select(.focused)) | .[0]) // 0) as \$i | .[\$i - 1].tab_id end"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'
-
-[[keys.command]]
-key = "prefix+ctrl+l"
-type = "shell"
-description = "next tab (wrapping)"
-command = 'tab_id=$(herdr tab list --workspace "$HERDR_ACTIVE_WORKSPACE_ID" | jq -r "[.result.tabs[] | select(.workspace_id == \"$HERDR_ACTIVE_WORKSPACE_ID\")] | sort_by(.number) | if length == 0 then empty else (index(map(select(.focused)) | .[0]) // 0) as \$i | .[(\$i + 1) % length].tab_id end"); [ -z "$tab_id" ] || herdr tab focus "$tab_id"'

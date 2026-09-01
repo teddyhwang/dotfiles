@@ -218,37 +218,38 @@ function currentHerdrTarget(): HerdrTarget | undefined {
   return { socketPath, tabId };
 }
 
-/** Rename one explicit Herdr tab over its socket API; never uses UI focus. */
-export function renameHerdrTab(
-  target: HerdrTarget,
-  label: string,
-  timeoutMs = 1_500,
-): Promise<boolean> {
+/** Round-trip one request on its own short-lived connection to Herdr. */
+function herdrCall(
+  socketPath: string,
+  method: string,
+  params: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<Record<string, unknown> | undefined> {
   return new Promise((resolve) => {
     let finished = false;
     let buffer = "";
     const endpoint =
       process.platform === "win32"
-        ? `\\\\.\\pipe\\${target.socketPath}`
-        : target.socketPath;
+        ? `\\\\.\\pipe\\${socketPath}`
+        : socketPath;
     const socket = net.createConnection(endpoint);
 
-    const finish = (delivered: boolean) => {
+    const finish = (response?: Record<string, unknown>) => {
       if (finished) return;
       finished = true;
       socket.destroy();
-      resolve(delivered);
+      resolve(response);
     };
 
     socket.setTimeout(timeoutMs);
-    socket.once("error", () => finish(false));
-    socket.once("timeout", () => finish(false));
+    socket.once("error", () => finish());
+    socket.once("timeout", () => finish());
     socket.once("connect", () => {
       socket.write(
         `${JSON.stringify({
           id: `pi-session-tab-name:${Date.now()}:${Math.random().toString(36).slice(2)}`,
-          method: "tab.rename",
-          params: { tab_id: target.tabId, label },
+          method,
+          params,
         })}\n`,
       );
     });
@@ -257,16 +258,65 @@ export function renameHerdrTab(
       const newline = buffer.indexOf("\n");
       if (newline < 0) return;
       try {
-        const response = JSON.parse(buffer.slice(0, newline)) as {
-          error?: unknown;
-        };
-        finish(response.error === undefined);
+        finish(JSON.parse(buffer.slice(0, newline)));
       } catch {
-        finish(false);
+        finish();
       }
     });
-    socket.once("end", () => finish(false));
+    socket.once("end", () => finish());
   });
+}
+
+/** Rename one explicit Herdr tab over its socket API; never uses UI focus. */
+export async function renameHerdrTab(
+  target: HerdrTarget,
+  label: string,
+  timeoutMs = 1_500,
+): Promise<boolean> {
+  const response = await herdrCall(
+    target.socketPath,
+    "tab.rename",
+    { tab_id: target.tabId, label },
+    timeoutMs,
+  );
+  return response !== undefined && response.error === undefined;
+}
+
+/** Count the panes sharing this tab, or undefined when Herdr does not say. */
+export function panesInTab(
+  snapshot: unknown,
+  tabId: string,
+): number | undefined {
+  const panes = (snapshot as { panes?: unknown } | undefined)?.panes;
+  if (!Array.isArray(panes)) return undefined;
+  return panes.filter(
+    (pane) => (pane as { tab_id?: unknown } | null)?.tab_id === tabId,
+  ).length;
+}
+
+/** True when this Pi session is the only pane in its tab.
+ *
+ * A tab label speaks for the whole split. Pi only knows what Pi is doing, so
+ * it claims the label only when there is nothing else in the tab to
+ * misrepresent; in a split it stays quiet and lets herdr-tab-autoname, which
+ * can see every pane, summarize them together.
+ */
+export async function isAloneInTab(
+  target: HerdrTarget,
+  timeoutMs = 1_500,
+): Promise<boolean> {
+  const response = await herdrCall(
+    target.socketPath,
+    "session.snapshot",
+    {},
+    timeoutMs,
+  );
+  const snapshot = (response?.result as { snapshot?: unknown } | undefined)
+    ?.snapshot;
+  const count = panesInTab(snapshot, target.tabId);
+  // An unreadable snapshot must not strand a solo tab at its number, and the
+  // daemon corrects an over-eager rename on its next pass either way.
+  return count === undefined || count <= 1;
 }
 
 export default function sessionTabNameExtension(pi: ExtensionAPI) {
@@ -286,6 +336,9 @@ export default function sessionTabNameExtension(pi: ExtensionAPI) {
       while (pendingHerdrLabel) {
         const nextLabel = pendingHerdrLabel;
         pendingHerdrLabel = undefined;
+        // Re-checked every pass: a split can open, or the sibling pane can
+        // close, between one session rename and the next.
+        if (!(await isAloneInTab(target))) continue;
         if (!(await renameHerdrTab(target, nextLabel, 500))) {
           await renameHerdrTab(target, nextLabel, 1_500);
         }

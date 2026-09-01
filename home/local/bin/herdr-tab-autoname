@@ -9,6 +9,11 @@ API and copies that into the tab label, falling back to repo + branch for panes
 whose title says nothing useful (pi writes "π - dotfiles", plain shells write
 whatever the prompt sets).
 
+A tab is a whole split, not one pane, so the label has to be true of everything
+visible in it. One topic among the panes becomes the label; two panes doing
+different things fall back to repo + branch, which is honest about both. A pane
+that exits takes its topic with it and the tab is renamed from what is left.
+
 Ownership rules, so this never fights the user:
   - a tab is auto-named only while its label is Herdr's generated number or the
     last label this daemon assigned;
@@ -327,7 +332,9 @@ class Session:
         # race with this daemon and rename the tab directly; adopt that exact
         # terminal-title-derived label instead of mistaking it for a hand edit.
         if label and not label.isdigit() and label != self.assigned.get(tab_id):
-            pi_label = pi_session_label_for(panes)
+            # The Pi extension renames its own tab, but only from a pane that
+            # is alone in it, so an adopted label never speaks over a split.
+            pi_label = pi_session_label_for(panes) if len(panes) == 1 else None
             if label == pi_label:
                 self.assigned[tab_id] = label
                 log(f"{tab_id}: adopted Pi session label {label!r}")
@@ -354,20 +361,31 @@ class Session:
         self.renamed_at[tab_id] = now
 
     def label_for(self, panes: list[dict]) -> str | None:
+        """The one thing every visible pane agrees it is doing.
+
+        A tab labelled after a single pane lies about the rest of the split, so
+        a topic only wins when it is the sole topic on offer. Panes that say
+        nothing (a plain shell, a pager, an agent still on its generic title)
+        abstain rather than veto: they leave the tab to whichever pane is doing
+        identifiable work. Two panes doing genuinely different things have no
+        honest one-line summary, so the tab falls back to the location, which
+        is true of all of them.
+        """
         if not panes:
             return None
 
         ordered = sorted(panes, key=pane_order)
-        pi_label = pi_session_label_for(ordered)
-        if pi_label:
-            return pi_label
 
+        topics = []
         for pane in ordered:
-            if not pane.get("agent"):
-                continue
-            topic = topic_from_title(pane)
-            if topic:
-                return truncate(topic)
+            topic = pi_session_name_from_title(pane) or (
+                topic_from_title(pane) if pane.get("agent") else None
+            )
+            if topic and topic not in topics:
+                topics.append(topic)
+
+        if len(topics) == 1:
+            return truncate(topics[0])
 
         cwd = next((pane.get("cwd") for pane in ordered if pane.get("cwd")), None)
         return truncate(self.project_label(cwd)) if cwd else None

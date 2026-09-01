@@ -8,7 +8,9 @@ import {
   deriveLegacySessionName,
   deriveSessionName,
   firstUserPrompt,
+  isAloneInTab,
   normalizeAiSessionName,
+  panesInTab,
   renameHerdrTab,
   toHerdrLabel,
 } from "../home/pi-agent/extensions/session-tab-name.ts";
@@ -261,5 +263,76 @@ test("sends a tab.rename request to the inherited Herdr tab", async (t) => {
       method: "tab.rename",
       params: { tab_id: "w6:tB", label: "Pi session labels" },
     },
+  );
+});
+
+test("counts only the panes sharing this tab", () => {
+  const snapshot = {
+    panes: [
+      { pane_id: "w1:p1", tab_id: "w1:tA" },
+      { pane_id: "w1:p2", tab_id: "w1:tA" },
+      { pane_id: "w1:p3", tab_id: "w1:tB" },
+    ],
+  };
+  assert.equal(panesInTab(snapshot, "w1:tA"), 2);
+  assert.equal(panesInTab(snapshot, "w1:tB"), 1);
+  assert.equal(panesInTab(snapshot, "w1:tZ"), 0);
+  assert.equal(panesInTab(undefined, "w1:tA"), undefined);
+  assert.equal(panesInTab({ panes: "nonsense" }, "w1:tA"), undefined);
+});
+
+test("claims the tab label only when Pi is alone in the tab", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("Unix socket fixture");
+    return;
+  }
+
+  // The tab label speaks for every visible pane, so a Pi session sharing its
+  // tab leaves the naming to herdr-tab-autoname, which can see them all.
+  const serve = async (panes) => {
+    const socketPath = path.join(
+      os.tmpdir(),
+      `pi-alone-${process.pid}-${Math.random().toString(36).slice(2)}.sock`,
+    );
+    const server = net.createServer((socket) => {
+      let buffer = "";
+      socket.on("data", (chunk) => {
+        buffer += chunk.toString("utf8");
+        const newline = buffer.indexOf("\n");
+        if (newline < 0) return;
+        const request = JSON.parse(buffer.slice(0, newline));
+        socket.end(
+          `${JSON.stringify({
+            id: request.id,
+            result: { snapshot: { panes } },
+          })}\n`,
+        );
+      });
+    });
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(socketPath, resolve);
+    });
+    t.after(() => server.close());
+    return socketPath;
+  };
+
+  const solo = await serve([{ pane_id: "w6:p1", tab_id: "w6:tB" }]);
+  assert.equal(await isAloneInTab({ socketPath: solo, tabId: "w6:tB" }), true);
+
+  const split = await serve([
+    { pane_id: "w6:p1", tab_id: "w6:tB" },
+    { pane_id: "w6:p2", tab_id: "w6:tB" },
+  ]);
+  assert.equal(await isAloneInTab({ socketPath: split, tabId: "w6:tB" }), false);
+
+  // An unreachable server must not strand a solo tab at its number; the
+  // daemon corrects an over-eager rename on its next pass.
+  assert.equal(
+    await isAloneInTab(
+      { socketPath: path.join(os.tmpdir(), "pi-no-such.sock"), tabId: "w6:tB" },
+      200,
+    ),
+    true,
   );
 });

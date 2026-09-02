@@ -12,8 +12,8 @@
       <string>-c</string>
       <string>exec "$HOME/.local/bin/herdr-tab-autoname"</string>
     </array>
-    <!-- launchd hands agents a minimal PATH; the daemon shells out to git, and
-         python3 may only exist under Homebrew. -->
+    <!-- launchd hands agents a minimal PATH; the TypeScript daemon needs the
+         Homebrew Node runtime and shells out to git. -->
     <key>EnvironmentVariables</key>
     <dict>
       <key>PATH</key>

@@ -5,5 +5,3 @@ home/config/alacritty/colors.toml
 home/config/ghostty/themes/
 home/config/btop/themes/
 home/shared/shopify
-__pycache__/
-*.py[cod]

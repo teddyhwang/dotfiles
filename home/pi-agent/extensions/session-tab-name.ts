@@ -218,29 +218,48 @@ function currentHerdrTarget(): HerdrTarget | undefined {
   return { socketPath, tabId };
 }
 
-/** Round-trip one request on its own short-lived connection to Herdr. */
+/**
+ * Round-trip one request on its own short-lived connection to Herdr.
+ *
+ * The socket is deliberately unref'ed: best-effort tab metadata must never
+ * keep Pi alive, delay shutdown, or sit on an extension event's critical path.
+ */
 function herdrCall(
   socketPath: string,
   method: string,
   params: Record<string, unknown>,
   timeoutMs: number,
+  signal?: AbortSignal,
 ): Promise<Record<string, unknown> | undefined> {
   return new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve(undefined);
+      return;
+    }
+
     let finished = false;
     let buffer = "";
     const endpoint =
-      process.platform === "win32"
-        ? `\\\\.\\pipe\\${socketPath}`
-        : socketPath;
-    const socket = net.createConnection(endpoint);
+      process.platform === "win32" ? `\\\\.\\pipe\\${socketPath}` : socketPath;
+    let socket: net.Socket;
+    try {
+      socket = net.createConnection(endpoint);
+      socket.unref();
+    } catch {
+      resolve(undefined);
+      return;
+    }
 
+    const abort = () => finish();
     const finish = (response?: Record<string, unknown>) => {
       if (finished) return;
       finished = true;
+      signal?.removeEventListener("abort", abort);
       socket.destroy();
       resolve(response);
     };
 
+    signal?.addEventListener("abort", abort, { once: true });
     socket.setTimeout(timeoutMs);
     socket.once("error", () => finish());
     socket.once("timeout", () => finish());
@@ -256,7 +275,12 @@ function herdrCall(
     socket.on("data", (chunk) => {
       buffer += chunk.toString("utf8");
       const newline = buffer.indexOf("\n");
-      if (newline < 0) return;
+      if (newline < 0) {
+        // Herdr replies are one compact JSON line. Do not let a malformed peer
+        // grow an unbounded buffer in the interactive Pi process.
+        if (buffer.length > 64 * 1024) finish();
+        return;
+      }
       try {
         finish(JSON.parse(buffer.slice(0, newline)));
       } catch {
@@ -272,12 +296,14 @@ export async function renameHerdrTab(
   target: HerdrTarget,
   label: string,
   timeoutMs = 1_500,
+  signal?: AbortSignal,
 ): Promise<boolean> {
   const response = await herdrCall(
     target.socketPath,
     "tab.rename",
     { tab_id: target.tabId, label },
     timeoutMs,
+    signal,
   );
   return response !== undefined && response.error === undefined;
 }
@@ -304,13 +330,16 @@ export function panesInTab(
 export async function isAloneInTab(
   target: HerdrTarget,
   timeoutMs = 1_500,
+  signal?: AbortSignal,
 ): Promise<boolean> {
   const response = await herdrCall(
     target.socketPath,
     "session.snapshot",
     {},
     timeoutMs,
+    signal,
   );
+  if (signal?.aborted) return false;
   const snapshot = (response?.result as { snapshot?: unknown } | undefined)
     ?.snapshot;
   const count = panesInTab(snapshot, target.tabId);
@@ -321,37 +350,76 @@ export async function isAloneInTab(
 
 export default function sessionTabNameExtension(pi: ExtensionAPI) {
   let pendingPrompt: string | undefined;
-  let pendingHerdrLabel: string | undefined;
+  let namingPromise: Promise<void> | undefined;
+  let sessionController: AbortController | undefined;
+  let sessionActive = false;
+
+  type QueuedHerdrRename = {
+    target: HerdrTarget;
+    label: string;
+    signal: AbortSignal;
+  };
+  let pendingHerdrRename: QueuedHerdrRename | undefined;
   let renameLoop: Promise<void> | undefined;
+  let renameStart: NodeJS.Immediate | undefined;
+
+  const startRenameLoop = () => {
+    renameStart = undefined;
+    if (renameLoop || !pendingHerdrRename) return;
+
+    const loop = (async () => {
+      while (pendingHerdrRename) {
+        // Last write wins: bursts of session metadata updates collapse to one
+        // request rather than queueing stale tab labels.
+        const next = pendingHerdrRename;
+        pendingHerdrRename = undefined;
+        if (next.signal.aborted) continue;
+
+        // Re-checked every pass: a split can open, or the sibling pane can
+        // close, between one session rename and the next.
+        const alone = await isAloneInTab(next.target, 1_500, next.signal);
+        if (next.signal.aborted || !alone) continue;
+
+        const delivered = await renameHerdrTab(
+          next.target,
+          next.label,
+          500,
+          next.signal,
+        );
+        if (!delivered && !next.signal.aborted) {
+          await renameHerdrTab(next.target, next.label, 1_500, next.signal);
+        }
+      }
+    })();
+    renameLoop = loop;
+
+    const settled = () => {
+      if (renameLoop !== loop) return;
+      renameLoop = undefined;
+      if (pendingHerdrRename) queueRenameStart();
+    };
+    // The loop is intentionally detached from Pi's event lifecycle. Handle
+    // both outcomes so a surprise cannot become an unhandled rejection.
+    void loop.then(settled, settled);
+  };
+
+  const queueRenameStart = () => {
+    if (renameLoop || renameStart || !pendingHerdrRename) return;
+    // Even socket construction happens after the extension hook returns.
+    // Unref the turn so tab metadata can never delay process termination.
+    renameStart = setImmediate(startRenameLoop);
+    renameStart.unref();
+  };
 
   const queueHerdrRename = (name: string) => {
     const target = currentHerdrTarget();
     const label = toHerdrLabel(name);
-    if (!target || !label) return;
+    const signal = sessionController?.signal;
+    if (!target || !label || !signal || signal.aborted) return;
 
-    pendingHerdrLabel = label;
-    if (renameLoop) return;
-
-    renameLoop = (async () => {
-      while (pendingHerdrLabel) {
-        const nextLabel = pendingHerdrLabel;
-        pendingHerdrLabel = undefined;
-        // Re-checked every pass: a split can open, or the sibling pane can
-        // close, between one session rename and the next.
-        if (!(await isAloneInTab(target))) continue;
-        if (!(await renameHerdrTab(target, nextLabel, 500))) {
-          await renameHerdrTab(target, nextLabel, 1_500);
-        }
-      }
-    })().finally(() => {
-      renameLoop = undefined;
-      if (pendingHerdrLabel) queueHerdrRename(pendingHerdrLabel);
-    });
+    pendingHerdrRename = { target, label, signal };
+    queueRenameStart();
   };
-
-  let namingPromise: Promise<void> | undefined;
-  let namingController: AbortController | undefined;
-  let sessionActive = false;
 
   const nameFromPrompt = (
     prompt: string | undefined,
@@ -360,9 +428,9 @@ export default function sessionTabNameExtension(pi: ExtensionAPI) {
   ) => {
     const currentName = pi.getSessionName();
     if (!prompt || (currentName && currentName !== replaceName)) return;
-    if (namingPromise || !namingController) return;
+    if (namingPromise || !sessionController) return;
 
-    const controller = namingController;
+    const controller = sessionController;
     namingPromise = (async () => {
       try {
         const name =
@@ -384,8 +452,13 @@ export default function sessionTabNameExtension(pi: ExtensionAPI) {
   };
 
   pi.on("session_start", (_event, ctx: ExtensionContext) => {
-    namingController?.abort();
-    namingController = new AbortController();
+    sessionController?.abort();
+    pendingHerdrRename = undefined;
+    if (renameStart) {
+      clearImmediate(renameStart);
+      renameStart = undefined;
+    }
+    sessionController = new AbortController();
     sessionActive = true;
     pendingPrompt = undefined;
 
@@ -419,7 +492,12 @@ export default function sessionTabNameExtension(pi: ExtensionAPI) {
   pi.on("session_shutdown", () => {
     sessionActive = false;
     pendingPrompt = undefined;
-    namingController?.abort();
-    namingController = undefined;
+    pendingHerdrRename = undefined;
+    if (renameStart) {
+      clearImmediate(renameStart);
+      renameStart = undefined;
+    }
+    sessionController?.abort();
+    sessionController = undefined;
   });
 }

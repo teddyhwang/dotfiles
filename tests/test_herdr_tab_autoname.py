@@ -1,6 +1,9 @@
+import concurrent.futures
 import importlib.machinery
 import importlib.util
 import pathlib
+import threading
+import time
 import unittest
 
 SCRIPT = pathlib.Path(__file__).parents[1] / "home/local/bin/herdr-tab-autoname"
@@ -26,9 +29,7 @@ class HerdrTabAutonameTest(unittest.TestCase):
         self.assertEqual(
             autoname.pi_session_name_from_title(pane), "Fix session labels"
         )
-        self.assertEqual(
-            autoname.pi_session_label_for([pane]), "Fix session labels"
-        )
+        self.assertEqual(autoname.pi_session_label_for([pane]), "Fix session labels")
 
     def test_rejects_generic_pi_title(self):
         pane = self.pi_pane("π - dotfiles")
@@ -115,9 +116,7 @@ class HerdrTabAutonameTest(unittest.TestCase):
                     self.agent_pane("Refactor the auth module", "w1:p1", agent),
                     self.shell_pane("w1:p2"),
                 ]
-                self.assertEqual(
-                    session.label_for(panes), "Refactor the auth module"
-                )
+                self.assertEqual(session.label_for(panes), "Refactor the auth module")
 
     def test_a_generic_agent_title_abstains_instead_of_vetoing(self):
         # "codex"/"Claude" name the harness, not the work, so they neither
@@ -165,6 +164,63 @@ class HerdrTabAutonameTest(unittest.TestCase):
             [self.pi_pane(), self.agent_pane("Update the README")],
         )
         self.assertNotIn("w1:t1", session.assigned)
+
+    def test_snapshot_and_rename_io_run_off_the_event_thread(self):
+        caller_thread = threading.get_ident()
+        rename_started = threading.Event()
+        release_rename = threading.Event()
+        rename_thread = []
+
+        class FakeGit:
+            def forget_missing(self, _live_cwds):
+                pass
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            session = object.__new__(autoname.Session)
+            session.path = "/unused/herdr.sock"
+            session.git = FakeGit()
+            session.executor = executor
+            session._state_lock = threading.Lock()
+            session.closed = False
+            session.settle_deadline = time.monotonic()
+            session.sync_future = None
+            session.assigned = {}
+            session.renamed_at = {}
+            session.pane_signatures = {}
+
+            def call(method, _params):
+                if method == "session.snapshot":
+                    return {
+                        "result": {
+                            "snapshot": {
+                                "tabs": [{"tab_id": "w1:t1", "label": "1"}],
+                                "panes": [dict(self.pi_pane(), tab_id="w1:t1")],
+                            }
+                        }
+                    }
+                self.assertEqual(method, "tab.rename")
+                rename_thread.append(threading.get_ident())
+                rename_started.set()
+                release_rename.wait(1)
+                return {"result": {"type": "tab_info"}}
+
+            session.call = call
+            started = time.monotonic()
+            session.tick()
+            elapsed = time.monotonic() - started
+
+            try:
+                # tick only submits work. A deliberately wedged rename cannot
+                # hold up the thread that consumes Herdr's event stream.
+                self.assertLess(elapsed, 0.2)
+                self.assertTrue(rename_started.wait(0.5))
+                self.assertEqual(len(rename_thread), 1)
+                self.assertNotEqual(rename_thread[0], caller_thread)
+            finally:
+                release_rename.set()
+                future = session.sync_future
+                if future is not None:
+                    future.result(timeout=1)
 
 
 if __name__ == "__main__":

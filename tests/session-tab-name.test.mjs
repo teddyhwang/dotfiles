@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { pathToFileURL } from "node:url";
 import {
   default as sessionTabNameExtension,
   deriveLegacySessionName,
@@ -266,6 +268,169 @@ test("sends a tab.rename request to the inherited Herdr tab", async (t) => {
   );
 });
 
+test(
+  "session hooks detach and cancel Herdr rename I/O",
+  { timeout: 2_000 },
+  async (t) => {
+    if (process.platform === "win32") {
+      t.skip("Unix socket fixture");
+      return;
+    }
+
+    const socketPath = path.join(
+      os.tmpdir(),
+      `pi-detached-rename-${process.pid}-${Date.now()}.sock`,
+    );
+    const sockets = new Set();
+    let finishRenameRequest;
+    const renameRequested = new Promise((resolve) => {
+      finishRenameRequest = resolve;
+    });
+    let finishRenameClose;
+    const renameClosed = new Promise((resolve) => {
+      finishRenameClose = resolve;
+    });
+    const server = net.createServer((socket) => {
+      sockets.add(socket);
+      socket.once("close", () => sockets.delete(socket));
+      let buffer = "";
+      socket.on("data", (chunk) => {
+        buffer += chunk.toString("utf8");
+        const newline = buffer.indexOf("\n");
+        if (newline < 0) return;
+        const request = JSON.parse(buffer.slice(0, newline));
+        if (request.method === "session.snapshot") {
+          socket.end(
+            `${JSON.stringify({
+              id: request.id,
+              result: {
+                snapshot: {
+                  panes: [{ pane_id: "w9:p1", tab_id: "w9:tA" }],
+                },
+              },
+            })}\n`,
+          );
+          return;
+        }
+        if (request.method === "tab.rename") {
+          finishRenameRequest();
+          socket.once("close", finishRenameClose);
+          // Deliberately never reply. session_shutdown must abort this request.
+        }
+      });
+    });
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(socketPath, resolve);
+    });
+
+    const previousEnv = {
+      HERDR_ENV: process.env.HERDR_ENV,
+      HERDR_SOCKET_PATH: process.env.HERDR_SOCKET_PATH,
+      HERDR_TAB_ID: process.env.HERDR_TAB_ID,
+    };
+    process.env.HERDR_ENV = "1";
+    process.env.HERDR_SOCKET_PATH = socketPath;
+    process.env.HERDR_TAB_ID = "w9:tA";
+    t.after(() => {
+      for (const socket of sockets) socket.destroy();
+      server.close();
+      for (const [key, value] of Object.entries(previousEnv)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    });
+
+    const handlers = new Map();
+    const pi = {
+      on(event, handler) {
+        handlers.set(event, handler);
+      },
+      getSessionName() {
+        return "Detached Herdr Rename";
+      },
+      setSessionName() {},
+    };
+    const ctx = {
+      sessionManager: { getBranch: () => [] },
+      model: undefined,
+      modelRegistry: { hasConfiguredAuth: () => false },
+    };
+    sessionTabNameExtension(pi);
+
+    // A lifecycle handler must never return the socket promise to Pi.
+    assert.equal(handlers.get("session_start")({}, ctx), undefined);
+    await renameRequested;
+    assert.equal(
+      handlers.get("session_shutdown")({ reason: "quit" }, ctx),
+      undefined,
+    );
+    await renameClosed;
+  },
+);
+
+test(
+  "an unanswered Herdr rename cannot keep Pi's process alive",
+  { timeout: 2_000 },
+  async (t) => {
+    if (process.platform === "win32") {
+      t.skip("Unix socket fixture");
+      return;
+    }
+
+    const socketPath = path.join(
+      os.tmpdir(),
+      `pi-unref-rename-${process.pid}-${Date.now()}.sock`,
+    );
+    const sockets = new Set();
+    const server = net.createServer((socket) => {
+      sockets.add(socket);
+      socket.once("close", () => sockets.delete(socket));
+      // Never reply: the child must exit because its Herdr socket is unref'ed,
+      // not because the request completed.
+    });
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(socketPath, resolve);
+    });
+    t.after(() => {
+      for (const socket of sockets) socket.destroy();
+      server.close();
+    });
+
+    const extensionUrl = pathToFileURL(
+      path.resolve("home/pi-agent/extensions/session-tab-name.ts"),
+    ).href;
+    const child = spawn(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        [
+          `import { renameHerdrTab } from ${JSON.stringify(extensionUrl)};`,
+          `void renameHerdrTab(${JSON.stringify({ socketPath, tabId: "w1:t1" })}, "Nonblocking", 10000);`,
+          "await new Promise((resolve) => setTimeout(resolve, 100));",
+        ].join("\n"),
+      ],
+      { stdio: ["ignore", "pipe", "pipe"] },
+    );
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+
+    const exit = new Promise((resolve, reject) => {
+      child.once("error", reject);
+      child.once("exit", (code, signal) => resolve({ code, signal }));
+    });
+    const timeout = setTimeout(() => child.kill("SIGKILL"), 1_500);
+    const result = await exit;
+    clearTimeout(timeout);
+    assert.deepEqual(result, { code: 0, signal: null }, stderr);
+  },
+);
+
 test("counts only the panes sharing this tab", () => {
   const snapshot = {
     panes: [
@@ -324,7 +489,10 @@ test("claims the tab label only when Pi is alone in the tab", async (t) => {
     { pane_id: "w6:p1", tab_id: "w6:tB" },
     { pane_id: "w6:p2", tab_id: "w6:tB" },
   ]);
-  assert.equal(await isAloneInTab({ socketPath: split, tabId: "w6:tB" }), false);
+  assert.equal(
+    await isAloneInTab({ socketPath: split, tabId: "w6:tB" }),
+    false,
+  );
 
   // An unreachable server must not strand a solo tab at its number; the
   // daemon corrects an over-eager rename on its next pass.

@@ -29,6 +29,7 @@ restarts, so starting it before Herdr exists is fine on either platform.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import errno
 import fcntl
 import json
@@ -37,6 +38,7 @@ import select
 import socket
 import subprocess
 import sys
+import threading
 import time
 
 # Herdr writes its sockets beside config.toml. herdr.sock is the default
@@ -88,6 +90,10 @@ RENAME_INTERVAL = 2.0
 RECONNECT_SECONDS = 2.0
 RESCAN_SECONDS = 3.0
 GIT_CACHE_SECONDS = 15.0
+# Snapshot, git, and rename round trips run here instead of on the event-stream
+# thread. A wedged socket or slow repository can therefore never stall event
+# intake or make Herdr's interactive path wait on tab metadata.
+BACKGROUND_WORKERS = 4
 
 SUBSCRIPTIONS = [
     {"type": "tab.created"},
@@ -130,22 +136,32 @@ class GitCache:
 
     def __init__(self) -> None:
         self._entries: dict[str, tuple[float, tuple[str | None, str | None]]] = {}
+        self._lock = threading.Lock()
 
     def describe(self, cwd: str) -> tuple[str | None, str | None]:
         """Return (repo root, branch or short sha) for cwd, or (None, None)."""
         now = time.monotonic()
-        cached = self._entries.get(cwd)
+        with self._lock:
+            cached = self._entries.get(cwd)
         if cached and now - cached[0] < GIT_CACHE_SECONDS:
             return cached[1]
 
+        # subprocess.run is intentionally outside the cache lock: independent
+        # sessions must not serialize their repository lookups.
         result = (self._run(cwd, "rev-parse", "--show-toplevel"), self._branch(cwd))
-        self._entries[cwd] = (now, result)
+        with self._lock:
+            self._entries[cwd] = (now, result)
         return result
 
     def forget_missing(self, live_cwds: set[str]) -> None:
-        for cwd in list(self._entries):
-            if cwd not in live_cwds:
-                del self._entries[cwd]
+        # Another Herdr session may still be using a cwd absent from this one.
+        # Keep fresh entries so parallel workers do not make each other repeat
+        # git subprocesses; stale, globally absent paths age out naturally.
+        cutoff = time.monotonic() - GIT_CACHE_SECONDS
+        with self._lock:
+            for cwd, (created_at, _) in list(self._entries.items()):
+                if cwd not in live_cwds and created_at < cutoff:
+                    del self._entries[cwd]
 
     def _branch(self, cwd: str) -> str | None:
         branch = self._run(cwd, "symbolic-ref", "--quiet", "--short", "HEAD")
@@ -163,6 +179,7 @@ class GitCache:
                 capture_output=True,
                 text=True,
                 timeout=2,
+                check=False,
             )
         except (OSError, subprocess.SubprocessError):
             return None
@@ -180,9 +197,15 @@ class Session:
     short-lived connection.
     """
 
-    def __init__(self, path: str, git: GitCache) -> None:
+    def __init__(
+        self,
+        path: str,
+        git: GitCache,
+        executor: concurrent.futures.ThreadPoolExecutor,
+    ) -> None:
         self.path = path
         self.git = git
+        self.executor = executor
         self.events = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.events.settimeout(2)
         self.events.connect(path)
@@ -198,22 +221,34 @@ class Session:
         )
         self.events.settimeout(None)
         self.buffer = b""
-        self.settle_deadline: float | None = None
+        self._state_lock = threading.Lock()
+        self.closed = False
+        self.settle_deadline: float | None = time.monotonic()
+        self.sync_future: concurrent.futures.Future[None] | None = None
         # tab_id -> label this daemon assigned. A label that is neither this nor
         # the tab's number means the user renamed the tab by hand.
         self.assigned: dict[str, str] = {}
         self.renamed_at: dict[str, float] = {}
         self.pane_signatures: dict[str, tuple] = {}
-        self.sync()
+        self.tick()
 
     def fileno(self) -> int:
         return self.events.fileno()
 
     def close(self) -> None:
+        with self._state_lock:
+            self.closed = True
+            self.settle_deadline = None
+            if self.sync_future is not None:
+                self.sync_future.cancel()
         try:
             self.events.close()
         except OSError:
             pass
+
+    def is_closed(self) -> bool:
+        with self._state_lock:
+            return self.closed
 
     def call(self, method: str, params: dict) -> dict | None:
         """Round-trip one request on its own connection."""
@@ -235,38 +270,72 @@ class Session:
             return None
 
     def sync(self) -> None:
-        self.settle_deadline = None
+        """Snapshot and rename on a worker, never on the event-stream thread."""
         response = self.call("session.snapshot", {})
+        if self.is_closed():
+            return
         snapshot = ((response or {}).get("result") or {}).get("snapshot")
         if not snapshot:
             return
         try:
             self.apply(snapshot)
-        except Exception as exc:  # a surprise in one snapshot must not end the daemon
+        except Exception as exc:  # noqa: BLE001 - one bad snapshot is non-fatal
             log(f"snapshot ignored: {exc!r}")
 
     def mark_dirty(self) -> None:
-        if self.settle_deadline is None:
-            self.settle_deadline = time.monotonic() + SETTLE_SECONDS
+        with self._state_lock:
+            if not self.closed and self.settle_deadline is None:
+                self.settle_deadline = time.monotonic() + SETTLE_SECONDS
 
     def tick(self) -> None:
-        """Take a snapshot once the burst of events has settled."""
-        if self.settle_deadline is not None and time.monotonic() >= self.settle_deadline:
-            self.sync()
+        """Dispatch settled work without running any I/O on the caller."""
+        completed: concurrent.futures.Future[None] | None = None
+        with self._state_lock:
+            if self.closed:
+                return
+            if self.sync_future is not None and self.sync_future.done():
+                completed = self.sync_future
+                self.sync_future = None
+            if (
+                self.sync_future is None
+                and self.settle_deadline is not None
+                and time.monotonic() >= self.settle_deadline
+            ):
+                self.settle_deadline = None
+                self.sync_future = self.executor.submit(self.sync)
+
+        # result() cannot block after done(); observe unexpected worker errors
+        # outside the state lock so logging never delays event handling.
+        if completed is not None:
+            try:
+                completed.result()
+            except concurrent.futures.CancelledError:
+                pass
+            except Exception as exc:  # noqa: BLE001 - keep the daemon alive
+                log(f"background sync failed: {exc!r}")
+
+    def wait_for_sync(self) -> None:
+        """Wait only for the explicit --once contract; the daemon never calls this."""
+        with self._state_lock:
+            future = self.sync_future
+        if future is not None:
+            try:
+                future.result()
+            except concurrent.futures.CancelledError:
+                pass
 
     def timeout(self) -> float | None:
-        if self.settle_deadline is None:
-            return None
-        return max(0.0, self.settle_deadline - time.monotonic())
+        with self._state_lock:
+            if self.settle_deadline is None:
+                return None
+            return max(0.0, self.settle_deadline - time.monotonic())
 
     def read(self) -> bool:
         """Drain the event stream. Returns False when the server hangs up."""
         try:
             chunk = self.events.recv(65536)
         except OSError as exc:
-            if exc.errno == errno.EINTR:
-                return True
-            return False
+            return exc.errno == errno.EINTR
         if not chunk:
             return False
 
@@ -291,9 +360,10 @@ class Session:
             if not pane_id:
                 return
             signature = tuple(pane.get(field) for field in PANE_SIGNATURE_FIELDS)
-            if self.pane_signatures.get(pane_id) == signature:
-                return
-            self.pane_signatures[pane_id] = signature
+            with self._state_lock:
+                if self.pane_signatures.get(pane_id) == signature:
+                    return
+                self.pane_signatures[pane_id] = signature
         self.mark_dirty()
 
     def apply(self, snapshot: dict) -> None:
@@ -317,9 +387,10 @@ class Session:
                 del self.assigned[tab_id]
                 self.renamed_at.pop(tab_id, None)
         live_panes = {pane.get("pane_id") for pane in panes}
-        for pane_id in list(self.pane_signatures):
-            if pane_id not in live_panes:
-                del self.pane_signatures[pane_id]
+        with self._state_lock:
+            for pane_id in list(self.pane_signatures):
+                if pane_id not in live_panes:
+                    del self.pane_signatures[pane_id]
         self.git.forget_missing({pane.get("cwd") for pane in panes if pane.get("cwd")})
 
     def consider(self, tab: dict, panes: list[dict]) -> None:
@@ -355,7 +426,9 @@ class Session:
             return
 
         log(f"{tab_id}: {label!r} -> {desired!r}{' [dry-run]' if DRY_RUN else ''}")
-        if not DRY_RUN:
+        if not DRY_RUN and not self.is_closed():
+            # consider() runs only inside sync's worker in the daemon. The
+            # request can time out without ever stalling event intake.
             self.call("tab.rename", {"tab_id": tab_id, "label": desired})
         self.assigned[tab_id] = desired
         self.renamed_at[tab_id] = now
@@ -527,57 +600,71 @@ def claim_singleton() -> bool:
 
 def run(once: bool) -> int:
     sessions: dict[str, Session] = {}
+    executor = concurrent.futures.ThreadPoolExecutor(
+        max_workers=BACKGROUND_WORKERS,
+        thread_name_prefix="herdr-tab-autoname",
+    )
     next_scan = 0.0
 
-    while True:
-        now = time.monotonic()
-        if now >= next_scan:
-            next_scan = now + RESCAN_SECONDS
-            paths = set(session_sockets())
-            for path in list(sessions):
-                if path not in paths:
-                    sessions.pop(path).close()
-            for path in paths - set(sessions):
-                try:
-                    sessions[path] = Session(path, GIT_CACHE)
-                    log(f"following {path}")
-                except OSError as exc:
-                    log(f"cannot follow {path}: {exc}")
+    try:
+        while True:
+            now = time.monotonic()
+            if now >= next_scan:
+                next_scan = now + RESCAN_SECONDS
+                paths = set(session_sockets())
+                for path in list(sessions):
+                    if path not in paths:
+                        sessions.pop(path).close()
+                for path in paths - set(sessions):
+                    try:
+                        sessions[path] = Session(path, GIT_CACHE, executor)
+                        log(f"following {path}")
+                    except OSError as exc:
+                        log(f"cannot follow {path}: {exc}")
 
-        if once and not sessions:
-            log("no Herdr server running")
-            return 1
+            if once and not sessions:
+                log("no Herdr server running")
+                return 1
 
-        if once:
-            # Connecting already synced every session once.
+            if once:
+                # --once explicitly promises an applied result, so it joins the
+                # already-asynchronous workers before returning to its caller.
+                for session in sessions.values():
+                    session.wait_for_sync()
+                return 0
+
+            timeout = RECONNECT_SECONDS
             for session in sessions.values():
-                session.close()
-            return 0
+                session_timeout = session.timeout()
+                if session_timeout is not None:
+                    timeout = min(timeout, session_timeout)
 
-        timeout = RECONNECT_SECONDS
+            readable: list[Session] = []
+            if sessions:
+                try:
+                    readable, _, _ = select.select(
+                        list(sessions.values()), [], [], timeout
+                    )
+                except OSError:
+                    readable = []
+            else:
+                time.sleep(timeout)
+
+            for session in readable:
+                if not session.read():
+                    log(f"{session.path} closed")
+                    session.close()
+                    sessions.pop(session.path, None)
+                    next_scan = 0.0
+
+            for session in list(sessions.values()):
+                session.tick()
+    finally:
         for session in sessions.values():
-            session_timeout = session.timeout()
-            if session_timeout is not None:
-                timeout = min(timeout, session_timeout)
-
-        readable: list[Session] = []
-        if sessions:
-            try:
-                readable, _, _ = select.select(list(sessions.values()), [], [], timeout)
-            except OSError:
-                readable = []
-        else:
-            time.sleep(timeout)
-
-        for session in readable:
-            if not session.read():
-                log(f"{session.path} closed")
-                session.close()
-                sessions.pop(session.path, None)
-                next_scan = 0.0
-
-        for session in list(sessions.values()):
-            session.tick()
+            session.close()
+        # Running calls retain their own bounded socket/subprocess deadlines;
+        # shutdown never waits for metadata work that is already irrelevant.
+        executor.shutdown(wait=False, cancel_futures=True)
 
 
 def main() -> int:

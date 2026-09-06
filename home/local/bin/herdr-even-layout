@@ -15,21 +15,43 @@ import sys
 SOCKET = os.environ.get(
     "HERDR_SOCKET_PATH", os.path.expanduser("~/.config/herdr/herdr.sock")
 )
+try:
+    TIMEOUT_SECONDS = float(os.environ.get("HERDR_SOCKET_TIMEOUT", "2"))
+    if TIMEOUT_SECONDS <= 0:
+        raise ValueError
+except ValueError:
+    raise SystemExit("herdr-even-layout: HERDR_SOCKET_TIMEOUT must be positive") from None
+MAX_RESPONSE_BYTES = 1024 * 1024
 
 
 def call(method, params):
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-        s.connect(SOCKET)
-        s.sendall((json.dumps({"id": "even", "method": method, "params": params}) + "\n").encode())
-        buf = b""
-        while not buf.endswith(b"\n"):
-            chunk = s.recv(65536)
-            if not chunk:
-                break
-            buf += chunk
-    reply = json.loads(buf.decode().splitlines()[0])
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            s.settimeout(TIMEOUT_SECONDS)
+            s.connect(SOCKET)
+            request = {"id": "even", "method": method, "params": params}
+            s.sendall((json.dumps(request) + "\n").encode())
+            buf = b""
+            while not buf.endswith(b"\n"):
+                chunk = s.recv(65536)
+                if not chunk:
+                    break
+                buf += chunk
+                if len(buf) > MAX_RESPONSE_BYTES:
+                    raise ValueError("response exceeded 1 MiB")
+
+        if not buf.endswith(b"\n"):
+            raise ValueError("incomplete response")
+        reply = json.loads(buf.decode().splitlines()[0])
+    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as error:
+        raise SystemExit(f"herdr-even-layout: {error}") from error
+
     if "error" in reply:
-        raise SystemExit(f"herdr-even-layout: {reply['error'].get('message', reply['error'])}")
+        error = reply["error"]
+        message = error.get("message", error) if isinstance(error, dict) else error
+        raise SystemExit(f"herdr-even-layout: {message}")
+    if "result" not in reply:
+        raise SystemExit("herdr-even-layout: response did not contain a result")
     return reply["result"]
 
 

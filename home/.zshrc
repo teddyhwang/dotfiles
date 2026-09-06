@@ -2,17 +2,20 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-[[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
+[[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
 
 [[ -f ~/.shared/env ]] && source ~/.shared/env
 [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
 
 ZINIT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zinit/zinit.git"
-if [[ ! -d "$ZINIT_HOME" ]]; then
-  mkdir -p "$(dirname "$ZINIT_HOME")"
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [[ ! -r "$ZINIT_HOME/zinit.zsh" ]]; then
+  print -u2 "zinit is not installed; run the dotfiles setup script"
+  [[ -f "$HOME/.shared/aliases" ]] && source "$HOME/.shared/aliases"
+  [[ -f "$HOME/.shared/init" ]] && source "$HOME/.shared/init"
+  [[ -f "$HOME/.shared/functions" ]] && source "$HOME/.shared/functions"
+  return 0
 fi
-source "${ZINIT_HOME}/zinit.zsh"
+source "$ZINIT_HOME/zinit.zsh"
 
 zinit ice depth=1
 zinit light romkatv/powerlevel10k
@@ -106,8 +109,8 @@ bindkey '^f' fzf-cd-widget
 [[ -f ~/.shared/functions ]] && . ~/.shared/functions
 
 # Added by tec agent
-if [[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]]; then
-  _tec_init="/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init"
+_tec_init="$HOME/.local/state/tec/profiles/base/current/global/init"
+if [[ -x "$_tec_init" ]]; then
   _tec_cache="$HOME/.cache/tec_init_cache.zsh"
   if [[ ! -f "$_tec_cache" ]] || [[ "$_tec_init" -nt "$_tec_cache" ]]; then
     "$_tec_init" zsh >"$_tec_cache" 2>/dev/null
@@ -137,6 +140,7 @@ else
   done
   unset _chruby_dir
 fi
+unset _tec_init
 
 __fzf_rebind_hook() {
   if [[ "$1" == "precmd" ]]; then
@@ -202,27 +206,26 @@ __ruby_env_hook precmd
 __sync_tmux_ssh_env_hook precmd
 
 tinty_source_shell_theme() {
-  tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
+  local tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
+  local newer_file script
 
-  if [ "$1" = "init" ]; then
-    command tinty $@
-    while read -r script; do
+  if [[ "$1" == "init" ]]; then
+    command tinty "$@"
+    while IFS= read -r script; do
       . "$script"
     done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh")
-  elif [ "$1" = "apply" ]; then
+  elif [[ "$1" == "apply" ]]; then
     newer_file=$(mktemp)
-    command tinty $@
-    while read -r script; do
+    command tinty "$@"
+    while IFS= read -r script; do
       . "$script"
     done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh" -newer "$newer_file")
     rm -f "$newer_file"
   else
-    command tinty $@
+    command tinty "$@"
   fi
 
   _tinty_rebuild_cache 2>/dev/null
-
-  unset tinty_data_dir
 }
 
 _tinty_rebuild_cache() {
@@ -237,6 +240,7 @@ _tinty_rebuild_cache() {
 
 if (( $+commands[tinty] )); then
   alias tinty=tinty_source_shell_theme
+  (( $+functions[_tinty] )) && compdef _tinty tinty tinty_source_shell_theme
   () {
     emulate -L zsh
     setopt extended_glob
@@ -268,3 +272,6 @@ fi
   # failed "previous command". Leave $? clean.
   return 0
 }
+
+# Avoid PATH growth when nested shells re-run toolchain initializers.
+typeset -U path PATH

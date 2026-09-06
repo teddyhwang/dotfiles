@@ -1,6 +1,8 @@
 #!/bin/sh
 
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
@@ -22,10 +24,12 @@ else
   fi
 
   print_progress "Installing ble.sh..."
-  TMPDIR=$(mktemp -d)
-  git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git "$TMPDIR/ble.sh"
-  make -C "$TMPDIR/ble.sh" install PREFIX="$HOME/.local"
-  rm -rf "$TMPDIR"
+  tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-blesh.XXXXXX")
+  trap 'rm -rf "$tmp_dir"' 0 HUP INT TERM
+  git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git "$tmp_dir/ble.sh"
+  make -C "$tmp_dir/ble.sh" install PREFIX="$HOME/.local"
+  rm -rf "$tmp_dir"
+  trap - 0 HUP INT TERM
   track_change
 fi
 

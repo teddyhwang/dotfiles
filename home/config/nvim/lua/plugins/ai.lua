@@ -26,7 +26,7 @@ return {
             cmd = {
               "sh",
               "-c",
-              'command -v devx >/dev/null && export OPENAI_API_KEY=$(devx llm-gateway print-token --key); exec /opt/homebrew/bin/opencode "$@"',
+              'if command -v devx >/dev/null 2>&1; then OPENAI_API_KEY=$(devx llm-gateway print-token --key) || exit; export OPENAI_API_KEY; fi; exec opencode "$@"',
               "sh",
             },
           },

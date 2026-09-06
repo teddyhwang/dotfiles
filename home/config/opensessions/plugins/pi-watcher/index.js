@@ -6,10 +6,17 @@ const POLL_MS = 2000;
 const SESSION_ROOT = path.join(process.env.HOME || '', '.pi', 'agent', 'sessions');
 const MAX_FILES_PER_DIR = 6;
 const TAIL_BYTES = 128 * 1024;
+const COMMAND_TIMEOUT_MS = 1000;
+const COMMAND_MAX_BUFFER = 4 * 1024 * 1024;
 
 function run(cmd, args) {
   try {
-    return execFileSync(cmd, args, { encoding: 'utf8' });
+    return execFileSync(cmd, args, {
+      encoding: 'utf8',
+      timeout: COMMAND_TIMEOUT_MS,
+      maxBuffer: COMMAND_MAX_BUFFER,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
   } catch {
     return '';
   }
@@ -114,11 +121,11 @@ function findPiDescendants(rootPid, procSnapshot) {
 }
 
 function readSessionHeader(filePath) {
+  let fd;
   try {
-    const fd = fs.openSync(filePath, 'r');
+    fd = fs.openSync(filePath, 'r');
     const buf = Buffer.alloc(4096);
     const bytes = fs.readSync(fd, buf, 0, buf.length, 0);
-    fs.closeSync(fd);
     const firstLine = buf.toString('utf8', 0, bytes).split('\n')[0];
     if (!firstLine) return null;
     const obj = JSON.parse(firstLine);
@@ -126,6 +133,8 @@ function readSessionHeader(filePath) {
     return { cwd: obj.cwd, cwdReal: realpathSafe(obj.cwd), id: obj.id };
   } catch {
     return null;
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
   }
 }
 
@@ -170,14 +179,14 @@ function collectCandidatesByRealpath() {
 }
 
 function parseSessionStatus(filePath) {
+  let fd;
   try {
     const stat = fs.statSync(filePath);
     const size = stat.size;
     const start = Math.max(0, size - TAIL_BYTES);
-    const fd = fs.openSync(filePath, 'r');
+    fd = fs.openSync(filePath, 'r');
     const buf = Buffer.alloc(size - start);
     fs.readSync(fd, buf, 0, buf.length, start);
-    fs.closeSync(fd);
 
     const lines = buf.toString('utf8').split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
@@ -208,7 +217,11 @@ function parseSessionStatus(filePath) {
         return { status: 'running', ts: Date.parse(obj.timestamp) || stat.mtimeMs };
       }
     }
-  } catch {}
+  } catch {
+    return { status: 'idle', ts: Date.now() };
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
 
   return { status: 'idle', ts: Date.now() };
 }

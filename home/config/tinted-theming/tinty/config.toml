@@ -20,7 +20,7 @@ supported-systems = ["base16", "base24"]
 name = "tinted-fzf"
 path = "https://github.com/tinted-theming/tinted-fzf"
 supported-systems = ["base16", "base24"]
-hook = ". %f"
+hook = '. "$TINTY_THEME_FILE_PATH"'
 themes-dir = "sh"
 
 [[items]]
@@ -28,25 +28,25 @@ name = "base16-btop"
 path = "https://git.sr.ht/~blueingreen/base16-btop"
 themes-dir = "colors"
 supported-systems = ["base16"]
-hook = "command ln -snf %f ~/.config/btop/themes/current.theme && pkill -SIGUSR2 btop"
+hook = 'command ln -snf "$TINTY_THEME_FILE_PATH" "$HOME/.config/btop/themes/current.theme" && pkill -SIGUSR2 btop'
 
 [[items]]
 name = "tinted-shell"
 path = "https://github.com/tinted-theming/tinted-shell"
 themes-dir = "scripts"
 supported-systems = ["base16", "base24"]
-hook = ". %f && tinty-herdr-hook %f"
+hook = '. "$TINTY_THEME_FILE_PATH" && tinty-herdr-hook "$TINTY_THEME_FILE_PATH"'
 
 [[items]]
 name = "base16-opencode"
 path = "https://github.com/scaryrawr/base16-opencode"
 themes-dir = "themes"
 supported-systems = ["base16", "base24"]
-hook = 'tinty-opencode-hook %f'
+hook = 'tinty-opencode-hook "$TINTY_THEME_FILE_PATH"'
 
 [[items]]
 name = "tinted-zed"
 path = "https://github.com/tinted-theming/tinted-zed"
 themes-dir = "themes"
 supported-systems = ["base16", "base24"]
-hook = "cp -f \"$TINTY_THEME_FILE_PATH\" ~/.config/zed/themes/"
+hook = 'cp -f "$TINTY_THEME_FILE_PATH" "$HOME/.config/zed/themes/"'

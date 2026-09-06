@@ -1,7 +1,9 @@
 #!/bin/sh
 
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
+DOTFILES_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd -P)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
@@ -12,18 +14,20 @@ if [ -d "$ZINIT_HOME" ]; then
   print_info "zinit is installed"
 else
   print_progress "Installing zinit..."
-  mkdir -p "$(dirname "$ZINIT_HOME")"
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+  mkdir -p "$(dirname -- "$ZINIT_HOME")"
+  git clone --depth 1 https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
   track_change
 fi
 
-if [ -d ~/.zsh/completions ]; then
-  print_info "Custom completions added"
-else
-  print_progress "Adding custom completions..."
-  mkdir -p ~/.zsh/completions
-  cp "${DOTFILES_DIR}/home/completions"/* ~/.zsh/completions/.
-  track_change
-fi
+mkdir -p "$HOME/.zsh/completions"
+for completion in "$DOTFILES_DIR"/home/completions/*; do
+  [ -f "$completion" ] || continue
+  destination="$HOME/.zsh/completions/$(basename -- "$completion")"
+  if ! cmp -s "$completion" "$destination"; then
+    print_progress "Installing $(basename -- "$completion")..."
+    cp "$completion" "$destination"
+    track_change
+  fi
+done
 
 print_conditional_success "Zsh"

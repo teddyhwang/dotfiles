@@ -1,7 +1,9 @@
 #!/bin/sh
 
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
+DOTFILES_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd -P)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
@@ -36,6 +38,11 @@ fi
 
 if ! jq_bin=$(find_executable jq); then
   print_error "jq is required to verify Herdr plugins"
+  exit 1
+fi
+
+if [ ! -r "$lazy_lock" ]; then
+  print_error "Neovim lockfile is missing: $lazy_lock"
   exit 1
 fi
 

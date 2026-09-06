@@ -1,91 +1,123 @@
 #!/bin/sh
 
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-DOTFILES_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
+DOTFILES_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd -P)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
-# Ensure Homebrew is installed
+# Ensure Homebrew is installed and available in this process.
+# shellcheck source=brew.sh
 . "${SCRIPT_DIR}/brew.sh"
 
-if ! command -v brew >/dev/null 2>&1; then
-  if [ -f "/usr/local/bin/brew" ]; then
-    BREW_BIN="/usr/local/bin/brew"
-  else
-    BREW_BIN="/opt/homebrew/bin/brew"
-  fi
-  print_progress "Installing Brew packages..."
-  "$BREW_BIN" bundle
-  "$("$BREW_BIN" --prefix)/opt/fzf/install" --all
-else
-  BREW_BIN=$(command -v brew)
-  print_info "Brew bundled"
+# Codex may be managed by npm (including on this workstation). Do not let
+# Homebrew fail on the existing /opt/homebrew/bin/codex artifact; fresh systems
+# without Codex still install the cask declared in Brewfile.
+if command -v codex >/dev/null 2>&1 && ! "$BREW_BIN" list --cask codex >/dev/null 2>&1; then
+  case " ${HOMEBREW_BUNDLE_CASK_SKIP:-} " in
+    *" codex "*) ;;
+    *) HOMEBREW_BUNDLE_CASK_SKIP="${HOMEBREW_BUNDLE_CASK_SKIP:+$HOMEBREW_BUNDLE_CASK_SKIP }codex" ;;
+  esac
+  export HOMEBREW_BUNDLE_CASK_SKIP
+  print_info "Codex is managed outside Homebrew; skipping its cask"
 fi
 
-# setup.sh depends on Herdr after this script. `brew bundle` above only runs
-# during a fresh Homebrew install, so also enforce this formula on existing
-# Homebrew installations.
-if ! "$BREW_BIN" list --formula herdr >/dev/null 2>&1; then
-  print_progress "Installing Herdr..."
-  "$BREW_BIN" install herdr
+# Homebrew 6 requires explicit trust for third-party tap content. Trust only
+# the exact artifacts declared here, never each tap's present and future code.
+if "$BREW_BIN" command trust >/dev/null 2>&1; then
+  "$BREW_BIN" trust --formula \
+    airbytehq/tap/abctl \
+    felixkratz/formulae/borders \
+    shopify/shopify/ejson \
+    shopify/shopify/ejson2env \
+    tinted-theming/tinted/tinty \
+    tw93/tap/mole >/dev/null
+  "$BREW_BIN" trust --cask epk/epk/font-sf-mono-nerd-font >/dev/null
+fi
+
+print_progress "Installing Brewfile dependencies..."
+if "$BREW_BIN" bundle check --no-upgrade --file "$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
+  print_info "Brewfile dependencies are installed"
+else
+  # A setup run should install missing dependencies, not unexpectedly upgrade
+  # the entire workstation. Upgrades remain an explicit maintenance action.
+  "$BREW_BIN" bundle install --no-upgrade --file "$DOTFILES_DIR/Brewfile"
+  if ! "$BREW_BIN" bundle check --no-upgrade --file "$DOTFILES_DIR/Brewfile"; then
+    print_error "Homebrew could not satisfy every Brewfile dependency"
+    exit 1
+  fi
   track_change
-else
-  print_info "Herdr is installed"
 fi
 
-if [ -d ~/Library/Application\ Support/Amethyst/ ]; then
-  if ! [ -f ~/Library/Preferences/com.amethyst.Amethyst.plist ]; then
+fzf_install="$("$BREW_BIN" --prefix fzf 2>/dev/null)/install"
+if [ -x "$fzf_install" ]; then
+  "$fzf_install" --key-bindings --completion --no-update-rc >/dev/null
+fi
+
+if ! command -v herdr >/dev/null 2>&1; then
+  print_error "Herdr is listed in Brewfile but is unavailable after installation"
+  exit 1
+fi
+
+if [ -d "$HOME/Library/Application Support/Amethyst" ]; then
+  if [ ! -f "$HOME/Library/Preferences/com.amethyst.Amethyst.plist" ]; then
     print_progress "Copying Amethyst config file..."
-    cp -rf "${DOTFILES_DIR}/apps/amethyst/com.amethyst.Amethyst.plist" ~/Library/Preferences/com.amethyst.Amethyst.plist
+    cp "$DOTFILES_DIR/apps/amethyst/com.amethyst.Amethyst.plist" "$HOME/Library/Preferences/com.amethyst.Amethyst.plist"
     track_change
   else
-    print_info "Amethyst config file is copied"
+    print_info "Amethyst config file is installed"
   fi
 
-  if ! [ -f ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js ]; then
+  if [ ! -f "$HOME/Library/Application Support/Amethyst/Layouts/uniform-columns.js" ]; then
     print_progress "Copying Amethyst custom layout file..."
-    cp -rf "${DOTFILES_DIR}/apps/amethyst/uniform-columns.js" ~/Library/Application\ Support/Amethyst/Layouts/uniform-columns.js
+    mkdir -p "$HOME/Library/Application Support/Amethyst/Layouts"
+    cp "$DOTFILES_DIR/apps/amethyst/uniform-columns.js" "$HOME/Library/Application Support/Amethyst/Layouts/uniform-columns.js"
     track_change
   else
-    print_info "Amethyst custom layout file is copied"
+    print_info "Amethyst custom layout is installed"
   fi
 
   print_progress "Symlinking Amethyst YAML config..."
-  validate_and_symlink "${DOTFILES_DIR}/apps/amethyst/amethyst.yml" "$HOME/.amethyst.yml"
+  validate_and_symlink "$DOTFILES_DIR/apps/amethyst/amethyst.yml" "$HOME/.amethyst.yml"
 else
-  print_warning "Amethyst not installed"
+  print_warning "Amethyst is not installed"
 fi
 
-if ! [ -f ~/Library/LaunchAgents/pbcopy.plist ]; then
-  printf "Do you want to setup pbcopy/pbpaste launch agents? (y/N) "
-  read -r response
-  printf "\033[1A\033[2K\033[1A"
-  case "$response" in
-  [Yy] | [Yy][Ee][Ss])
-    print_progress "Copying launch agent config files..."
-    cp "${DOTFILES_DIR}/apps/pbcopy.plist" ~/Library/LaunchAgents/.
-    cp "${DOTFILES_DIR}/apps/pbpaste.plist" ~/Library/LaunchAgents/.
-    launchctl load ~/Library/LaunchAgents/pbcopy.plist
-    launchctl load ~/Library/LaunchAgents/pbpaste.plist
+launch_agents="$HOME/Library/LaunchAgents"
+launch_domain="gui/$(id -u)"
+mkdir -p "$launch_agents"
+
+pbcopy_agent="$launch_agents/pbcopy.plist"
+pbpaste_agent="$launch_agents/pbpaste.plist"
+if [ ! -f "$pbcopy_agent" ] || [ ! -f "$pbpaste_agent" ]; then
+  if confirm "Do you want to set up loopback-only pbcopy/pbpaste launch agents?"; then
+    print_progress "Installing pbcopy/pbpaste launch agents..."
+    cp "$DOTFILES_DIR/apps/pbcopy.plist" "$pbcopy_agent"
+    cp "$DOTFILES_DIR/apps/pbpaste.plist" "$pbpaste_agent"
+    launchctl bootout "$launch_domain" "$pbcopy_agent" 2>/dev/null || true
+    launchctl bootout "$launch_domain" "$pbpaste_agent" 2>/dev/null || true
+    launchctl bootstrap "$launch_domain" "$pbcopy_agent"
+    launchctl bootstrap "$launch_domain" "$pbpaste_agent"
     track_change
-    ;;
-  *)
+  else
     print_warning "Skipping launch agent setup"
-    ;;
-  esac
+  fi
 else
-  print_info "launch agent config files are copied"
+  print_info "pbcopy/pbpaste launch agents are installed"
 fi
 
 # Herdr tab auto-naming. hypr/autostart.lua starts this on Linux; launchd is the
 # equivalent here. Reload whenever the plist changes so edits take effect.
-herdr_agent=~/Library/LaunchAgents/herdr-tab-autoname.plist
-if ! cmp -s "${DOTFILES_DIR}/apps/herdr-tab-autoname.plist" "$herdr_agent"; then
+herdr_agent="$launch_agents/herdr-tab-autoname.plist"
+if ! cmp -s "$DOTFILES_DIR/apps/herdr-tab-autoname.plist" "$herdr_agent"; then
   print_progress "Installing herdr-tab-autoname launch agent..."
-  cp "${DOTFILES_DIR}/apps/herdr-tab-autoname.plist" "$herdr_agent"
-  launchctl unload "$herdr_agent" 2>/dev/null
-  launchctl load "$herdr_agent"
+  cp "$DOTFILES_DIR/apps/herdr-tab-autoname.plist" "$herdr_agent"
+  launchctl bootout "$launch_domain" "$herdr_agent" 2>/dev/null || true
+  launchctl bootstrap "$launch_domain" "$herdr_agent"
   track_change
 else
   print_info "herdr-tab-autoname launch agent is installed"
 fi
+
+print_conditional_success "macOS packages and services"

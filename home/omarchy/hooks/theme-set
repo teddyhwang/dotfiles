@@ -1,6 +1,9 @@
 #!/bin/bash
-# Omarchy theme name is passed as $1
-OMARCHY_THEME="$1"
+
+set -euo pipefail
+
+# Omarchy theme name is passed as $1.
+OMARCHY_THEME="${1:-}"
 
 # Map Omarchy themes to base16 tinty themes
 case "$OMARCHY_THEME" in
@@ -75,6 +78,7 @@ esac
 
 tinty apply "$TINTY_THEME"
 # Omarchy 4 moved the current theme from ~/.config/omarchy to ~/.local/state/omarchy.
-ln -snf ~/.local/state/omarchy/current/theme/btop.theme ~/.config/btop/themes/current.theme
+mkdir -p "$HOME/.config/btop/themes"
+ln -snf "$HOME/.local/state/omarchy/current/theme/btop.theme" "$HOME/.config/btop/themes/current.theme"
 # btop may not be running; a missed signal is not a hook failure.
 pkill -SIGUSR2 btop || true

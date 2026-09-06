@@ -1,16 +1,27 @@
 #!/usr/bin/env bash
 
-_brew_cache="$HOME/.cache/brew_shellenv.sh"
+_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}"
+_brew_cache="$_cache_dir/brew_shellenv.sh"
 if [[ -x /opt/homebrew/bin/brew ]]; then
   _brew_bin=/opt/homebrew/bin/brew
 elif [[ -x /usr/local/bin/brew ]]; then
   _brew_bin=/usr/local/bin/brew
+else
+  _brew_bin=
 fi
+
 if [[ -n "$_brew_bin" ]]; then
-  if [[ ! -f "$_brew_cache" ]] || [[ "$_brew_bin" -nt "$_brew_cache" ]]; then
-    "$_brew_bin" shellenv >"$_brew_cache" 2>/dev/null
+  if [[ ! -r "$_brew_cache" ]] || [[ "$_brew_bin" -nt "$_brew_cache" ]]; then
+    mkdir -p "$_cache_dir"
+    _brew_tmp=$(mktemp "$_cache_dir/brew_shellenv.XXXXXX")
+    if "$_brew_bin" shellenv >"$_brew_tmp" 2>/dev/null; then
+      mv -f "$_brew_tmp" "$_brew_cache"
+    else
+      rm -f "$_brew_tmp"
+    fi
+    unset _brew_tmp
   fi
-  . "$_brew_cache"
+  [[ -r "$_brew_cache" ]] && . "$_brew_cache"
 fi
 unset _brew_bin _brew_cache
 
@@ -23,26 +34,47 @@ export FZF_TMUX_OPTS='-p 80%,60%'
 export BUN_INSTALL="$HOME/.bun"
 export PNPM_HOME="$HOME/.local/share/pnpm"
 
-[[ -d "$HOME/.local/bin" ]] && PATH="$HOME/.local/bin:$PATH"
-[[ -d "$HOME/.local/share/nvim/mason/bin" ]] && PATH="$HOME/.local/share/nvim/mason/bin:$PATH"
-[[ -d "$HOME/go/bin" ]] && PATH="$HOME/go/bin:$PATH"
-[[ -d "$HOME/.cargo/bin" ]] && PATH="$HOME/.cargo/bin:$PATH"
-[[ -d "$HOME/.opencode/bin" ]] && PATH="$HOME/.opencode/bin:$PATH"
-[[ -d $BUN_INSTALL ]] && PATH="$BUN_INSTALL/bin:$PATH"
-[[ -d "$PNPM_HOME" ]] && PATH="$PNPM_HOME:$PATH"
-[[ -d "$HOME/.gem/ruby/4.0.0/bin" ]] && PATH="$HOME/.gem/ruby/4.0.0/bin:$PATH"
+_path_prepend() {
+  [[ -d "$1" ]] || return 0
+  case ":$PATH:" in
+    *":$1:"*) ;;
+    *) PATH="$1${PATH:+:$PATH}" ;;
+  esac
+}
 
+_path_prepend "$HOME/.local/bin"
+_path_prepend "$HOME/.local/share/nvim/mason/bin"
+_path_prepend "$HOME/go/bin"
+_path_prepend "$HOME/.cargo/bin"
+_path_prepend "$HOME/.opencode/bin"
+_path_prepend "$BUN_INSTALL/bin"
+_path_prepend "$PNPM_HOME"
+_path_prepend "$HOME/.gem/ruby/4.0.0/bin"
+unset -f _path_prepend
 export PATH
 
-if [[ -z "$XDG_CONFIG_HOME" ]]; then
+if [[ -z "${XDG_CONFIG_HOME:-}" ]]; then
   export XDG_CONFIG_HOME="$HOME/.config"
 fi
 
 if command -v vivid &>/dev/null; then
-  _vivid_cache="$HOME/.cache/vivid_ls_colors"
-  if [[ ! -f "$_vivid_cache" ]] || [[ "$(command -v vivid)" -nt "$_vivid_cache" ]]; then
-    vivid generate molokai >"$_vivid_cache" 2>/dev/null
+  _vivid_bin=$(command -v vivid)
+  _vivid_cache="$_cache_dir/vivid_ls_colors"
+  if [[ ! -r "$_vivid_cache" ]] || [[ "$_vivid_bin" -nt "$_vivid_cache" ]]; then
+    mkdir -p "$_cache_dir"
+    _vivid_tmp=$(mktemp "$_cache_dir/vivid_ls_colors.XXXXXX")
+    if vivid generate molokai >"$_vivid_tmp" 2>/dev/null; then
+      mv -f "$_vivid_tmp" "$_vivid_cache"
+    else
+      rm -f "$_vivid_tmp"
+    fi
+    unset _vivid_tmp
   fi
-  export LS_COLORS="$(<"$_vivid_cache")"
-  unset _vivid_cache
+  if [[ -r "$_vivid_cache" ]]; then
+    LS_COLORS=$(<"$_vivid_cache")
+    export LS_COLORS
+  fi
+  unset _vivid_bin _vivid_cache
 fi
+
+unset _cache_dir

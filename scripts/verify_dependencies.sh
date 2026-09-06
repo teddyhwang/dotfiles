@@ -1,6 +1,8 @@
 #!/bin/sh
 
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 # shellcheck source=scripts/utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 

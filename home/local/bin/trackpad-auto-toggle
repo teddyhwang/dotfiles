@@ -8,12 +8,15 @@
 #     with non-legacy parsers. Use eval."), so this goes through hl.device().
 #   - The device name comes from omarchy-hw-touchpad rather than being hardcoded.
 
-command -v socat >/dev/null 2>&1 || exit 0
+for command_name in socat omarchy-hw-touchpad hyprctl; do
+  command -v "$command_name" >/dev/null 2>&1 || exit 0
+done
 
 DEVICE=$(omarchy-hw-touchpad 2>/dev/null)
 [ -n "$DEVICE" ] || exit 0
+DEVICE_ESCAPED=$(printf '%s' "$DEVICE" | tr '\n' ' ' | sed 's/\\/\\\\/g; s/"/\\"/g')
 
-SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+SOCKET="${XDG_RUNTIME_DIR:-}/hypr/${HYPRLAND_INSTANCE_SIGNATURE:-}/.socket2.sock"
 [ -S "$SOCKET" ] || exit 0
 
 # Written by omarchy-toggle-touchpad. When it exists the touchpad was turned
@@ -26,7 +29,7 @@ set_touchpad() {
   [ "$state" = "$1" ] && return
   [ -f "$MANUAL_OFF" ] && return
   state="$1"
-  hyprctl eval "hl.device({ name = \"$DEVICE\", enabled = $1 })" >/dev/null 2>&1
+  hyprctl eval "hl.device({ name = \"$DEVICE_ESCAPED\", enabled = $1 })" >/dev/null 2>&1
 }
 
 socat -U - UNIX-CONNECT:"$SOCKET" 2>/dev/null | while IFS= read -r line; do

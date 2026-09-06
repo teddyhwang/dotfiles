@@ -35,16 +35,13 @@ return {
           return
         end
 
-        -- URL encode the path
-        local encoded_path = vim.fn.shellescape(relative_path)
-        encoded_path = encoded_path:gsub("^'", ""):gsub("'$", "")
-        encoded_path = encoded_path:gsub("/", "%%2F")
-
+        local encoded_path = vim.uri_encode(relative_path, "rfc3986")
         local url = "https://stewardlens.shopify.io/search?q=" .. encoded_path
-
-        -- Open in browser (macOS)
-        local cmd = "open --background " .. vim.fn.shellescape(url)
-        vim.fn.system(cmd)
+        local process, err = vim.ui.open(url)
+        if not process then
+          vim.notify("Could not open Stewardlens: " .. err, vim.log.levels.ERROR)
+          return
+        end
 
         vim.notify("Opening in Stewardlens: " .. relative_path, vim.log.levels.INFO)
       end

@@ -1,7 +1,8 @@
+# shellcheck shell=bash
 # If not running interactively, don't do anything (leave this at the top of this file)
 [[ $- != *i* ]] && return
 
-[[ -f "$HOME/.local/share/../bin/env" ]] && . "$HOME/.local/share/../bin/env"
+[[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
 
 [[ -f ~/.local/share/blesh/ble.sh ]] && source ~/.local/share/blesh/ble.sh --noattach
 set -o vi
@@ -45,5 +46,9 @@ fi
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
-# Added by tec agent
-[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && [[ $- == *i* ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init bash)"
+# Added by tec agent.
+_tec_init="$HOME/.local/state/tec/profiles/base/current/global/init"
+if [[ -x "$_tec_init" ]]; then
+  eval "$("$_tec_init" bash)"
+fi
+unset _tec_init

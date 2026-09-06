@@ -32,7 +32,11 @@
 	rmdir = true
 
 [push]
-	default = matching
+	default = simple
+	autoSetupRemote = true
+
+[fetch]
+	prune = true
 
 [format]
 	pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset

@@ -37,10 +37,9 @@ require("lazy").setup({
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
   install = { colorscheme = { "tokyonight", "habamax" } },
-  checker = {
-    enabled = true, -- check for plugin updates periodically
-    notify = false, -- notify on update
-  }, -- automatically check for plugin updates
+  -- Keep startup deterministic and avoid background Git/network work. Updates
+  -- are explicit (`:Lazy update`) and the resulting lockfile is committed.
+  checker = { enabled = false },
   ui = {
     border = "rounded",
   },

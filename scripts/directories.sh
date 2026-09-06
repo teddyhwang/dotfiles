@@ -1,6 +1,8 @@
 #!/bin/sh
 
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+set -eu
+
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
@@ -23,7 +25,7 @@ add_directory_in_home '.local/bin'
 
 if ! [ -d /usr/local/bin ]; then
   print_progress "Adding directory /usr/local/bin..."
-  sudo mkdir /usr/local/bin
+  sudo mkdir -p /usr/local/bin
   track_change
 else
   print_info "/usr/local/bin/ exists"

@@ -1,6 +1,9 @@
-[[ -f ~/.shared/env ]] && . ~/.shared/env
-
-[[ -f ~/.bashrc ]] && . ~/.bashrc
-
-# Added by tec agent
-[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init bash)"
+# shellcheck shell=bash
+# Keep login and non-login interactive shells on the same initialization path.
+# Non-interactive login shells still need the shared environment, but should
+# not pay for interactive plugins.
+if [[ $- == *i* ]]; then
+  [[ -f "$HOME/.bashrc" ]] && . "$HOME/.bashrc"
+else
+  [[ -f "$HOME/.shared/env" ]] && . "$HOME/.shared/env"
+fi

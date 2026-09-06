@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-[[ -n "$_shared_init_loaded" ]] && return
+[[ -n "${_shared_init_loaded:-}" ]] && return
 _shared_init_loaded=1
 
 if [[ -n "$ZSH_VERSION" ]]; then
@@ -10,20 +10,45 @@ else
 fi
 _shared_init_regen=0
 
-if [[ ! -f "$_shared_init_cache" ]]; then
+if [[ ! -f "$_shared_init_cache" ]] || [[ "$HOME/.shared/init" -nt "$_shared_init_cache" ]]; then
   _shared_init_regen=1
 elif [[ -n "$ZSH_VERSION" ]]; then
   eval '_stale=( $_shared_init_cache(N.mh+24) )'
+  # _stale is assigned by the zsh-only eval above.
+  # shellcheck disable=SC2154
   ((${#_stale})) && _shared_init_regen=1
   unset _stale
 elif [[ -n "$BASH_VERSION" ]] && [[ $(find "$_shared_init_cache" -mmin +1440 2>/dev/null) ]]; then
   _shared_init_regen=1
 fi
 
-_shared_init_regen_cache() {
+_shared_init_regen_cache() (
   local _cache="$1" _shell="$2"
-  local _tmp="${_cache}.tmp.$$"
-  : >"$_tmp"
+  local _cache_dir _cache_name _lock _tmp=""
+  _cache_dir=$(dirname "$_cache")
+  _cache_name=$(basename "$_cache")
+  _lock="${_cache}.lock"
+
+  # Prevent a burst of concurrently-starting shells from all running the same
+  # generators. Recover locks and temporary files left by interrupted shells.
+  find "$_lock" -prune -mmin +10 -exec rmdir {} \; 2>/dev/null || true
+  if ! mkdir "$_lock" 2>/dev/null; then
+    # A first-ever shell has no stale cache to use. Wait briefly for the shell
+    # holding the lock rather than attempting to source a file mid-rename.
+    if [[ ! -f "$_cache" ]]; then
+      local _attempt=0
+      while [[ ! -f "$_cache" && "$_attempt" -lt 200 ]]; do
+        sleep 0.05
+        _attempt=$((_attempt + 1))
+      done
+      [[ -f "$_cache" ]] || exit 1
+    fi
+    exit 0
+  fi
+  trap '[[ -n "$_tmp" ]] && rm -f "$_tmp"; rmdir "$_lock" 2>/dev/null || true' 0
+  find "$_cache_dir" -maxdepth 1 -name "${_cache_name}.tmp.*" -mmin +10 -delete 2>/dev/null || true
+
+  _tmp=$(mktemp "${_cache}.tmp.XXXXXX") || exit 1
 
   # Several of the generators below are mise shims. A shim that has to install
   # its tool first prints progress on stdout, which lands in the cache and is
@@ -48,15 +73,19 @@ _shared_init_regen_cache() {
   if command -v atuin &>/dev/null; then
     atuin init "$_shell" --disable-up-arrow >>"$_tmp" 2>/dev/null
   fi
+  if command -v tinty &>/dev/null; then
+    tinty generate-completion "$_shell" >>"$_tmp" 2>/dev/null
+  fi
   if command -v shadowenv &>/dev/null; then
-    "$(which shadowenv)" init "$_shell" >>"$_tmp" 2>/dev/null
+    "$(command -v shadowenv)" init "$_shell" >>"$_tmp" 2>/dev/null
   fi
   if command -v try &>/dev/null; then
     command try init >>"$_tmp" 2>/dev/null
   fi
 
-  mv -f "$_tmp" "$_cache"
-}
+  mv -f "$_tmp" "$_cache" || exit 1
+  _tmp=""
+)
 
 if [[ "$_shared_init_regen" == "1" ]]; then
   mkdir -p "$HOME/.cache"
@@ -66,11 +95,17 @@ if [[ "$_shared_init_regen" == "1" ]]; then
   if [[ -f "$_shared_init_cache" ]]; then
     # Stale cache exists — use it now, regen in background for next shell
     source "$_shared_init_cache"
-    _shared_init_regen_cache "$_shared_init_cache" "$_shell" &!
+    _shared_init_regen_cache "$_shared_init_cache" "$_shell" </dev/null >/dev/null 2>&1 &
+    _shared_init_pid=$!
+    disown "$_shared_init_pid" 2>/dev/null || true
+    unset _shared_init_pid
   else
-    # No cache at all — must regen synchronously
-    _shared_init_regen_cache "$_shared_init_cache" "$_shell"
-    source "$_shared_init_cache"
+    # No cache at all — must regen synchronously.
+    if _shared_init_regen_cache "$_shared_init_cache" "$_shell"; then
+      source "$_shared_init_cache"
+    else
+      printf 'warning: could not generate shell initialization cache\n' >&2
+    fi
   fi
   unset _shell
 else

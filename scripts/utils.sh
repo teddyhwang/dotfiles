@@ -1,12 +1,22 @@
 #!/bin/sh
 
-# Portable realpath for sh compatibility
+# Portable realpath for sh compatibility.
 get_realpath() {
   path="$1"
   if command -v realpath >/dev/null 2>&1; then
     realpath "$path"
+  elif [ -L "$path" ]; then
+    link_target=$(readlink "$path")
+    case "$link_target" in
+      /*) get_realpath "$link_target" ;;
+      *) get_realpath "$(dirname -- "$path")/$link_target" ;;
+    esac
+  elif [ -d "$path" ]; then
+    (CDPATH='' cd -- "$path" && pwd -P)
   else
-    ( cd "$(dirname "$path")" && pwd -P )
+    directory=$(dirname -- "$path")
+    filename=$(basename -- "$path")
+    (CDPATH='' cd -- "$directory" && printf '%s/%s\n' "$(pwd -P)" "$filename")
   fi
 }
 
@@ -69,35 +79,64 @@ print_conditional_success() {
   reset_changes
 }
 
+confirm() {
+  prompt="$1"
+  response=""
+  printf "%s (y/N) " "$prompt"
+  if IFS= read -r response </dev/tty 2>/dev/null; then
+    printf "\033[1A\033[2K"
+  else
+    IFS= read -r response 2>/dev/null || response=""
+    printf "\n"
+  fi
+  case "$response" in
+    [Yy] | [Yy][Ee][Ss]) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # Symlink utilities
 symlink() {
-  ln -nsf "$1" "$2"
+  ln -nsf -- "$1" "$2"
 }
 
 validate_and_symlink() {
   source="$1"
   target="$2"
-  file=$(basename "$source")
+  file=$(basename -- "$source")
 
   if [ "$file" = ".DS_Store" ]; then
     print_info "Ignoring system file."
-  elif [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+    return 0
+  fi
+
+  if [ ! -e "$source" ] && [ ! -L "$source" ]; then
+    print_error "Cannot symlink missing source: $source"
+    return 1
+  fi
+
+  case "$target" in
+    "$HOME" | "$HOME"/*) ;;
+    *)
+      print_error "Refusing to manage a symlink outside HOME: $target"
+      return 1
+      ;;
+  esac
+
+  mkdir -p -- "$(dirname -- "$target")"
+
+  if [ -L "$target" ] && [ "$(get_realpath "$target")" = "$(get_realpath "$source")" ]; then
     print_info "$target is symlinked to your dotfiles."
-  elif [ -e "$target" ]; then
+  elif [ -e "$target" ] || [ -L "$target" ]; then
     print_warning "$target exists and differs from your dotfile."
-    printf "Do you want to replace it? (y/N) "
-    read -r response
-    printf "\033[1A\033[2K"
-    case "$response" in
-      [Yy]|[Yy][Ee][Ss])
-        print_progress "Replacing existing file..."
-        rm -rf "$target" && symlink "$source" "$target"
-        track_change
-        ;;
-      *)
-        print_info "Keeping existing $target"
-        ;;
-    esac
+    if confirm "Do you want to replace it?"; then
+      print_progress "Replacing existing file..."
+      rm -rf -- "$target"
+      symlink "$source" "$target"
+      track_change
+    else
+      print_info "Keeping existing $target"
+    fi
   else
     print_progress "$target does not exist. Symlinking to dotfile."
     symlink "$source" "$target"

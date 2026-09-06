@@ -25,7 +25,7 @@ tinty_source_shell_theme() {
 
 theme() {
   local selected
-  [ -f $TINTY_FZF ] && . $TINTY_FZF
+  [ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
   selected=$(tinty list | fzf-tmux -p 70%,70% --preview 'tinty info {}')
   if [[ -n "$selected" ]]; then
     tinty_source_shell_theme apply "$selected"
@@ -40,8 +40,12 @@ update() {
 }
 
 tmux() {
-  case $1 in
+  case ${1:-} in
   start)
+    if [[ -z "${2:-}" ]]; then
+      echo "Usage: tmux start <session-name>" >&2
+      return 2
+    fi
     if [[ -n "$TMUX" ]]; then
       command tmux new-session -d -s "$2"
       command tmux rename-window -t "$2:0" Terminal
@@ -64,20 +68,39 @@ tmux() {
 }
 
 killport() {
-  lsof -i "tcp:$1" | awk 'NR!=1 {print $2}' | xargs kill -9
+  local port="${1:-}" pids pid
+  case "$port" in
+  '' | *[!0-9]*)
+    echo "Usage: killport <port>" >&2
+    return 2
+    ;;
+  esac
+  if ((10#$port < 1 || 10#$port > 65535)); then
+    echo "killport: port must be between 1 and 65535" >&2
+    return 2
+  fi
+
+  pids=$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null) || {
+    echo "killport: no process is listening on port $port" >&2
+    return 1
+  }
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] && kill -TERM "$pid"
+  done <<<"$pids"
 }
 
 branch() {
+  local selected_branch
   if git rev-parse --git-dir &>/dev/null; then
-    branch=$(git for-each-ref --color --sort=-committerdate \
+    selected_branch=$(git for-each-ref --color --sort=-committerdate \
       refs/heads/ \
       --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' |
       fzf --ansi |
       cut -f1 -d'|' |
       xargs)
 
-    if [[ -n "$branch" ]]; then
-      git checkout "$branch"
+    if [[ -n "$selected_branch" ]]; then
+      git checkout "$selected_branch"
     fi
   else
     echo 'ERROR: Not a git repository'
@@ -85,16 +108,17 @@ branch() {
 }
 
 cob() {
+  local selected_branch
   if git rev-parse --git-dir &>/dev/null; then
-    branch=$(git branch --color --sort=-committerdate \
+    selected_branch=$(git branch --color --sort=-committerdate \
       --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) | (%(color:green)%(committerdate:relative)%(color:reset)) %(color:bold)%(authorname)%(color:reset) - %(contents:subject)' -r |
       fzf --ansi |
-      sed "s/origin\\///g" |
+      sed 's|origin/||' |
       cut -f1 -d'|' |
       xargs)
 
-    if [[ -n "$branch" ]]; then
-      git checkout "$branch"
+    if [[ -n "$selected_branch" ]]; then
+      git checkout "$selected_branch"
     fi
   else
     echo 'ERROR: Not a git repository'
@@ -102,9 +126,10 @@ cob() {
 }
 
 upstream() {
-  branch=$(git rev-parse --abbrev-ref HEAD)
-  if [[ -n "$branch" ]]; then
-    git branch --set-upstream-to="origin/$branch" "$branch"
+  local current_branch
+  current_branch=$(git branch --show-current 2>/dev/null) || return
+  if [[ -n "$current_branch" ]]; then
+    git branch --set-upstream-to="origin/$current_branch" "$current_branch"
   fi
 }
 
@@ -134,78 +159,95 @@ y() {
 }
 
 how() {
-  local input="$*"
-  local escaped_input
-  escaped_input=$(printf '%s' "$input" | jq -Rs .)
+  local input="$*" payload response
 
   if [[ -f /opt/dev/bin/dev ]]; then
-    curl -s https://proxy-shopify-ai.local.shop.dev/v1/chat/completions \
+    payload=$(jq -n --arg content "$input" '{
+      "model": "expensive-but-best",
+      "messages": [
+        {"role": "system", "content": "You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer. Pay attention to proper case sensitivity (uppercase/lowercase)."},
+        {"role": "user", "content": $content}
+      ]
+    }') || return
+    response=$(curl --fail-with-body --silent --show-error \
+      --connect-timeout 5 --max-time 60 \
+      https://proxy-shopify-ai.local.shop.dev/v1/chat/completions \
       -H "Content-Type: application/json" \
-      -d "$(jq -n --argjson content "$escaped_input" '{
-        "model": "expensive-but-best",
-        "messages": [
-          {"role": "system", "content": "You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer. Pay attention to proper case sensitivity (uppercase/lowercase)."},
-          {"role": "user", "content": $content}
-        ]
-      }')" | jq -r '.choices[0].message.content'
+      --data "$payload") || return
+    jq -er '.choices[0].message.content' <<<"$response"
   else
     claude -p "$input" --model haiku --append-system-prompt "You are a concise cheat sheet. Provide ONLY the shortest possible answer - just the command, key combination, or flag needed. No explanations, no context, no formatting. Just the raw answer."
   fi
 }
 
-if command -v tinty &>/dev/null; then
+if command -v tinty &>/dev/null && [[ -n "${BASH_VERSION:-}" ]]; then
   case $- in
   *i*)
-    if [[ -z "$FLOATERM" ]] && [[ -z "$NVIM" ]]; then
+    if [[ -z "${FLOATERM:-}" && -z "${NVIM:-}" ]]; then
       alias tinty=tinty_source_shell_theme
-      if [[ -n "$ZSH_VERSION" ]]; then
-        _tinty_deferred_init() {
-          eval "$(tinty generate-completion zsh)"
-          compdef tinty_source_shell_theme=tinty
-          tinty_source_shell_theme "init" &>/dev/null
-          add-zsh-hook -d precmd _tinty_deferred_init
-          unfunction _tinty_deferred_init
-        }
-        autoload -Uz add-zsh-hook
-        add-zsh-hook precmd _tinty_deferred_init
-      elif [[ -n "$BASH_VERSION" ]]; then
-        eval "$(tinty generate-completion bash)"
+      _tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
+      _tinty_loaded=0
+      for _tinty_script in "$_tinty_data_dir"/*.sh; do
+        [[ -f "$_tinty_script" ]] || continue
+        . "$_tinty_script"
+        _tinty_loaded=1
+      done
+      if [[ "$_tinty_loaded" -eq 0 ]]; then
         tinty_source_shell_theme "init" &>/dev/null
       fi
+      unset _tinty_data_dir _tinty_loaded _tinty_script
     fi
     ;;
   esac
 fi
 
 gwn() {
-  if [[ -z "$1" ]]; then
-    echo "Usage: ga [branch name]"
-    exit 1
+  if [[ -z "${1:-}" ]]; then
+    echo "Usage: gwn <branch-name>" >&2
+    return 2
   fi
 
-  local branch="$1"
-  local base="$(basename "$PWD")"
-  local worktree_path="../${base}--${branch}"
+  local branch base worktree_name worktree_path
+  branch="$1"
+  base="$(basename "$PWD")"
+  worktree_name="${branch//\//-}"
+  worktree_path="../${base}--${worktree_name}"
 
-  git worktree add -b "$branch" "$worktree_path"
-  mise trust "$worktree_path"
-  cd "$worktree_path"
+  git worktree add -b "$branch" "$worktree_path" || return
+  command -v mise &>/dev/null && mise trust "$worktree_path"
+  cd "$worktree_path" || return
 }
 
 gwd() {
-  if gum confirm "Remove worktree and branch?"; then
-    local cwd base branch root
+  local worktree_root primary_worktree current_branch
 
-    cwd="$(pwd)"
-    worktree="$(basename "$cwd")"
+  worktree_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+    echo "gwd: not inside a Git worktree" >&2
+    return 1
+  }
+  primary_worktree=$(git worktree list --porcelain | awk '/^worktree / { sub(/^worktree /, ""); print; exit }')
+  if [[ -z "$primary_worktree" || "$worktree_root" == "$primary_worktree" ]]; then
+    echo "gwd: refusing to remove the primary worktree" >&2
+    return 1
+  fi
+  current_branch=$(git -C "$worktree_root" branch --show-current)
 
-    root="${worktree%%--*}"
-    branch="${worktree#*--}"
+  local prompt="Remove worktree $worktree_root${current_branch:+ and branch $current_branch}?"
+  if command -v gum &>/dev/null; then
+    gum confirm "$prompt" || return 0
+  else
+    local answer
+    printf "%s (y/N) " "$prompt"
+    IFS= read -r answer || return 0
+    case "$answer" in
+    [Yy] | [Yy][Ee][Ss]) ;;
+    *) return 0 ;;
+    esac
+  fi
 
-    if [[ "$root" != "$worktree" ]]; then
-      cd "../$root"
-      git worktree remove "$worktree" --force
-      git branch -D "$branch"
-    fi
+  cd "$primary_worktree" || return
+  git worktree remove "$worktree_root" --force || return
+  if [[ -n "$current_branch" ]]; then
+    git branch -D -- "$current_branch"
   fi
 }

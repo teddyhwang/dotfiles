@@ -35,8 +35,13 @@ esac
 [ -f "$last_target" ] || exit 0
 
 # Count `pane` lines (the only line type that represents real workload).
-new_panes="$(grep -c '^pane	' "$new_file" 2>/dev/null || echo 0)"
-last_panes="$(grep -c '^pane	' "$last_target" 2>/dev/null || echo 0)"
+# grep -c already prints 0 when nothing matches; `|| echo 0` produced "0\n0"
+# and broke the numeric comparison for the empty saves we most need to guard.
+new_panes="$(grep -c '^pane	' "$new_file" 2>/dev/null || true)"
+last_panes="$(grep -c '^pane	' "$last_target" 2>/dev/null || true)"
+case "$new_panes:$last_panes" in
+  *[!0-9:]* | :* | *:) exit 0 ;;
+esac
 
 # Heuristics:
 #   - new save has <= 2 panes (trivial / fresh tmux startup), AND

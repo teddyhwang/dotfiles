@@ -95,9 +95,43 @@ confirm() {
   esac
 }
 
-# Symlink utilities
+# Validate both the spelling and the physical parent before creating anything.
+# Resolving the leaf itself would follow the very symlink we intend to replace.
+validate_home_target() (
+  candidate=$1
+  case "${HOME:-}" in
+    / | '') print_error "Refusing to manage an empty or root HOME"; exit 1 ;;
+    /*) ;;
+    *) print_error "HOME must be an absolute path"; exit 1 ;;
+  esac
+  case "$candidate" in
+    "$HOME"/*) ;;
+    *) print_error "Refusing to manage a symlink outside HOME: $candidate"; exit 1 ;;
+  esac
+  case "$candidate/" in
+    */../* | */./* | *//*)
+      print_error "Refusing an ambiguous target path: $candidate"; exit 1 ;;
+  esac
+  case "$candidate" in
+    */) print_error "Refusing a target with a trailing slash: $candidate"; exit 1 ;;
+  esac
+
+  home_real=$(CDPATH='' cd -- "$HOME" && pwd -P) || exit 1
+  [ "$home_real" != / ] || { print_error "Refusing HOME resolving to root"; exit 1; }
+  parent=$(dirname -- "$candidate")
+  while [ ! -e "$parent" ] && [ ! -L "$parent" ]; do
+    parent=$(dirname -- "$parent")
+  done
+  parent_real=$(CDPATH='' cd -- "$parent" && pwd -P) || exit 1
+  case "$parent_real" in
+    "$home_real" | "$home_real"/*) ;;
+    *) print_error "Refusing a target whose parent escapes HOME: $candidate"; exit 1 ;;
+  esac
+)
+
+# Symlink utilities: never overwrite a path that appeared after validation.
 symlink() {
-  ln -nsf -- "$1" "$2"
+  ln -s -- "$1" "$2"
 }
 
 validate_and_symlink() {
@@ -115,31 +149,35 @@ validate_and_symlink() {
     return 1
   fi
 
-  case "$target" in
-    "$HOME" | "$HOME"/*) ;;
-    *)
-      print_error "Refusing to manage a symlink outside HOME: $target"
-      return 1
-      ;;
-  esac
-
-  mkdir -p -- "$(dirname -- "$target")"
+  validate_home_target "$target" || return 1
+  mkdir -p -- "$(dirname -- "$target")" || return 1
 
   if [ -L "$target" ] && [ "$(get_realpath "$target")" = "$(get_realpath "$source")" ]; then
     print_info "$target is symlinked to your dotfiles."
   elif [ -e "$target" ] || [ -L "$target" ]; then
     print_warning "$target exists and differs from your dotfile."
     if confirm "Do you want to replace it?"; then
-      print_progress "Replacing existing file..."
-      rm -rf -- "$target"
-      symlink "$source" "$target"
+      backup_root="$HOME/.local/state/dotfiles/backups"
+      validate_home_target "$backup_root/entry" || return 1
+      mkdir -p -- "$backup_root" || return 1
+      backup_dir=$(mktemp -d "$backup_root/replaced.XXXXXX") || return 1
+      backup="$backup_dir/$(basename -- "$target")"
+      mv -- "$target" "$backup" || return 1
+      if ! symlink "$source" "$target"; then
+        print_error "Could not create $target; original preserved at $backup"
+        if [ ! -e "$target" ] && [ ! -L "$target" ]; then
+          mv -- "$backup" "$target" || true
+        fi
+        return 1
+      fi
+      print_info "Preserved original at $backup"
       track_change
     else
       print_info "Keeping existing $target"
     fi
   else
     print_progress "$target does not exist. Symlinking to dotfile."
-    symlink "$source" "$target"
+    symlink "$source" "$target" || return 1
     track_change
   fi
 }

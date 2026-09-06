@@ -7,6 +7,9 @@
 [[ -f ~/.local/share/blesh/ble.sh ]] && source ~/.local/share/blesh/ble.sh --noattach
 set -o vi
 
+# Establish tool paths before looking for the prompt or Omarchy integrations.
+[[ -f ~/.shared/env ]] && source ~/.shared/env
+
 # All the default Omarchy aliases and functions
 # (don't mess with these directly, just overwrite them here!)
 # Omarchy 4 ships these under /usr/share/omarchy; ~/.local/share/omarchy is
@@ -18,8 +21,6 @@ else
   command -v starship &> /dev/null && eval "$(starship init bash)"
 fi
 unset _omarchy_bash_rc
-
-[[ -f ~/.shared/env ]] && source ~/.shared/env
 if [[ -n "$DESKTOP_SESSION" ]]; then
   export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/gcr/ssh"
   export SSH_ASKPASS="/usr/lib/seahorse/ssh-askpass"

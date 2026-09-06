@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 _cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}"
-_brew_cache="$_cache_dir/brew_shellenv.sh"
+# Use a new, explicitly POSIX cache: brew otherwise guesses the parent shell
+# and can put Zsh-only syntax in a file later sourced by Bash.
+_brew_cache="$_cache_dir/brew_shellenv.posix.sh"
 if [[ -x /opt/homebrew/bin/brew ]]; then
   _brew_bin=/opt/homebrew/bin/brew
 elif [[ -x /usr/local/bin/brew ]]; then
@@ -14,7 +16,10 @@ if [[ -n "$_brew_bin" ]]; then
   if [[ ! -r "$_brew_cache" ]] || [[ "$_brew_bin" -nt "$_brew_cache" ]]; then
     mkdir -p "$_cache_dir"
     _brew_tmp=$(mktemp "$_cache_dir/brew_shellenv.XXXXXX")
-    if "$_brew_bin" shellenv >"$_brew_tmp" 2>/dev/null; then
+    # shellenv emits nothing when Homebrew already leads PATH. Generate from
+    # a minimal PATH so a nested shell cannot poison future login shells.
+    if PATH=/usr/bin:/bin "$_brew_bin" shellenv sh >"$_brew_tmp" 2>/dev/null &&
+      [[ -s "$_brew_tmp" ]] && sh -n "$_brew_tmp" 2>/dev/null; then
       mv -f "$_brew_tmp" "$_brew_cache"
     else
       rm -f "$_brew_tmp"
@@ -22,6 +27,10 @@ if [[ -n "$_brew_bin" ]]; then
     unset _brew_tmp
   fi
   [[ -r "$_brew_cache" ]] && . "$_brew_cache"
+  if [[ -n "${ZSH_VERSION:-}" && -n "${HOMEBREW_PREFIX:-}" ]]; then
+    typeset -U fpath
+    fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" "${fpath[@]}")
+  fi
 fi
 unset _brew_bin _brew_cache
 

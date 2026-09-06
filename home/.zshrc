@@ -29,7 +29,7 @@ ZVM_INIT_MODE=sourcing
 
 zvm_after_init() {
   [[ -f ~/.fzf.zsh ]] && source ~/.fzf.zsh
-  [[ -f ~/.cache/shared_init_cache.zsh ]] && source ~/.cache/shared_init_cache.zsh
+  [[ -f "${XDG_CACHE_HOME:-$HOME/.cache}/shared_init_cache.zsh" ]] && source "${XDG_CACHE_HOME:-$HOME/.cache}/shared_init_cache.zsh"
   bindkey '^[[Z' autosuggest-accept
   zicdreplay
 }
@@ -205,56 +205,6 @@ fi
 __ruby_env_hook precmd
 __sync_tmux_ssh_env_hook precmd
 
-tinty_source_shell_theme() {
-  local tinty_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
-  local newer_file script
-
-  if [[ "$1" == "init" ]]; then
-    command tinty "$@"
-    while IFS= read -r script; do
-      . "$script"
-    done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh")
-  elif [[ "$1" == "apply" ]]; then
-    newer_file=$(mktemp)
-    command tinty "$@"
-    while IFS= read -r script; do
-      . "$script"
-    done < <(find "$tinty_data_dir" -maxdepth 1 -name "*.sh" -newer "$newer_file")
-    rm -f "$newer_file"
-  else
-    command tinty "$@"
-  fi
-
-  _tinty_rebuild_cache 2>/dev/null
-}
-
-_tinty_rebuild_cache() {
-  local cache="$HOME/.cache/tinty_init_cache.zsh"
-  local data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
-  : >| "$cache"
-  for script in "$data_dir"/*.sh(N); do
-    printf '. %q\n' "$script" >> "$cache"
-  done
-  zcompile "$cache" 2>/dev/null
-}
-
-if (( $+commands[tinty] )); then
-  alias tinty=tinty_source_shell_theme
-  (( $+functions[_tinty] )) && compdef _tinty tinty tinty_source_shell_theme
-  () {
-    emulate -L zsh
-    setopt extended_glob
-    local cache="$HOME/.cache/tinty_init_cache.zsh"
-    local data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tinted-theming/tinty"
-    local newer=($data_dir/*.sh(Ne:'[[ $REPLY -nt $cache ]]':))
-    if [[ -f $cache && ${#newer} -eq 0 ]]; then
-      source $cache
-    else
-      tinty_source_shell_theme "init" &> /dev/null
-    fi
-  }
-fi
-
 () {
   emulate -L zsh
   setopt extended_glob
@@ -262,9 +212,8 @@ fi
   for f in \
     "${HOME}/.zshrc" \
     "${HOME}/.p10k.zsh" \
-    "${HOME}/.cache/shared_init_cache.zsh" \
-    "${HOME}/.cache/tec_init_cache.zsh" \
-    "${HOME}/.cache/tinty_init_cache.zsh"; do
+    "${XDG_CACHE_HOME:-$HOME/.cache}/shared_init_cache.zsh" \
+    "${HOME}/.cache/tec_init_cache.zsh"; do
     [[ -f $f && ( ! -f ${f}.zwc || $f -nt ${f}.zwc ) ]] && zcompile $f 2>/dev/null
   done
   # When everything is already compiled the last [[ ]] above evaluates false

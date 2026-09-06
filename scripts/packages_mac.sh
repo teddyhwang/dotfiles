@@ -84,40 +84,4 @@ else
   print_warning "Amethyst is not installed"
 fi
 
-launch_agents="$HOME/Library/LaunchAgents"
-launch_domain="gui/$(id -u)"
-mkdir -p "$launch_agents"
-
-pbcopy_agent="$launch_agents/pbcopy.plist"
-pbpaste_agent="$launch_agents/pbpaste.plist"
-if [ ! -f "$pbcopy_agent" ] || [ ! -f "$pbpaste_agent" ]; then
-  if confirm "Do you want to set up loopback-only pbcopy/pbpaste launch agents?"; then
-    print_progress "Installing pbcopy/pbpaste launch agents..."
-    cp "$DOTFILES_DIR/apps/pbcopy.plist" "$pbcopy_agent"
-    cp "$DOTFILES_DIR/apps/pbpaste.plist" "$pbpaste_agent"
-    launchctl bootout "$launch_domain" "$pbcopy_agent" 2>/dev/null || true
-    launchctl bootout "$launch_domain" "$pbpaste_agent" 2>/dev/null || true
-    launchctl bootstrap "$launch_domain" "$pbcopy_agent"
-    launchctl bootstrap "$launch_domain" "$pbpaste_agent"
-    track_change
-  else
-    print_warning "Skipping launch agent setup"
-  fi
-else
-  print_info "pbcopy/pbpaste launch agents are installed"
-fi
-
-# Herdr tab auto-naming. hypr/autostart.lua starts this on Linux; launchd is the
-# equivalent here. Reload whenever the plist changes so edits take effect.
-herdr_agent="$launch_agents/herdr-tab-autoname.plist"
-if ! cmp -s "$DOTFILES_DIR/apps/herdr-tab-autoname.plist" "$herdr_agent"; then
-  print_progress "Installing herdr-tab-autoname launch agent..."
-  cp "$DOTFILES_DIR/apps/herdr-tab-autoname.plist" "$herdr_agent"
-  launchctl bootout "$launch_domain" "$herdr_agent" 2>/dev/null || true
-  launchctl bootstrap "$launch_domain" "$herdr_agent"
-  track_change
-else
-  print_info "herdr-tab-autoname launch agent is installed"
-fi
-
-print_conditional_success "macOS packages and services"
+print_conditional_success "macOS packages"

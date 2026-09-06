@@ -13,8 +13,12 @@ concurrency:
 
 jobs:
   dotfiles:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,7 +27,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Install validation tools
-        run: sudo apt-get update && sudo apt-get install --yes lua5.4 ruby shellcheck zsh
+      - name: Install Linux validation tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes lua5.4 neovim ruby shellcheck tmux zsh
+      - name: Install macOS validation tools
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: |
+          brew install bash lua neovim ruby shellcheck tmux zsh
+          echo "$(brew --prefix ruby)/bin" >> "$GITHUB_PATH"
       - name: Validate
         run: ./scripts/check.sh

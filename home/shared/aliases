@@ -18,7 +18,9 @@ alias main='git checkout main'
 alias mux="tmuxinator"
 alias ping='prettyping --nolegend'
 alias please='sudo $(fc -ln -1)'
-alias rake="noglob rake"
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+  alias rake='noglob rake'
+fi
 alias n="nvim"
 alias vi='nvim'
 alias weather='curl wttr.in'

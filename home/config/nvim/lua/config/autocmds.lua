@@ -49,12 +49,14 @@ vim.filetype.add({
   },
 })
 
--- Auto-reload files when changed externally
-vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI", "FocusGained" }, {
-  pattern = "*",
-  callback = function()
-    if vim.fn.mode() ~= "c" and vim.bo.buftype ~= "nofile" then
-      vim.cmd("checktime")
+-- LazyVim already checks all files on FocusGained/TermClose/TermLeave.
+-- Frequent buffer/cursor events only need to check the current file, not stat
+-- every loaded buffer after each editing pause (updatetime is 100ms).
+vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "CursorHoldI" }, {
+  group = vim.api.nvim_create_augroup("dotfiles_autoread", { clear = true }),
+  callback = function(args)
+    if vim.fn.mode() ~= "c" and vim.bo[args.buf].buftype == "" then
+      vim.cmd("checktime " .. args.buf)
     end
   end,
 })

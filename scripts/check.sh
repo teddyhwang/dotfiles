@@ -13,7 +13,7 @@ require_command() {
   fi
 }
 
-for command_name in bash git node python3 ruby shellcheck sh zsh; do
+for command_name in bash git jq node python3 ruby shellcheck sh zsh; do
   require_command "$command_name"
 done
 

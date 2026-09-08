@@ -42,7 +42,7 @@ sudo ./scripts/macbook_t2_linux.sh
 This runs shell syntax checks, ShellCheck, structured-config parsing, Python and
 Lua compilation checks when available, and the Node test suite. GitHub Actions
 runs the same check on Linux and macOS. Validation needs Node 24+, Python 3.11+,
-Ruby with `YAML.safe_load_file`, ShellCheck, Bash, and Zsh. Neovim and tmux enable
+Ruby with `YAML.safe_load_file`, jq, ShellCheck, Bash, and Zsh. Neovim and tmux enable
 additional isolated integration tests.
 
 Measure warm startup locally (no cache deletion or dependency installation):

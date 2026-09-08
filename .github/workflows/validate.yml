@@ -29,13 +29,13 @@ jobs:
           python-version: "3.13"
       - name: Install Linux validation tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install --yes lua5.4 neovim ruby shellcheck tmux zsh
+        run: sudo apt-get update && sudo apt-get install --yes jq lua5.4 neovim ruby shellcheck tmux zsh
       - name: Install macOS validation tools
         if: runner.os == 'macOS'
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"
         run: |
-          brew install bash lua neovim ruby shellcheck tmux zsh
+          brew install bash jq lua neovim ruby shellcheck tmux zsh
           echo "$(brew --prefix ruby)/bin" >> "$GITHUB_PATH"
       - name: Validate
         run: ./scripts/check.sh

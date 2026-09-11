@@ -47,13 +47,16 @@ follow-space-thrown-windows: true
 floating-is-blacklist: false
 floating:
   - id: com.google.Chrome
-    # Whitelist mode: titles listed here TILE; titles that don't match FLOAT.
-    # The negative-lookahead regex tiles every Chrome window EXCEPT those
-    # whose title starts with "Meet - " (Google Meet's popped-out window).
-    # Caveat: any Chrome window currently showing a Meet tab will float,
-    # since Amethyst can only see window titles, not which tab is popped out.
+    # Whitelist mode: titles matching this rule TILE; everything else FLOATS.
+    # Chrome adds " - Google Chrome" to normal browser/popup AX titles, but
+    # NOT to native video PiP or Document PiP windows (including Meet overlays).
+    # Match that browser signature, not website/video titles or window size.
+    # Optional suffixes cover named profiles, Incognito, and Guest windows.
+    # Empty startup titles do not match, so Amethyst retries classification.
+    # Limitation: extensions opening ordinary browser popups still tile.
+    # See apps/amethyst/README.md for rationale and tests.
     window-titles:
-      - "^(?!Meet - ).*"
+      - '^(?:[\s\S]* - )?Google Chrome(?: - [\s\S]+| \([^)]+\))?$'
   - id: com.googlecode.iterm2
     window-titles: []
   - id: com.tinyspeck.slackmacgap

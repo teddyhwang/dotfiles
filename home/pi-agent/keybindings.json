@@ -12,5 +12,8 @@
     "ctrl+j"
   ],
   "tui.altScreen.search": "ctrl+shift+s",
-  "app.message.followUp": []
+  "app.message.followUp": [],
+  "app.clipboard.pasteImage": [
+    "alt+v"
+  ]
 }

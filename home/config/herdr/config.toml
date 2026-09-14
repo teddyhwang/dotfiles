@@ -117,8 +117,11 @@ height = "50%"
 command = '''
 TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
 [ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
+# Herdr 0.9.0's agent focus updates server state without moving the attached
+# client's viewport (herdrdev/herdr#3760). The raw pane.focus method still
+# projects to the client and also selects the exact pane in a split tab.
 sel=$(jq -rn --argjson ws "$("${HERDR_BIN_PATH:-herdr}" workspace list | jq -c '.result.workspaces')" --argjson ag "$("${HERDR_BIN_PATH:-herdr}" agent list | jq -c '.result.agents')" '($ws | map({key: .workspace_id, value: .label}) | from_entries) as $labels | $ag[] | "\(.pane_id)\t\(if .focused then "\u2192" else " " end) \($labels[.workspace_id] // .workspace_id)  \(.agent)  \(.agent_status)  \(.terminal_title_stripped // "")"' | fzf --delimiter='\t' --with-nth=2.. --reverse --no-sort --prompt='agent> ' | cut -f1)
-[ -n "$sel" ] && "${HERDR_BIN_PATH:-herdr}" agent focus "$sel" >/dev/null 2>&1
+[ -n "$sel" ] && "$HOME/.local/bin/herdr-focus-pane" "$sel" >/dev/null 2>&1
 '''
 
 [[keys.command]]

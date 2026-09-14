@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Focus an exact Herdr pane through the raw socket API."""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import socket
+import sys
+
+
+def socket_path() -> str:
+    configured = os.environ.get("HERDR_SOCKET_PATH")
+    if configured:
+        return configured
+
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    session = os.environ.get("HERDR_SESSION")
+    if session and session != "default":
+        return str(config_home / "herdr" / "sessions" / session / "herdr.sock")
+    return str(config_home / "herdr" / "herdr.sock")
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        print("usage: herdr-focus-pane PANE_ID", file=sys.stderr)
+        return 2
+
+    request_id = f"dotfiles:pane-focus:{os.getpid()}"
+    request = {
+        "id": request_id,
+        "method": "pane.focus",
+        "params": {"pane_id": sys.argv[1]},
+    }
+
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(5)
+            client.connect(socket_path())
+            client.sendall(json.dumps(request, separators=(",", ":")).encode() + b"\n")
+            response_line = client.makefile("rb").readline()
+        if not response_line:
+            raise RuntimeError("Herdr closed the socket without a response")
+        response = json.loads(response_line)
+        if response.get("id") != request_id:
+            raise RuntimeError("Herdr returned a response with the wrong request ID")
+        if "error" in response:
+            error = response["error"]
+            raise RuntimeError(error.get("message") or error.get("code") or "pane focus failed")
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"herdr-focus-pane: {error}", file=sys.stderr)
+        return 1
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

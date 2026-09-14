@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -39,7 +40,7 @@ if (args[0] === "pane" && args[1] === "process-info") {
   result = {
     panes: [{ pane_id: "w1:p2", workspace_id: "w1", tab_id: "w1:t2", cwd: "/test" }],
     workspaces: [{ workspace_id: "w1", label: "test", tab_count: 2, pane_count: 2, agent_status: "unknown" }],
-    agents: [{ pane_id: "w1:p2", workspace_id: "w1", agent: "pi", agent_status: "idle" }],
+    agents: [{ pane_id: "w1:p2", workspace_id: "w1", tab_id: "w1:t2", agent: "pi", agent_status: "idle" }],
   };
 }
 console.log(JSON.stringify({ result }));
@@ -53,6 +54,12 @@ console.log(JSON.stringify({ result }));
   await executable(path.join(bin, "fzf"), "#!/bin/sh\nhead -n 1\n");
   await executable(path.join(bin, "pbpaste"), "#!/bin/sh\nprintf 'clipboard text'\n");
   const log = path.join(home, "calls.jsonl");
+  const localBin = path.join(home, ".local/bin");
+  await mkdir(localBin, { recursive: true });
+  await executable(path.join(localBin, "herdr-focus-pane"), `#!${process.execPath}
+import { appendFileSync } from "node:fs";
+appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", process.argv[2]]) + "\\n");
+`);
   // Model PATH after the login shell has selected the wrong installation.
   // Do not inherit any live Herdr context; every CLI invocation is mocked.
   const env = {
@@ -78,7 +85,9 @@ const cases = [
   ["ctrl+x", [{ name: "vim" }], [processInfo, sendKeys("ctrl+x")]],
   ["ctrl+x", [], [processInfo, sendKeys("ctrl+l")]],
   ["prefix+shift+v", shell, [["pane", "list"], ["pane", "move", "w1:p2", "--tab", "w1:t1", "--split", "right", "--focus"]]],
-  ["prefix+a", shell, [["workspace", "list"], ["agent", "list"], ["agent", "focus", "w1:p2"]]],
+  // Herdr 0.9.0 does not project agent.focus to the attached client. The
+  // helper uses the working raw pane.focus path instead.
+  ["prefix+a", shell, [["workspace", "list"], ["agent", "list"], ["pane", "focus", "w1:p2"]]],
   ["prefix+s", shell, [["workspace", "list"], ["workspace", "focus", "w1"]]],
   ["prefix+shift+b", shell, [["pane", "move", "w1:p1", "--new-tab", "--focus"]]],
   ["prefix+shift+t", shell, [["pane", "move", "w1:p1", "--new-tab", "--focus"]]],
@@ -116,6 +125,53 @@ for (const mode of ["provided", "unset", "empty"]) {
     }
   });
 }
+
+test("herdr-focus-pane sends an exact pane.focus socket request", async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), "herdr-focus-pane-"));
+  const socketPath = path.join(directory, "herdr.sock");
+  let resolveRequest;
+  const requestReceived = new Promise((resolve) => {
+    resolveRequest = resolve;
+  });
+  const server = createServer((connection) => {
+    let buffer = "";
+    connection.setEncoding("utf8");
+    connection.on("data", (chunk) => {
+      buffer += chunk;
+      const newline = buffer.indexOf("\n");
+      if (newline === -1) return;
+      const request = JSON.parse(buffer.slice(0, newline));
+      resolveRequest(request);
+      connection.end(`${JSON.stringify({ id: request.id, result: { type: "pane_info" } })}\n`);
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(socketPath, resolve);
+  });
+  t.after(async () => {
+    await new Promise((resolve) => server.close(resolve));
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  const result = await new Promise((resolve) => {
+    const child = spawn(path.resolve("home/local/bin/herdr-focus-pane"), ["w9:p3"], {
+      env: { ...process.env, HERDR_SOCKET_PATH: socketPath },
+    });
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("close", (status) => resolve({ status, stderr }));
+  });
+
+  assert.deepEqual(result, { status: 0, stderr: "" });
+  const request = await requestReceived;
+  assert.match(request.id, /^dotfiles:pane-focus:\d+$/);
+  assert.equal(request.method, "pane.focus");
+  assert.deepEqual(request.params, { pane_id: "w9:p3" });
+});
 
 test("all Herdr shell commands parse and CLI-backed bindings have regression coverage", () => {
   const coveredKeys = new Set(cases.map(([key]) => key));

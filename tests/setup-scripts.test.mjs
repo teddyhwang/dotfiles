@@ -54,7 +54,7 @@ test("symlink helper rejects unsafe source and target paths", async () => {
   }
 });
 
-test("macOS package setup reads the repository Brewfile without implicit upgrades", async () => {
+test("macOS package setup selects the personal or work Brewfile without implicit upgrades", async () => {
   const home = await mkdtemp(path.join(tmpdir(), "dotfiles-macos-home-"));
   const bin = path.join(home, "bin");
   const log = path.join(home, "brew.log");
@@ -83,8 +83,89 @@ test("macOS package setup reads the repository Brewfile without implicit upgrade
       input: "",
     });
     assert.equal(result.status, 0, result.stderr || result.stdout);
-    const invocation = await readFile(log, "utf8");
+    let invocation = await readFile(log, "utf8");
     assert.ok(invocation.includes(`check --no-upgrade --file ${repo}/Brewfile`), invocation);
+    assert.match(result.stdout, /devx not detected; using the personal Brewfile/);
+
+    const devx = path.join(bin, "devx");
+    await writeFile(devx, "#!/bin/sh\nexit 0\n");
+    await chmod(devx, 0o755);
+    await writeFile(log, "");
+
+    const workResult = run("sh", [path.join(repo, "scripts/packages_mac.sh")], {
+      cwd: tmpdir(),
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${bin}:/usr/bin:/bin`,
+        BREW_LOG: log,
+      },
+      input: "",
+    });
+    assert.equal(workResult.status, 0, workResult.stderr || workResult.stdout);
+    invocation = await readFile(log, "utf8");
+    assert.ok(invocation.includes(`check --no-upgrade --file ${repo}/Brewfile.work`), invocation);
+    assert.match(workResult.stdout, /devx detected; using the work Mac Brewfile/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test("Homebrew backup snapshots the machine without replacing the personal Brewfile", async () => {
+  const home = await mkdtemp(path.join(tmpdir(), "dotfiles-brew-backup-"));
+  const bin = path.join(home, "bin");
+  const log = path.join(home, "brew.log");
+  const backup = path.join(home, "Brewfile.work");
+  try {
+    await mkdir(bin, { recursive: true });
+    const brew = path.join(bin, "brew");
+    await writeFile(
+      brew,
+      `#!/bin/sh\nprintf '%s\\n' "$*" >"$BREW_LOG"\nwhile [ "$#" -gt 0 ]; do\n  if [ "$1" = "--file" ]; then\n    shift\n    printf '%s\\n' 'tap "example/tools"' 'brew "example"' 'cask "example-app"' >"$1"\n    exit 0\n  fi\n  shift\ndone\nexit 1\n`,
+    );
+    await chmod(brew, 0o755);
+
+    const personalBefore = await readFile(path.join(repo, "Brewfile"), "utf8");
+    const result = run("sh", [path.join(repo, "scripts/backup_brewfile.sh")], {
+      cwd: tmpdir(),
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${bin}:/usr/bin:/bin`,
+        BREW_LOG: log,
+        BREWFILE_BACKUP_FILE: backup,
+      },
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+
+    const invocation = await readFile(log, "utf8");
+    assert.match(invocation, /^bundle dump /);
+    assert.match(invocation, /--force/);
+    assert.match(invocation, /--no-describe/);
+    assert.match(invocation, /--no-vscode/);
+    assert.match(invocation, /--no-go/);
+    assert.match(invocation, /--no-cargo/);
+    assert.match(invocation, /--no-uv/);
+    assert.match(invocation, /--no-npm/);
+
+    const snapshot = await readFile(backup, "utf8");
+    assert.match(snapshot, /Generated from the work Mac/);
+    assert.match(snapshot, /brew "example"/);
+    assert.equal(await readFile(path.join(repo, "Brewfile"), "utf8"), personalBefore);
+
+    const refused = run("sh", [path.join(repo, "scripts/backup_brewfile.sh")], {
+      cwd: repo,
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${bin}:/usr/bin:/bin`,
+        BREW_LOG: log,
+        BREWFILE_BACKUP_FILE: "Brewfile",
+      },
+    });
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stdout, /Refusing to overwrite the curated personal Brewfile/);
+    assert.equal(await readFile(path.join(repo, "Brewfile"), "utf8"), personalBefore);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

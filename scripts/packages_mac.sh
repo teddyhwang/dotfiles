@@ -11,9 +11,21 @@ DOTFILES_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd -P)
 # shellcheck source=brew.sh
 . "${SCRIPT_DIR}/brew.sh"
 
+if command -v devx >/dev/null 2>&1; then
+  BREWFILE="${DOTFILES_DIR}/Brewfile.work"
+  print_info "devx detected; using the work Mac Brewfile"
+else
+  BREWFILE="${DOTFILES_DIR}/Brewfile"
+  print_info "devx not detected; using the personal Brewfile"
+fi
+if [ ! -f "$BREWFILE" ]; then
+  print_error "Brewfile not found: $BREWFILE"
+  exit 1
+fi
+
 # Codex may be managed by npm (including on this workstation). Do not let
 # Homebrew fail on the existing /opt/homebrew/bin/codex artifact; fresh systems
-# without Codex still install the cask declared in Brewfile.
+# without Codex still install the cask declared in the selected Brewfile.
 if command -v codex >/dev/null 2>&1 && ! "$BREW_BIN" list --cask codex >/dev/null 2>&1; then
   case " ${HOMEBREW_BUNDLE_CASK_SKIP:-} " in
     *" codex "*) ;;
@@ -37,13 +49,13 @@ if "$BREW_BIN" command trust >/dev/null 2>&1; then
 fi
 
 print_progress "Installing Brewfile dependencies..."
-if "$BREW_BIN" bundle check --no-upgrade --file "$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
+if "$BREW_BIN" bundle check --no-upgrade --file "$BREWFILE" >/dev/null 2>&1; then
   print_info "Brewfile dependencies are installed"
 else
   # A setup run should install missing dependencies, not unexpectedly upgrade
   # the entire workstation. Upgrades remain an explicit maintenance action.
-  "$BREW_BIN" bundle install --no-upgrade --file "$DOTFILES_DIR/Brewfile"
-  if ! "$BREW_BIN" bundle check --no-upgrade --file "$DOTFILES_DIR/Brewfile"; then
+  "$BREW_BIN" bundle install --no-upgrade --file "$BREWFILE"
+  if ! "$BREW_BIN" bundle check --no-upgrade --file "$BREWFILE"; then
     print_error "Homebrew could not satisfy every Brewfile dependency"
     exit 1
   fi

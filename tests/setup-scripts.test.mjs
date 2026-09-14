@@ -164,16 +164,22 @@ test("Herdr layout helper times out instead of hanging", async () => {
   }
 });
 
-test("portable configs avoid hard-coded home paths and pin Neovim plugins", async () => {
+test("portable configs avoid hard-coded home paths and unsafe push defaults", async () => {
   for (const filename of ["home/.bash_profile", "home/.bashrc", "home/.zshrc"]) {
     const contents = await readFile(path.join(repo, filename), "utf8");
     assert.doesNotMatch(contents, /\/Users\/teddyhwang/);
   }
 
-  const lock = JSON.parse(await readFile(path.join(repo, "home/config/nvim/lazy-lock.json"), "utf8"));
-  assert.match(lock["herdr-splits.nvim"].commit, /^[0-9a-f]{40}$/);
-
   const gitconfig = await readFile(path.join(repo, "home/.shared.gitconfig"), "utf8");
   assert.match(gitconfig, /default = simple/);
   assert.doesNotMatch(gitconfig, /default = matching/);
+});
+
+test("Neovim plugin lockfile is machine-local", () => {
+  const lockfile = "home/config/nvim/lazy-lock.json";
+  const ignored = run("git", ["check-ignore", "--quiet", lockfile]);
+  assert.equal(ignored.status, 0, ignored.stderr);
+
+  const tracked = run("git", ["ls-files", "--error-unmatch", lockfile]);
+  assert.notEqual(tracked.status, 0);
 });

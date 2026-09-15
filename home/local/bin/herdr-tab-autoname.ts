@@ -2,11 +2,12 @@
 /**
  * Name Herdr tabs after what the tab is actually doing.
  *
- * Herdr gives every tab a stable, one-based public number. This daemon follows
- * every local Herdr session socket and formats labels like tmux (`1:name`). The
+ * This daemon follows every local Herdr session socket and formats labels like
+ * tmux (`1:name`). The prefix is the tab's one-based position in its workspace,
+ * so it matches `prefix+1..9` and is recomputed after tabs move or close. The
  * name is the one topic shared by the tab's active agents, falling back to
  * repository + branch. Manual names opt out of automatic naming, but keep the
- * number prefix; renaming a tab back to a bare number opts it in again.
+ * position prefix; renaming a tab back to a bare number opts it in again.
  *
  * All socket, filesystem, and Git work uses Node's asynchronous APIs. Event
  * intake never waits for snapshots, repository inspection, or tab renames.
@@ -108,6 +109,7 @@ export type PaneInfo = {
 };
 export type TabInfo = {
   tab_id?: string;
+  workspace_id?: string;
   number?: number;
   label?: string | null;
   [key: string]: unknown;
@@ -167,17 +169,16 @@ export function truncateLabel(label: string): string {
   return `${cut.replace(/[ \-—–:|]+$/u, "")}…`;
 }
 
-export function numberedTabLabel(number: number, label: string): string {
-  return truncateLabel(`${number}:${label}`);
+export function indexedTabLabel(position: number, label: string): string {
+  return truncateLabel(`${position}:${label}`);
 }
 
-function normalizedManualLabel(number: number, label: string): string {
-  return label.startsWith(`${number}:`)
-    ? truncateLabel(label)
-    : numberedTabLabel(number, label);
+function normalizedManualLabel(position: number, label: string): string {
+  const body = label.replace(/^\d+:/u, "");
+  return indexedTabLabel(position, body);
 }
 
-function positiveTabNumber(value: unknown): number | undefined {
+function positiveTabPosition(value: unknown): number | undefined {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0
     ? value
     : undefined;
@@ -515,11 +516,15 @@ export class TabNamer {
     }
 
     const liveTabs = new Set<string>();
+    const tabCountsByWorkspace = new Map<string, number>();
     for (const tab of tabs) {
       const tabId = asString(tab.tab_id);
-      if (!tabId) continue;
+      const workspaceId = asString(tab.workspace_id);
+      if (!tabId || !workspaceId) continue;
+      const position = (tabCountsByWorkspace.get(workspaceId) ?? 0) + 1;
+      tabCountsByWorkspace.set(workspaceId, position);
       liveTabs.add(tabId);
-      await this.consider(tab, panesByTab.get(tabId) ?? []);
+      await this.consider(tab, panesByTab.get(tabId) ?? [], position);
     }
 
     for (const tabId of this.assigned.keys()) {
@@ -541,17 +546,21 @@ export class TabNamer {
     await this.finishRecovery();
   }
 
-  async consider(tab: TabInfo, panes: readonly PaneInfo[]): Promise<void> {
+  async consider(
+    tab: TabInfo,
+    panes: readonly PaneInfo[],
+    tabPosition: number,
+  ): Promise<void> {
     const tabId = asString(tab.tab_id);
-    const number = positiveTabNumber(tab.number);
-    if (!tabId || number === undefined) return;
+    const position = positiveTabPosition(tabPosition);
+    if (!tabId || position === undefined) return;
     const label = asString(tab.label) ?? "";
     const assigned = this.assigned.get(tabId);
     let automatic =
       !label ||
       /^\d+$/u.test(label) ||
       label === assigned ||
-      (assigned !== undefined && numberedTabLabel(number, assigned) === label);
+      (assigned !== undefined && indexedTabLabel(position, assigned) === label);
 
     if (!automatic) {
       const piLabel = panes.length === 1 ? piSessionLabelFor(panes) : undefined;
@@ -568,7 +577,7 @@ export class TabNamer {
     ) {
       const desiredBody = await this.labelFor(panes);
       const desired = desiredBody
-        ? numberedTabLabel(number, desiredBody)
+        ? indexedTabLabel(position, desiredBody)
         : undefined;
       if (label === desiredBody || label === desired) {
         automatic = true;
@@ -583,13 +592,17 @@ export class TabNamer {
           `${tabId} renamed by hand to ${JSON.stringify(label)}; preserving its name`,
         );
       }
-      await this.renameLabel(tabId, label, normalizedManualLabel(number, label));
+      await this.renameLabel(
+        tabId,
+        label,
+        normalizedManualLabel(position, label),
+      );
       return;
     }
 
     const desiredBody = await this.labelFor(panes);
     if (!desiredBody) return;
-    const desired = numberedTabLabel(number, desiredBody);
+    const desired = indexedTabLabel(position, desiredBody);
     if (desired === label) {
       if (assigned !== desired) await this.rememberAssignment(tabId, desired);
       return;

@@ -11,12 +11,14 @@ import json, pathlib, tomllib
 config = tomllib.loads(pathlib.Path("home/config/herdr/config.toml").read_text())
 print(json.dumps({
     "commands": config["keys"]["command"],
+    "prompt_new_tab_name": config["ui"]["prompt_new_tab_name"],
     "switch_tab": config["keys"]["switch_tab"],
 }))
 `], { encoding: "utf8" });
 assert.equal(parsed.status, 0, parsed.stderr);
 const config = JSON.parse(parsed.stdout);
 const bindings = config.commands;
+assert.equal(config.prompt_new_tab_name, false, "one-based new-tab prompt must be disabled");
 assert.equal(config.switch_tab, "", "native one-based tab switching must be disabled");
 const jq = spawnSync("sh", ["-c", "command -v jq"], { encoding: "utf8" });
 assert.equal(jq.status, 0, "Herdr keybinding tests require jq");

@@ -9,10 +9,15 @@ import test from "node:test";
 const parsed = spawnSync("python3", ["-c", `
 import json, pathlib, tomllib
 config = tomllib.loads(pathlib.Path("home/config/herdr/config.toml").read_text())
-print(json.dumps(config["keys"]["command"]))
+print(json.dumps({
+    "commands": config["keys"]["command"],
+    "switch_tab": config["keys"]["switch_tab"],
+}))
 `], { encoding: "utf8" });
 assert.equal(parsed.status, 0, parsed.stderr);
-const bindings = JSON.parse(parsed.stdout);
+const config = JSON.parse(parsed.stdout);
+const bindings = config.commands;
+assert.equal(config.switch_tab, "", "native one-based tab switching must be disabled");
 const jq = spawnSync("sh", ["-c", "command -v jq"], { encoding: "utf8" });
 assert.equal(jq.status, 0, "Herdr keybinding tests require jq");
 
@@ -79,7 +84,15 @@ const processInfo = ["pane", "process-info", "--pane", "w1:p1"];
 const shell = [{ argv0: "/bin/zsh", name: "zsh" }];
 const vim = [{ argv0: "/usr/local/bin/nvim", name: "nvim" }];
 const sendKeys = (key) => ["pane", "send-keys", "w1:p1", key];
-const cases = [
+const cases = [];
+for (let index = 0; index <= 9; index += 1) {
+  cases.push([
+    `prefix+${index}`,
+    shell,
+    [["tab", "focus", `w1:${index + 1}`]],
+  ]);
+}
+cases.push(
   ["ctrl+x", shell, [processInfo, sendKeys("ctrl+l")]],
   ["ctrl+x", vim, [processInfo, sendKeys("ctrl+x")]],
   ["ctrl+x", [{ name: "vim" }], [processInfo, sendKeys("ctrl+x")]],
@@ -93,7 +106,7 @@ const cases = [
   ["prefix+shift+t", shell, [["pane", "move", "w1:p1", "--new-tab", "--focus"]]],
   ["prefix+x", shell, [["pane", "close", "w1:p1"]]],
   ["prefix+shift+p", shell, [["pane", "send-text", "w1:p1", "clipboard text"]]],
-];
+);
 for (const [key, direction] of [["ctrl+j", "down"], ["ctrl+k", "up"]]) {
   cases.push([key, shell, [processInfo, ["plugin", "action", "invoke", `herdr-splits.nav-${direction}`]]]);
   for (const name of ["fzf", "atuin", "tv"]) {

@@ -1,8 +1,8 @@
 id = "teddyhwang.tab-autoname"
 name = "Tab Autoname"
-version = "1.0.0"
+version = "1.1.0"
 min_herdr_version = "0.9.0"
-description = "Assign tmux-style positional names to Herdr tabs"
+description = "Assign zero-based positional names to Herdr tabs"
 platforms = ["linux", "macos"]
 
 [[startup]]

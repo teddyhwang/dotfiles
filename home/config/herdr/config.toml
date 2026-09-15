@@ -20,9 +20,9 @@ scrollback_limit_bytes = 104857600
 show_agent_labels_on_pane_borders = true
 
 # The teddyhwang.tab-autoname Herdr plugin invokes a transient naming worker
-# after tab, pane, and agent events. Every label starts with its one-based
+# after tab, pane, and agent events. Every label starts with its zero-based
 # position in the workspace, like tmux:
-# `1:name`. This matches the number used by prefix+1..9 and is recomputed after
+# `0:name`. This matches the number used by prefix+0..9 and is recomputed after
 # tabs move or close. The name is the agent topic when available, else repo and
 # branch. Naming a tab by hand -- at the new-tab prompt or with prefix+A -- opts
 # its name out; renaming it back to a bare number opts it back in.
@@ -69,7 +69,9 @@ previous_tab = ["prefix+p", "prefix+ctrl+h"]
 next_tab = ["prefix+n", "prefix+ctrl+l"]
 move_tab_previous = "prefix+shift+comma"   # prefix+<: move tab left
 move_tab_next = "prefix+shift+period"      # prefix+>: move tab right
-switch_tab = "prefix+1..9"           # one-based positions in the active space
+# Native indexed bindings only support 1..9. The direct positional commands
+# below provide zero-based prefix+0..9 without listing or sorting tabs.
+switch_tab = ""
 close_tab = "prefix+ampersand"      # tmux default: prefix+&
 
 # Workspaces / sessions
@@ -91,6 +93,68 @@ help = "prefix+?"
 
 # Use the running server's CLI for custom commands. Login-shell PATH can
 # otherwise select an older Homebrew installation and fail with protocol_mismatch.
+# Herdr's `workspace:position` target is one-based even though these keys and
+# displayed tab indexes are zero-based.
+[[keys.command]]
+key = "prefix+0"
+type = "shell"
+description = "select tab 0"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:1"'
+
+[[keys.command]]
+key = "prefix+1"
+type = "shell"
+description = "select tab 1"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:2"'
+
+[[keys.command]]
+key = "prefix+2"
+type = "shell"
+description = "select tab 2"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:3"'
+
+[[keys.command]]
+key = "prefix+3"
+type = "shell"
+description = "select tab 3"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:4"'
+
+[[keys.command]]
+key = "prefix+4"
+type = "shell"
+description = "select tab 4"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:5"'
+
+[[keys.command]]
+key = "prefix+5"
+type = "shell"
+description = "select tab 5"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:6"'
+
+[[keys.command]]
+key = "prefix+6"
+type = "shell"
+description = "select tab 6"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:7"'
+
+[[keys.command]]
+key = "prefix+7"
+type = "shell"
+description = "select tab 7"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:8"'
+
+[[keys.command]]
+key = "prefix+8"
+type = "shell"
+description = "select tab 8"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:9"'
+
+[[keys.command]]
+key = "prefix+9"
+type = "shell"
+description = "select tab 9"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:10"'
+
 [[keys.command]]
 key = "prefix+shift+v"
 type = "popup"

@@ -146,7 +146,7 @@ test("rejects a generic Pi title", () => {
   assert.equal(topicFromTitle(pane), undefined);
 });
 
-test("prefixes the number on an automatically named new tab", async () => {
+test("prefixes the zero-based index on an automatically named tab", async () => {
   const requests = [];
   const namer = createNamer({
     renameTab: async (tabId, label) => {
@@ -155,12 +155,12 @@ test("prefixes the number on an automatically named new tab", async () => {
     },
   });
 
-  await namer.consider(tabInfo("7", 7), [piPane()], 1);
+  await namer.consider(tabInfo("7", 7), [piPane()], 0);
 
   assert.deepEqual(requests, [
-    { tabId: "w1:t7", label: "1:Fix session labels" },
+    { tabId: "w1:t7", label: "0:Fix session labels" },
   ]);
-  assert.equal(namer.assignmentFor("w1:t7"), "1:Fix session labels");
+  assert.equal(namer.assignmentFor("w1:t7"), "0:Fix session labels");
 });
 
 test("indexes tabs by keyboard position within each workspace", async () => {
@@ -193,13 +193,13 @@ test("indexes tabs by keyboard position within each workspace", async () => {
   });
 
   assert.deepEqual(requests, [
-    { tabId: "wA:t7", label: "1:Refactor the auth module" },
-    { tabId: "wA:t9", label: "2:Update the README" },
-    { tabId: "wB:t4", label: "1:Review the release notes" },
+    { tabId: "wA:t7", label: "0:Refactor the auth module" },
+    { tabId: "wA:t9", label: "1:Update the README" },
+    { tabId: "wB:t4", label: "0:Review the release notes" },
   ]);
 });
 
-test("adopts and numbers a direct Pi extension rename", async () => {
+test("adopts and indexes a direct Pi extension rename", async () => {
   const ownership = new MemoryOwnership(
     new Map([[SESSION_PATH, new Map([["w1:t1", "1:dotfiles"]])]]),
   );
@@ -212,12 +212,12 @@ test("adopts and numbers a direct Pi extension rename", async () => {
     },
   });
 
-  await namer.consider(tabInfo("Fix session labels"), [piPane()], 1);
+  await namer.consider(tabInfo("Fix session labels"), [piPane()], 0);
 
   assert.deepEqual(requests, [
-    { tabId: "w1:t1", label: "1:Fix session labels" },
+    { tabId: "w1:t1", label: "0:Fix session labels" },
   ]);
-  assert.equal(namer.assignmentFor("w1:t1"), "1:Fix session labels");
+  assert.equal(namer.assignmentFor("w1:t1"), "0:Fix session labels");
 });
 
 test("prefixes a manual name without taking ownership of it", async () => {
@@ -233,13 +233,13 @@ test("prefixes a manual name without taking ownership of it", async () => {
     },
   });
 
-  await namer.consider(tabInfo("My manual name"), [piPane()], 1);
+  await namer.consider(tabInfo("My manual name"), [piPane()], 0);
 
-  assert.deepEqual(requests, [{ tabId: "w1:t1", label: "1:My manual name" }]);
+  assert.deepEqual(requests, [{ tabId: "w1:t1", label: "0:My manual name" }]);
   assert.equal(namer.assignmentFor("w1:t1"), undefined);
 });
 
-test("preserves one correct number prefix on a manual name", async () => {
+test("preserves one correct index prefix on a manual name", async () => {
   const requests = [];
   const namer = createNamer({
     renameTab: async (tabId, label) => {
@@ -387,15 +387,15 @@ test("automatic ownership survives transient worker invocations", async (t) => {
   await namer.consider(
     tabInfo("Refactor the auth module"),
     [{ ...agentPane("Refactor the auth module"), agent: null }],
-    1,
+    0,
   );
 
-  assert.deepEqual(requests, [{ tabId: "w1:t1", label: "1:dotfiles" }]);
+  assert.deepEqual(requests, [{ tabId: "w1:t1", label: "0:dotfiles" }]);
   await reloadedStore.flush();
   const persisted = await OwnershipStore.load(statePath);
   assert.deepEqual(
     Object.fromEntries(persisted.stateFor(SESSION_PATH).labels),
-    { "w1:t1": "1:dotfiles" },
+    { "w1:t1": "0:dotfiles" },
   );
 });
 
@@ -406,11 +406,11 @@ test("recovers existing automatic labels during state migration", async () => {
   await namer.consider(
     tabInfo("Update the README"),
     [agentPane("Update the README")],
-    1,
+    0,
   );
 
   assert.deepEqual(Object.fromEntries(namer.assignments()), {
-    "w1:t1": "1:Update the README",
+    "w1:t1": "0:Update the README",
   });
   assert.equal(ownership.stateFor(SESSION_PATH).known, true);
 });
@@ -420,7 +420,7 @@ test("does not adopt a Pi label that speaks over a split", async () => {
   await namer.consider(
     tabInfo("Fix session labels"),
     [piPane(), agentPane("Update the README")],
-    1,
+    0,
   );
   assert.equal(namer.assignmentFor("w1:t1"), undefined);
 });
@@ -442,7 +442,7 @@ test("rename waits never block the Node event loop", async () => {
     },
   });
 
-  const operation = namer.consider(tabInfo("1"), [piPane()], 1);
+  const operation = namer.consider(tabInfo("1"), [piPane()], 0);
   await started;
   let eventLoopAdvanced = false;
   setImmediate(() => {
@@ -544,6 +544,6 @@ test("a transient sync snapshots and renames without an event subscription", asy
   );
   assert.equal(snapshotCount, 1);
   assert.deepEqual(renames, [
-    { tab_id: "w1:t7", label: "1:Fix session labels" },
+    { tab_id: "w1:t7", label: "0:Fix session labels" },
   ]);
 });

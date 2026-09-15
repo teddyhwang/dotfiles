@@ -1,0 +1,63 @@
+id = "teddyhwang.tab-autoname"
+name = "Tab Autoname"
+version = "1.0.0"
+min_herdr_version = "0.9.0"
+description = "Assign tmux-style positional names to Herdr tabs"
+platforms = ["linux", "macos"]
+
+[[startup]]
+command = ["./schedule.sh"]
+
+[[actions]]
+id = "refresh"
+title = "Refresh tab names"
+contexts = ["global"]
+command = ["./schedule.sh"]
+
+[[events]]
+on = "workspace.focused"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "tab.created"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "tab.closed"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "tab.renamed"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "tab.moved"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "tab.focused"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "pane.created"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "pane.closed"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "pane.moved"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "pane.exited"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "pane.agent_detected"
+command = ["./schedule.sh"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["./schedule.sh"]

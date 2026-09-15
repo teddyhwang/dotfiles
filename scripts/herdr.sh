@@ -11,6 +11,9 @@ plugin_source="lmilojevicc/herdr-splits.nvim"
 plugin_id="herdr-splits"
 lazy_lock="$DOTFILES_DIR/home/config/nvim/lazy-lock.json"
 expected_actions='["nav-left","nav-down","nav-up","nav-right","resize-left","resize-down","resize-up","resize-right"]'
+tab_autoname_plugin_id="teddyhwang.tab-autoname"
+tab_autoname_plugin_path="$DOTFILES_DIR/plugins/herdr-tab-autoname"
+tab_autoname_events='["workspace.focused","tab.created","tab.closed","tab.renamed","tab.moved","tab.focused","pane.created","pane.closed","pane.moved","pane.exited","pane.agent_detected","pane.agent_status_changed"]'
 
 print_progress "Ensuring Herdr plugins are installed..."
 
@@ -110,6 +113,60 @@ fi
 if ! printf '%s' "$plugins_json" | plugin_matches || ! printf '%s' "$plugins_json" | plugin_enabled; then
   print_error "$plugin_id failed post-install verification"
   exit 1
+fi
+
+if [ ! -x "$HOME/.local/bin/herdr-tab-autoname" ]; then
+  print_error "Link binaries before configuring $tab_autoname_plugin_id (run setup.sh)"
+  exit 1
+fi
+
+tab_autoname_plugin_matches() {
+  # shellcheck disable=SC2016
+  "$jq_bin" -e \
+    --arg id "$tab_autoname_plugin_id" \
+    --arg manifest "$tab_autoname_plugin_path/herdr-plugin.toml" \
+    --argjson events "$tab_autoname_events" '
+      any(.result.plugins[]?;
+        .plugin_id == $id and
+        .manifest_path == $manifest and
+        .enabled == true and
+        any(.actions[]?; .id == "refresh") and
+        (($events - [.events[].on]) | length == 0) and
+        ((.warnings // []) | length == 0)
+      )
+    ' >/dev/null
+}
+
+if ! printf '%s' "$plugins_json" | tab_autoname_plugin_matches; then
+  print_progress "Linking local $tab_autoname_plugin_id plugin..."
+  "$herdr_bin" plugin link "$tab_autoname_plugin_path" --enabled
+  track_change
+  if ! plugins_json=$(list_plugins); then
+    print_error "Could not list Herdr plugins after linking $tab_autoname_plugin_id"
+    exit 1
+  fi
+else
+  print_info "$tab_autoname_plugin_id is linked and enabled"
+fi
+
+if ! printf '%s' "$plugins_json" | tab_autoname_plugin_matches; then
+  print_error "$tab_autoname_plugin_id failed post-link verification"
+  exit 1
+fi
+
+# Linux autostart used to leave a resident event subscriber running. Its Unix
+# socket is an unambiguous marker, so stop only that legacy process during the
+# plugin migration. macOS removes the same process through services_mac.sh.
+legacy_lock="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-tab-autoname.lock"
+if [ -S "$legacy_lock" ]; then
+  if command -v lsof >/dev/null 2>&1; then
+    legacy_pids=$(lsof -t "$legacy_lock" 2>/dev/null || true)
+    for legacy_pid in $legacy_pids; do
+      kill "$legacy_pid" 2>/dev/null || true
+    done
+  fi
+  rm -f "$legacy_lock"
+  track_change
 fi
 
 print_conditional_success "Herdr plugins"

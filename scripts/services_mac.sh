@@ -33,6 +33,21 @@ ensure_agent() {
   fi
 }
 
+remove_legacy_agent() {
+  name=$1
+  label=$2
+  agent="$launch_agents/$name.plist"
+  if launchctl print "$launch_domain/$label" >/dev/null 2>&1; then
+    print_progress "Removing legacy $name launch agent..."
+    launchctl bootout "$launch_domain/$label"
+    track_change
+  fi
+  if [ -e "$agent" ] || [ -L "$agent" ]; then
+    rm -f "$agent"
+    track_change
+  fi
+}
+
 # Existing clipboard agents imply prior opt-in. New installations still ask.
 if { [ -f "$launch_agents/pbcopy.plist" ] && [ -f "$launch_agents/pbpaste.plist" ]; } ||
   confirm "Do you want to set up loopback-only pbcopy/pbpaste launch agents?"; then
@@ -42,10 +57,8 @@ else
   print_warning "Skipping clipboard launch agent setup"
 fi
 
-if [ ! -x "$HOME/.local/bin/herdr-tab-autoname" ]; then
-  print_error "Link binaries before configuring launch agents (run setup.sh)"
-  exit 1
-fi
-ensure_agent herdr-tab-autoname localhost.herdr-tab-autoname
+# Tab naming moved to an event-driven Herdr plugin. Remove the old resident
+# process when upgrading an existing machine.
+remove_legacy_agent herdr-tab-autoname localhost.herdr-tab-autoname
 
 print_conditional_success "macOS launch agents"

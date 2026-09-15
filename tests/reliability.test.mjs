@@ -161,11 +161,12 @@ test("launch agent setup repairs unloaded jobs and is idempotent when loaded", a
   const agents = path.join(home, "Library/LaunchAgents");
   await mkdir(agents, { recursive: true });
   await mkdir(path.join(home, "loaded"));
-  await mkdir(path.join(home, ".local/bin"), { recursive: true });
-  await executable(path.join(home, ".local/bin/herdr-tab-autoname"), "exit 0");
-  for (const name of ["pbcopy", "pbpaste", "herdr-tab-autoname"]) {
+  for (const name of ["pbcopy", "pbpaste"]) {
     await copyFile(path.join(repo, "apps", `${name}.plist`), path.join(agents, `${name}.plist`));
   }
+  const legacyAgent = path.join(agents, "herdr-tab-autoname.plist");
+  await writeFile(legacyAgent, "legacy launch agent\n");
+  await writeFile(path.join(home, "loaded/localhost.herdr-tab-autoname"), "");
   await executable(path.join(home, "bin/launchctl"), `printf '%s\\n' "$*" >>"$HOME/launch-calls"
 case "$1" in
   print) test -f "$HOME/loaded/\${2##*/}" ;;
@@ -175,7 +176,9 @@ case "$1" in
 esac`);
   ok(spawnSync("sh", [path.join(repo, "scripts/services_mac.sh")], { env, encoding: "utf8" }));
   let calls = await readFile(path.join(home, "launch-calls"), "utf8");
-  assert.equal(calls.split("\n").filter((line) => line.startsWith("bootstrap ")).length, 3);
+  assert.equal(calls.split("\n").filter((line) => line.startsWith("bootstrap ")).length, 2);
+  assert.match(calls, /bootout .*localhost\.herdr-tab-autoname/);
+  await assert.rejects(readFile(legacyAgent));
   await writeFile(path.join(home, "launch-calls"), "");
   ok(spawnSync("sh", [path.join(repo, "scripts/services_mac.sh")], { env, encoding: "utf8" }));
   calls = await readFile(path.join(home, "launch-calls"), "utf8");

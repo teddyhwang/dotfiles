@@ -453,7 +453,7 @@ test("claims the tab label only when Pi is alone in the tab", async (t) => {
   }
 
   // The tab label speaks for every visible pane, so a Pi session sharing its
-  // tab leaves the naming to herdr-tab-autoname, which can see them all.
+  // tab leaves naming to the Herdr tab-autoname plugin, which can see them all.
   const serve = async (panes) => {
     const socketPath = path.join(
       os.tmpdir(),

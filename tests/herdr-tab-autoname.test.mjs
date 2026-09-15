@@ -5,13 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
-  HerdrSession,
   OwnershipStore,
   TabNamer,
   herdrCall,
   indexedTabLabel,
   piSessionLabelFor,
   piSessionNameFromTitle,
+  syncSession,
   topicFromTitle,
 } from "../home/local/bin/herdr-tab-autoname.ts";
 
@@ -113,7 +113,6 @@ function createNamer({
   ownership = new MemoryOwnership(new Map([[SESSION_PATH, new Map()]])),
   git = new FakeGit(),
   renameTab = async () => true,
-  markDirty = () => {},
   persistOwnership = true,
   isDryRun = false,
 } = {}) {
@@ -124,17 +123,7 @@ function createNamer({
     persistOwnership,
     dryRun: isDryRun,
     renameTab,
-    markDirty,
   });
-}
-
-async function waitFor(predicate, timeoutMs = 2_500) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (predicate()) return;
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-  assert.fail("Timed out waiting for asynchronous tab naming");
 }
 
 test("extracts an explicit Pi session name", () => {
@@ -372,7 +361,7 @@ test("released agent titles fall back to the project", async () => {
   );
 });
 
-test("automatic ownership survives a daemon restart", async (t) => {
+test("automatic ownership survives transient worker invocations", async (t) => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-ownership-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const statePath = path.join(directory, "ownership.json");
@@ -500,103 +489,61 @@ test("sends socket API requests asynchronously", async (t) => {
   assert.equal(request.method, "tab.rename");
 });
 
-test(
-  "agent release events resnapshot and replace the stale topic",
-  { timeout: 4_000 },
-  async (t) => {
-    if (process.platform === "win32") {
-      t.skip("Unix socket fixture");
-      return;
-    }
-    const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-events-"));
-    const socketPath = path.join(directory, "herdr.sock");
-    t.after(() => rm(directory, { recursive: true, force: true }));
-    const sockets = new Set();
-    let eventSocket;
-    let released = false;
-    let snapshotCount = 0;
-    const renames = [];
-    const server = net.createServer((socket) => {
-      sockets.add(socket);
-      socket.once("close", () => sockets.delete(socket));
-      let buffer = "";
-      socket.on("data", (chunk) => {
-        buffer += chunk.toString("utf8");
-        const newline = buffer.indexOf("\n");
-        if (newline < 0) return;
-        const request = JSON.parse(buffer.slice(0, newline));
-        if (request.method === "events.subscribe") {
-          eventSocket = socket;
-          socket.write(`${JSON.stringify({ id: request.id, result: {} })}\n`);
-          return;
-        }
-        if (request.method === "session.snapshot") {
-          snapshotCount += 1;
-          socket.end(
-            `${JSON.stringify({
-              id: request.id,
-              result: {
-                snapshot: {
-                  tabs: [tabInfo("1:Update the README")],
-                  panes: [
-                    {
-                      ...agentPane("Update the README", "w1:p1", "claude"),
-                      agent: released ? null : "claude",
-                      tab_id: "w1:t1",
-                    },
-                  ],
-                },
+test("a transient sync snapshots and renames without an event subscription", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("Unix socket fixture");
+    return;
+  }
+  const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-sync-"));
+  const socketPath = path.join(directory, "herdr.sock");
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  let snapshotCount = 0;
+  const renames = [];
+  const server = net.createServer((socket) => {
+    let buffer = "";
+    socket.on("data", (chunk) => {
+      buffer += chunk.toString("utf8");
+      const newline = buffer.indexOf("\n");
+      if (newline < 0) return;
+      const request = JSON.parse(buffer.slice(0, newline));
+      if (request.method === "session.snapshot") {
+        snapshotCount += 1;
+        socket.end(
+          `${JSON.stringify({
+            id: request.id,
+            result: {
+              snapshot: {
+                tabs: [tabInfo("7", 7)],
+                panes: [{ ...piPane(), tab_id: "w1:t7" }],
               },
-            })}\n`,
-          );
-          return;
-        }
-        if (request.method === "tab.rename") {
-          renames.push(request.params);
-          socket.end(`${JSON.stringify({ id: request.id, result: {} })}\n`);
-        }
-      });
+            },
+          })}\n`,
+        );
+      } else if (request.method === "tab.rename") {
+        renames.push(request.params);
+        socket.end(`${JSON.stringify({ id: request.id, result: {} })}\n`);
+      }
     });
-    await new Promise((resolve, reject) => {
-      server.once("error", reject);
-      server.listen(socketPath, resolve);
-    });
-    t.after(() => {
-      for (const socket of sockets) socket.destroy();
-      server.close();
-    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(socketPath, resolve);
+  });
+  t.after(() => server.close());
 
-    const ownership = new MemoryOwnership(
-      new Map([[socketPath, new Map([["w1:t1", "1:Update the README"]])]]),
-    );
-    const session = await HerdrSession.open(socketPath, {
+  assert.equal(
+    await syncSession(socketPath, {
       git: new FakeGit(),
-      ownership,
+      ownership: new MemoryOwnership(
+        new Map([[socketPath, new Map([["w1:t7", "7"]])]]),
+      ),
       persistOwnership: true,
       dryRun: false,
-      onDisconnect: () => {},
-    });
-    t.after(() => session.close());
-    session.start();
-    await waitFor(() => snapshotCount >= 1 && eventSocket);
-
-    released = true;
-    eventSocket.write(
-      `${JSON.stringify({
-        event: "pane.agent_detected",
-        data: {
-          type: "pane_agent_detected",
-          pane_id: "w1:p1",
-          agent: null,
-          released: true,
-        },
-      })}\n`,
-    );
-
-    await waitFor(
-      () =>
-        snapshotCount >= 2 &&
-        renames.some((request) => request.label === "1:dotfiles"),
-    );
-  },
-);
+    }),
+    true,
+  );
+  assert.equal(snapshotCount, 1);
+  assert.deepEqual(renames, [
+    { tab_id: "w1:t7", label: "1:Fix session labels" },
+  ]);
+});

@@ -324,8 +324,8 @@ export function panesInTab(
  *
  * A tab label speaks for the whole split. Pi only knows what Pi is doing, so
  * it claims the label only when there is nothing else in the tab to
- * misrepresent; in a split it stays quiet and lets herdr-tab-autoname, which
- * can see every pane, summarize them together.
+ * misrepresent; in a split it stays quiet and lets the Herdr tab-autoname
+ * plugin, which can see every pane, summarize them together.
  */
 export async function isAloneInTab(
   target: HerdrTarget,

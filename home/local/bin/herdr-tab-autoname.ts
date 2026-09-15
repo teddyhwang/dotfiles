@@ -2,15 +2,14 @@
 /**
  * Name Herdr tabs after what the tab is actually doing.
  *
- * This daemon follows every local Herdr session socket and formats labels like
- * tmux (`1:name`). The prefix is the tab's one-based position in its workspace,
- * so it matches `prefix+1..9` and is recomputed after tabs move or close. The
- * name is the one topic shared by the tab's active agents, falling back to
- * repository + branch. Manual names opt out of automatic naming, but keep the
- * position prefix; renaming a tab back to a bare number opts it in again.
- *
- * All socket, filesystem, and Git work uses Node's asynchronous APIs. Event
- * intake never waits for snapshots, repository inspection, or tab renames.
+ * This transient worker snapshots a Herdr session, formats labels like tmux
+ * (`1:name`), applies any changes, and exits. The Herdr plugin coalesces event
+ * bursts before invoking it asynchronously. The prefix is the tab's one-based
+ * position in its workspace, so it matches `prefix+1..9` and is recomputed
+ * after tabs move or close. The name is the one topic shared by the tab's
+ * active agents, falling back to repository + branch. Manual names opt out of
+ * automatic naming, but keep the position prefix; renaming a tab back to a
+ * bare number opts it in again.
  */
 
 import { execFile } from "node:child_process";
@@ -28,38 +27,15 @@ import {
 import { homedir } from "node:os";
 import { basename, dirname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import net, { type Server, type Socket } from "node:net";
+import net from "node:net";
 
 const CLIENT_SOCKET_SUFFIX = "-client.sock";
 const MAX_LABEL = 32;
 const MAX_REPLY_BYTES = 64 * 1024;
-const MAX_EVENT_BUFFER_BYTES = 1024 * 1024;
-const SETTLE_MS = 750;
-const RENAME_INTERVAL_MS = 2_000;
-const RECONNECT_MS = 2_000;
-const RESCAN_MS = 3_000;
 const GIT_CACHE_MS = 15_000;
 const SOCKET_TIMEOUT_MS = 2_000;
 const BRANCH_GLYPH = "";
 const BRANCH_IMPLIED = new Set(["main", "master"]);
-const CLIENT_SUBSCRIPTIONS = [
-  { type: "tab.created" },
-  { type: "tab.closed" },
-  { type: "tab.renamed" },
-  { type: "tab.moved" },
-  { type: "pane.created" },
-  { type: "pane.closed" },
-  { type: "pane.exited" },
-  { type: "pane.moved" },
-  { type: "pane.updated" },
-  { type: "pane.agent_detected" },
-] as const;
-const PANE_SIGNATURE_FIELDS = [
-  "tab_id",
-  "terminal_title_stripped",
-  "cwd",
-  "agent",
-] as const;
 const TITLE_SEPARATORS = [" - ", " — ", " – ", ": ", " | ", " • "];
 const GENERIC_TITLES = new Set([
   "claude",
@@ -81,11 +57,9 @@ const GENERIC_TITLES = new Set([
 const cacheDirectory = resolve(
   expandHome(process.env.XDG_CACHE_HOME || "~/.cache"),
 );
-const ownershipStatePath = join(
-  cacheDirectory,
-  "herdr-tab-autoname-state.json",
-);
-const singletonSocketPath = join(cacheDirectory, "herdr-tab-autoname.lock");
+const ownershipStatePath =
+  process.env.HERDR_TAB_AUTONAME_STATE_PATH ||
+  join(cacheDirectory, "herdr-tab-autoname-state.json");
 const configDirectories = [
   process.env.HERDR_CONFIG_DIR,
   "~/.config/herdr",
@@ -125,7 +99,6 @@ type OwnershipState = {
   known: boolean;
 };
 type RenameTab = (tabId: string, label: string) => Promise<boolean>;
-type MarkDirty = () => void;
 
 export interface GitDescriber {
   describe(cwd: string): Promise<GitDescription>;
@@ -463,7 +436,6 @@ export type TabNamerOptions = {
   persistOwnership: boolean;
   dryRun: boolean;
   renameTab: RenameTab;
-  markDirty: MarkDirty;
 };
 
 export class TabNamer {
@@ -473,9 +445,7 @@ export class TabNamer {
   private readonly persistOwnership: boolean;
   private readonly dryRun: boolean;
   private readonly renameTab: RenameTab;
-  private readonly markDirty: MarkDirty;
   private readonly assigned: Map<string, string>;
-  private readonly renamedAt = new Map<string, number>();
   private recoverExisting: boolean;
 
   constructor(options: TabNamerOptions) {
@@ -485,7 +455,6 @@ export class TabNamer {
     this.persistOwnership = options.persistOwnership;
     this.dryRun = options.dryRun;
     this.renameTab = options.renameTab;
-    this.markDirty = options.markDirty;
     const state = this.ownership.stateFor(this.sessionPath);
     this.assigned = state.labels;
     this.recoverExisting = !state.known;
@@ -530,7 +499,6 @@ export class TabNamer {
     for (const tabId of this.assigned.keys()) {
       if (!liveTabs.has(tabId)) {
         this.assigned.delete(tabId);
-        this.renamedAt.delete(tabId);
       }
     }
     if (this.canPersist()) {
@@ -637,13 +605,6 @@ export class TabNamer {
   ): Promise<boolean> {
     if (current === desired) return true;
 
-    const now = performance.now();
-    const lastRenamed = this.renamedAt.get(tabId);
-    if (lastRenamed !== undefined && now - lastRenamed < RENAME_INTERVAL_MS) {
-      this.markDirty();
-      return false;
-    }
-
     log(
       `${tabId}: ${JSON.stringify(current)} -> ${JSON.stringify(desired)}${
         this.dryRun ? " [dry-run]" : ""
@@ -651,13 +612,8 @@ export class TabNamer {
     );
     if (!this.dryRun) {
       const delivered = await this.renameTab(tabId, desired);
-      if (!delivered) {
-        this.renamedAt.set(tabId, now);
-        this.markDirty();
-        return false;
-      }
+      if (!delivered) return false;
     }
-    this.renamedAt.set(tabId, now);
     return true;
   }
 
@@ -752,206 +708,38 @@ export function herdrCall(
   });
 }
 
-function connectEventSocket(socketPath: string): Promise<Socket> {
-  return new Promise((resolveSocket, rejectSocket) => {
-    const socket = net.createConnection(socketPath);
-    const cleanup = () => {
-      socket.removeListener("error", onError);
-      socket.removeListener("timeout", onTimeout);
-    };
-    const onError = (error: Error) => {
-      cleanup();
-      socket.destroy();
-      rejectSocket(error);
-    };
-    const onTimeout = () => onError(new Error("event subscription timed out"));
-
-    socket.setTimeout(SOCKET_TIMEOUT_MS);
-    socket.once("error", onError);
-    socket.once("timeout", onTimeout);
-    socket.once("connect", () => {
-      cleanup();
-      socket.setTimeout(0);
-      socket.pause();
-      socket.write(
-        `${JSON.stringify({
-          id: "tab-autoname:subscribe",
-          method: "events.subscribe",
-          params: { subscriptions: CLIENT_SUBSCRIPTIONS },
-        })}\n`,
-      );
-      resolveSocket(socket);
-    });
-  });
-}
-
-export type HerdrSessionOptions = {
-  path: string;
-  socket: Socket;
+export type SyncSessionOptions = {
   git: GitDescriber;
   ownership: OwnershipRegistry;
   persistOwnership: boolean;
   dryRun: boolean;
-  onDisconnect: (session: HerdrSession) => void;
 };
 
-export class HerdrSession {
-  readonly path: string;
-  private readonly socket: Socket;
-  private readonly onDisconnect: (session: HerdrSession) => void;
-  private readonly controller = new AbortController();
-  private readonly paneSignatures = new Map<string, string>();
-  private readonly namer: TabNamer;
-  private buffer = "";
-  private closed = false;
-  private dirty = false;
-  private settleTimer: NodeJS.Timeout | undefined;
-  private syncPromise: Promise<void> | undefined;
+export async function syncSession(
+  path: string,
+  options: SyncSessionOptions,
+): Promise<boolean> {
+  const response = await herdrCall(path, "session.snapshot", {});
+  const result = isRecord(response?.result) ? response.result : undefined;
+  const snapshot = isRecord(result?.snapshot) ? result.snapshot : undefined;
+  if (!snapshot) return false;
 
-  private constructor(options: HerdrSessionOptions) {
-    this.path = options.path;
-    this.socket = options.socket;
-    this.onDisconnect = options.onDisconnect;
-    this.namer = new TabNamer({
-      sessionPath: this.path,
-      git: options.git,
-      ownership: options.ownership,
-      persistOwnership: options.persistOwnership,
-      dryRun: options.dryRun,
-      renameTab: async (tabId, label) => {
-        const response = await herdrCall(
-          this.path,
-          "tab.rename",
-          { tab_id: tabId, label },
-          SOCKET_TIMEOUT_MS,
-          this.controller.signal,
-        );
-        return response !== undefined && response.error === undefined;
-      },
-      markDirty: () => this.markDirty(),
-    });
-
-    this.socket.on("data", (chunk) => this.read(chunk));
-    this.socket.once("end", () => this.disconnect());
-    this.socket.once("close", () => this.disconnect());
-    this.socket.once("error", () => this.disconnect());
-    this.socket.resume();
-  }
-
-  static async open(
-    path: string,
-    options: Omit<HerdrSessionOptions, "path" | "socket">,
-  ): Promise<HerdrSession> {
-    const socket = await connectEventSocket(path);
-    return new HerdrSession({ ...options, path, socket });
-  }
-
-  start(): void {
-    this.queueSync(0);
-  }
-
-  async syncOnce(): Promise<void> {
-    await this.sync();
-  }
-
-  close(): void {
-    if (this.closed) return;
-    this.closed = true;
-    this.dirty = false;
-    if (this.settleTimer) clearTimeout(this.settleTimer);
-    this.settleTimer = undefined;
-    this.controller.abort();
-    this.socket.destroy();
-  }
-
-  private disconnect(): void {
-    if (this.closed) return;
-    this.close();
-    this.onDisconnect(this);
-  }
-
-  private read(chunk: Buffer | string): void {
-    this.buffer += chunk.toString();
-    if (Buffer.byteLength(this.buffer) > MAX_EVENT_BUFFER_BYTES) {
-      log(`${this.path}: event buffer exceeded limit; reconnecting`);
-      this.disconnect();
-      return;
-    }
-
-    while (this.buffer.includes("\n")) {
-      const newline = this.buffer.indexOf("\n");
-      const line = this.buffer.slice(0, newline);
-      this.buffer = this.buffer.slice(newline + 1);
-      if (!line.trim()) continue;
-      try {
-        const message: unknown = JSON.parse(line);
-        if (isRecord(message) && "event" in message && isRecord(message.data)) {
-          this.handleEvent(message.data);
-        }
-      } catch {
-        // One malformed event must not disconnect an otherwise healthy stream.
-      }
-    }
-  }
-
-  private handleEvent(data: JsonRecord): void {
-    if (data.type === "pane_updated") {
-      if (!isRecord(data.pane)) return;
-      const paneId = asString(data.pane.pane_id);
-      if (!paneId) return;
-      const signature = JSON.stringify(
-        PANE_SIGNATURE_FIELDS.map((field) => data.pane![field] ?? null),
-      );
-      if (this.paneSignatures.get(paneId) === signature) return;
-      this.paneSignatures.set(paneId, signature);
-    }
-    // pane_agent_detected includes released=true when a harness exits. It and
-    // every other subscribed topology event require a fresh snapshot.
-    this.markDirty();
-  }
-
-  private markDirty(): void {
-    this.queueSync(SETTLE_MS);
-  }
-
-  private queueSync(delayMs: number): void {
-    if (this.closed) return;
-    this.dirty = true;
-    if (this.syncPromise || this.settleTimer) return;
-    this.settleTimer = setTimeout(() => {
-      this.settleTimer = undefined;
-      this.startSync();
-    }, delayMs);
-  }
-
-  private startSync(): void {
-    if (this.closed || this.syncPromise) return;
-    this.dirty = false;
-    const operation = this.sync();
-    this.syncPromise = operation;
-    const settled = (error?: unknown) => {
-      if (error) log(`${this.path}: background sync failed: ${String(error)}`);
-      if (this.syncPromise !== operation) return;
-      this.syncPromise = undefined;
-      if (this.dirty) this.queueSync(SETTLE_MS);
-    };
-    void operation.then(() => settled(), settled);
-  }
-
-  private async sync(): Promise<void> {
-    const response = await herdrCall(
-      this.path,
-      "session.snapshot",
-      {},
-      SOCKET_TIMEOUT_MS,
-      this.controller.signal,
-    );
-    if (this.closed) return;
-    const result = isRecord(response?.result) ? response.result : undefined;
-    const snapshot = isRecord(result?.snapshot) ? result.snapshot : undefined;
-    if (!snapshot) return;
-    await this.namer.apply(snapshot);
-  }
+  const namer = new TabNamer({
+    sessionPath: path,
+    git: options.git,
+    ownership: options.ownership,
+    persistOwnership: options.persistOwnership,
+    dryRun: options.dryRun,
+    renameTab: async (tabId, label) => {
+      const renameResponse = await herdrCall(path, "tab.rename", {
+        tab_id: tabId,
+        label,
+      });
+      return renameResponse !== undefined && renameResponse.error === undefined;
+    },
+  });
+  await namer.apply(snapshot);
+  return true;
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -986,84 +774,25 @@ export async function sessionSockets(): Promise<string[]> {
   return [...found].sort();
 }
 
-function listen(server: Server, path: string): Promise<void> {
-  return new Promise((resolveListen, rejectListen) => {
-    const onError = (error: Error) => {
-      server.removeListener("listening", onListening);
-      rejectListen(error);
-    };
-    const onListening = () => {
-      server.removeListener("error", onError);
-      resolveListen();
-    };
-    server.once("error", onError);
-    server.once("listening", onListening);
-    server.listen(path);
-  });
-}
-
-function socketAccepts(path: string): Promise<boolean> {
-  return new Promise((resolveCheck) => {
-    const socket = net.createConnection(path);
-    let settled = false;
-    const finish = (accepted: boolean) => {
-      if (settled) return;
-      settled = true;
-      socket.destroy();
-      resolveCheck(accepted);
-    };
-    socket.setTimeout(250);
-    socket.once("connect", () => finish(true));
-    socket.once("error", () => finish(false));
-    socket.once("timeout", () => finish(false));
-  });
-}
-
-async function claimSingleton(): Promise<Server | undefined> {
-  await mkdir(cacheDirectory, { recursive: true });
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const server = net.createServer((socket) => socket.end());
-    try {
-      await listen(server, singletonSocketPath);
-      await chmod(singletonSocketPath, 0o600).catch((error) =>
-        log(`cannot restrict singleton socket permissions: ${String(error)}`),
-      );
-      return server;
-    } catch (error) {
-      server.close();
-      const code = (error as NodeJS.ErrnoException).code;
-      if (code !== "EADDRINUSE") throw error;
-      if (await socketAccepts(singletonSocketPath)) return undefined;
-      await unlink(singletonSocketPath).catch(() => undefined);
-    }
-  }
-  return undefined;
-}
-
-async function releaseSingleton(server: Server): Promise<void> {
-  await new Promise<void>((resolveClose) => server.close(() => resolveClose()));
-  await unlink(singletonSocketPath).catch(() => undefined);
-}
-
 type CliOptions = {
-  once: boolean;
   dryRun: boolean;
   verbose: boolean;
 };
 
 function usage(): string {
   return [
-    "Usage: herdr-tab-autoname [--once] [--dry-run] [-v|--verbose]",
+    "Usage: herdr-tab-autoname [--dry-run] [-v|--verbose]",
     "",
-    "Name Herdr tabs after their active agents, repository, and branch.",
+    "Update Herdr tab names once, then exit.",
   ].join("\n");
 }
 
 function parseArgs(args: readonly string[]): CliOptions | undefined {
-  const options: CliOptions = { once: false, dryRun: false, verbose: false };
+  const options: CliOptions = { dryRun: false, verbose: false };
   for (const argument of args) {
-    if (argument === "--once") options.once = true;
-    else if (argument === "--dry-run") options.dryRun = true;
+    // Retained as a no-op while existing callers migrate from the daemon CLI.
+    if (argument === "--once") continue;
+    if (argument === "--dry-run") options.dryRun = true;
     else if (argument === "-v" || argument === "--verbose") {
       options.verbose = true;
     } else if (argument === "-h" || argument === "--help") {
@@ -1078,27 +807,6 @@ function parseArgs(args: readonly string[]): CliOptions | undefined {
   return options;
 }
 
-async function openSession(
-  path: string,
-  ownership: OwnershipRegistry,
-  git: GitDescriber,
-  persistOwnership: boolean,
-  onDisconnect: (session: HerdrSession) => void,
-): Promise<HerdrSession | undefined> {
-  try {
-    return await HerdrSession.open(path, {
-      git,
-      ownership,
-      persistOwnership,
-      dryRun,
-      onDisconnect,
-    });
-  } catch (error) {
-    log(`cannot follow ${path}: ${String(error)}`);
-    return undefined;
-  }
-}
-
 async function runOnce(
   ownership: OwnershipRegistry,
   git: GitDescriber,
@@ -1108,100 +816,24 @@ async function runOnce(
     log("no Herdr server running");
     return 1;
   }
-  const sessions = (
-    await Promise.all(
-      paths.map((path) => openSession(path, ownership, git, false, () => {})),
-    )
-  ).filter((session): session is HerdrSession => Boolean(session));
-  if (sessions.length === 0) return 1;
 
-  try {
-    await Promise.all(sessions.map((session) => session.syncOnce()));
-    return 0;
-  } finally {
-    for (const session of sessions) session.close();
-  }
-}
-
-async function runDaemon(
-  ownership: OwnershipRegistry,
-  git: GitDescriber,
-): Promise<number> {
-  const singleton = await claimSingleton();
-  if (!singleton) {
-    log("another herdr-tab-autoname is already running");
-    return 0;
-  }
-
-  const sessions = new Map<string, HerdrSession>();
-  let shuttingDown = false;
-  let scanRunning = false;
-  let scanAgain = false;
-
-  const scan = async (): Promise<void> => {
-    if (shuttingDown) return;
-    if (scanRunning) {
-      scanAgain = true;
-      return;
-    }
-    scanRunning = true;
-    try {
-      const paths = new Set(await sessionSockets());
-      for (const [path, session] of sessions) {
-        if (!paths.has(path)) {
-          sessions.delete(path);
-          session.close();
-        }
+  const results = await Promise.all(
+    paths.map(async (path) => {
+      try {
+        return await syncSession(path, {
+          git,
+          ownership,
+          persistOwnership: true,
+          dryRun,
+        });
+      } catch (error) {
+        log(`cannot update ${path}: ${String(error)}`);
+        return false;
       }
-      await Promise.all(
-        [...paths]
-          .filter((path) => !sessions.has(path))
-          .map(async (path) => {
-            const session = await openSession(
-              path,
-              ownership,
-              git,
-              true,
-              (disconnected) => {
-                if (sessions.get(path) !== disconnected) return;
-                sessions.delete(path);
-                void scan();
-              },
-            );
-            if (!session || shuttingDown) {
-              session?.close();
-              return;
-            }
-            sessions.set(path, session);
-            session.start();
-            log(`following ${path}`);
-          }),
-      );
-    } finally {
-      scanRunning = false;
-      if (scanAgain) {
-        scanAgain = false;
-        void scan();
-      }
-    }
-  };
-
-  await scan();
-  const scanTimer = setInterval(() => void scan(), RESCAN_MS);
-  await new Promise<void>((resolveStop) => {
-    const stop = () => resolveStop();
-    process.once("SIGINT", stop);
-    process.once("SIGTERM", stop);
-    process.once("SIGHUP", stop);
-  });
-
-  shuttingDown = true;
-  clearInterval(scanTimer);
-  for (const session of sessions.values()) session.close();
-  sessions.clear();
+    }),
+  );
   await ownership.flush();
-  await releaseSingleton(singleton);
-  return 0;
+  return results.some(Boolean) ? 0 : 1;
 }
 
 export async function main(args = process.argv.slice(2)): Promise<number> {
@@ -1213,7 +845,7 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
 
   const ownership = await OwnershipStore.load(ownershipStatePath);
   const git = new GitCache();
-  return options.once ? runOnce(ownership, git) : runDaemon(ownership, git);
+  return runOnce(ownership, git);
 }
 
 async function isMainModule(): Promise<boolean> {

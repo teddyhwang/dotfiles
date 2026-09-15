@@ -20,9 +20,10 @@ scrollback_limit_bytes = 104857600
 show_agent_labels_on_pane_borders = true
 
 # Tab labels are filled in by home/local/bin/herdr-tab-autoname (started from
-# hypr/autostart.lua on Linux, apps/herdr-tab-autoname.plist on macOS): agent
-# topic when the agent reports one, else repo and branch. Naming a tab by hand
-# -- at the new-tab prompt or with prefix+A -- opts that tab out; renaming it
+# hypr/autostart.lua on Linux, apps/herdr-tab-autoname.plist on macOS). Every
+# label keeps Herdr's stable one-based tab number, like tmux: `1:name`. The name
+# is the agent topic when available, else repo and branch. Naming a tab by hand
+# -- at the new-tab prompt or with prefix+A -- opts its name out; renaming it
 # back to a bare number opts it back in.
 
 agent_panel_sort = "spaces"
@@ -67,7 +68,7 @@ previous_tab = ["prefix+p", "prefix+ctrl+h"]
 next_tab = ["prefix+n", "prefix+ctrl+l"]
 move_tab_previous = "prefix+shift+comma"   # prefix+<: move tab left
 move_tab_next = "prefix+shift+period"      # prefix+>: move tab right
-switch_tab = "prefix+1..9"
+switch_tab = "prefix+1..9"           # Herdr public tab numbers are one-based
 close_tab = "prefix+ampersand"      # tmux default: prefix+&
 
 # Workspaces / sessions

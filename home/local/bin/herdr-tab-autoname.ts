@@ -2,10 +2,11 @@
 /**
  * Name Herdr tabs after what the tab is actually doing.
  *
- * Herdr labels new tabs with numbers. This daemon follows every local Herdr
- * session socket and replaces generated labels with the one topic shared by
- * the tab's active agents, falling back to repository + branch. Manual labels
- * opt out; renaming a tab back to a number opts it in again.
+ * Herdr gives every tab a stable, one-based public number. This daemon follows
+ * every local Herdr session socket and formats labels like tmux (`1:name`). The
+ * name is the one topic shared by the tab's active agents, falling back to
+ * repository + branch. Manual names opt out of automatic naming, but keep the
+ * number prefix; renaming a tab back to a bare number opts it in again.
  *
  * All socket, filesystem, and Git work uses Node's asynchronous APIs. Event
  * intake never waits for snapshots, repository inspection, or tab renames.
@@ -107,6 +108,7 @@ export type PaneInfo = {
 };
 export type TabInfo = {
   tab_id?: string;
+  number?: number;
   label?: string | null;
   [key: string]: unknown;
 };
@@ -163,6 +165,22 @@ export function truncateLabel(label: string): string {
     if (space >= Math.floor(MAX_LABEL / 2)) cut = cut.slice(0, space);
   }
   return `${cut.replace(/[ \-—–:|]+$/u, "")}…`;
+}
+
+export function numberedTabLabel(number: number, label: string): string {
+  return truncateLabel(`${number}:${label}`);
+}
+
+function normalizedManualLabel(number: number, label: string): string {
+  return label.startsWith(`${number}:`)
+    ? truncateLabel(label)
+    : numberedTabLabel(number, label);
+}
+
+function positiveTabNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+    ? value
+    : undefined;
 }
 
 export function paneOrder(pane: PaneInfo): readonly [number, number | string] {
@@ -525,60 +543,59 @@ export class TabNamer {
 
   async consider(tab: TabInfo, panes: readonly PaneInfo[]): Promise<void> {
     const tabId = asString(tab.tab_id);
-    if (!tabId) return;
+    const number = positiveTabNumber(tab.number);
+    if (!tabId || number === undefined) return;
     const label = asString(tab.label) ?? "";
+    const assigned = this.assigned.get(tabId);
+    let automatic =
+      !label ||
+      /^\d+$/u.test(label) ||
+      label === assigned ||
+      (assigned !== undefined && numberedTabLabel(number, assigned) === label);
 
-    if (label && !/^\d+$/u.test(label) && label !== this.assigned.get(tabId)) {
+    if (!automatic) {
       const piLabel = panes.length === 1 ? piSessionLabelFor(panes) : undefined;
       if (label === piLabel) {
-        await this.rememberAssignment(tabId, label);
+        automatic = true;
         log(`${tabId}: adopted Pi session label ${JSON.stringify(label)}`);
-        return;
       }
+    }
 
-      if (this.recoverExisting && panes.some((pane) => Boolean(pane.agent))) {
-        const desired = await this.labelFor(panes);
-        if (label === desired) {
-          await this.rememberAssignment(tabId, label);
-          log(`${tabId}: recovered automatic label ${JSON.stringify(label)}`);
-          return;
-        }
+    if (
+      !automatic &&
+      this.recoverExisting &&
+      panes.some((pane) => Boolean(pane.agent))
+    ) {
+      const desiredBody = await this.labelFor(panes);
+      const desired = desiredBody
+        ? numberedTabLabel(number, desiredBody)
+        : undefined;
+      if (label === desiredBody || label === desired) {
+        automatic = true;
+        log(`${tabId}: recovered automatic label ${JSON.stringify(label)}`);
       }
+    }
 
+    if (!automatic) {
       const previous = await this.forgetAssignment(tabId);
       if (previous !== undefined) {
         log(
-          `${tabId} renamed by hand to ${JSON.stringify(label)}; leaving it alone`,
+          `${tabId} renamed by hand to ${JSON.stringify(label)}; preserving its name`,
         );
       }
+      await this.renameLabel(tabId, label, normalizedManualLabel(number, label));
       return;
     }
 
-    const desired = await this.labelFor(panes);
-    if (!desired || desired === label) return;
-
-    const now = performance.now();
-    const lastRenamed = this.renamedAt.get(tabId);
-    if (lastRenamed !== undefined && now - lastRenamed < RENAME_INTERVAL_MS) {
-      this.markDirty();
+    const desiredBody = await this.labelFor(panes);
+    if (!desiredBody) return;
+    const desired = numberedTabLabel(number, desiredBody);
+    if (desired === label) {
+      if (assigned !== desired) await this.rememberAssignment(tabId, desired);
       return;
     }
-
-    log(
-      `${tabId}: ${JSON.stringify(label)} -> ${JSON.stringify(desired)}${
-        this.dryRun ? " [dry-run]" : ""
-      }`,
-    );
-    if (!this.dryRun) {
-      const delivered = await this.renameTab(tabId, desired);
-      if (!delivered) {
-        this.renamedAt.set(tabId, now);
-        this.markDirty();
-        return;
-      }
-    }
+    if (!(await this.renameLabel(tabId, label, desired))) return;
     await this.rememberAssignment(tabId, desired);
-    this.renamedAt.set(tabId, now);
   }
 
   async labelFor(panes: readonly PaneInfo[]): Promise<string | undefined> {
@@ -598,6 +615,37 @@ export class TabNamer {
     if (!root && normalize(cwd) === normalize(homedir())) name = "~";
     if (!branch || BRANCH_IMPLIED.has(branch)) return name;
     return `${name} ${BRANCH_GLYPH} ${branch}`;
+  }
+
+  private async renameLabel(
+    tabId: string,
+    current: string,
+    desired: string,
+  ): Promise<boolean> {
+    if (current === desired) return true;
+
+    const now = performance.now();
+    const lastRenamed = this.renamedAt.get(tabId);
+    if (lastRenamed !== undefined && now - lastRenamed < RENAME_INTERVAL_MS) {
+      this.markDirty();
+      return false;
+    }
+
+    log(
+      `${tabId}: ${JSON.stringify(current)} -> ${JSON.stringify(desired)}${
+        this.dryRun ? " [dry-run]" : ""
+      }`,
+    );
+    if (!this.dryRun) {
+      const delivered = await this.renameTab(tabId, desired);
+      if (!delivered) {
+        this.renamedAt.set(tabId, now);
+        this.markDirty();
+        return false;
+      }
+    }
+    this.renamedAt.set(tabId, now);
+    return true;
   }
 
   private canPersist(): boolean {

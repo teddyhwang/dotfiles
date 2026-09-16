@@ -84,7 +84,9 @@ test("plugin coalesces concurrent events across Herdr sessions", async (t) => {
     HOME: directory,
     HERDR_PLUGIN_ROOT: pluginRoot,
     HERDR_PLUGIN_STATE_DIR: state,
-    HERDR_TAB_AUTONAME_SETTLE_SECONDS: "0.1",
+    // Give all spawned hooks time to publish their pending files, including on
+    // slower CI runners, before the scheduler drains the burst.
+    HERDR_TAB_AUTONAME_SETTLE_SECONDS: "1",
     HERDR_TAB_AUTONAME_WORKER: worker,
     CALL_LOG: calls,
   };

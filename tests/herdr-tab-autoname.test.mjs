@@ -126,10 +126,23 @@ function createNamer({
   });
 }
 
-test("extracts an explicit Pi session name", () => {
-  const pane = piPane();
-  assert.equal(piSessionNameFromTitle(pane), "Fix session labels");
-  assert.equal(piSessionLabelFor([pane]), "Fix session labels");
+test("extracts legacy and session-banner Pi session names", () => {
+  const legacyPane = piPane();
+  const bannerPane = piPane("π — 🪻 0:When updating nvim mason");
+  const worldBannerPane = piPane(
+    "π root //areas/core/shopify — 🪻 Show me which file",
+  );
+
+  assert.equal(piSessionNameFromTitle(legacyPane), "Fix session labels");
+  assert.equal(piSessionLabelFor([legacyPane]), "Fix session labels");
+  assert.equal(
+    piSessionNameFromTitle(bannerPane),
+    "🪻 When updating nvim mason",
+  );
+  assert.equal(
+    piSessionNameFromTitle(worldBannerPane),
+    "🪻 Show me which file",
+  );
 });
 
 test("formats indexed tab labels like tmux within the label limit", () => {
@@ -146,7 +159,7 @@ test("rejects a generic Pi title", () => {
   assert.equal(topicFromTitle(pane), undefined);
 });
 
-test("prefixes the zero-based index on an automatically named tab", async () => {
+test("leaves active Pi tab naming to session-banner", async () => {
   const requests = [];
   const namer = createNamer({
     renameTab: async (tabId, label) => {
@@ -157,10 +170,8 @@ test("prefixes the zero-based index on an automatically named tab", async () => 
 
   await namer.consider(tabInfo("7", 7), [piPane()], 0);
 
-  assert.deepEqual(requests, [
-    { tabId: "w1:t7", label: "0:Fix session labels" },
-  ]);
-  assert.equal(namer.assignmentFor("w1:t7"), "0:Fix session labels");
+  assert.deepEqual(requests, []);
+  assert.equal(namer.assignmentFor("w1:t7"), undefined);
 });
 
 test("indexes tabs by keyboard position within each workspace", async () => {
@@ -199,9 +210,9 @@ test("indexes tabs by keyboard position within each workspace", async () => {
   ]);
 });
 
-test("adopts and indexes a direct Pi extension rename", async () => {
+test("hands an existing automatic Pi tab back to session-banner", async () => {
   const ownership = new MemoryOwnership(
-    new Map([[SESSION_PATH, new Map([["w1:t1", "1:dotfiles"]])]]),
+    new Map([[SESSION_PATH, new Map([["w1:t1", "0:dotfiles"]])]]),
   );
   const requests = [];
   const namer = createNamer({
@@ -211,13 +222,14 @@ test("adopts and indexes a direct Pi extension rename", async () => {
       return true;
     },
   });
+  const pane = piPane("π — 🪻 0:When updating nvim mason");
 
-  await namer.consider(tabInfo("Fix session labels"), [piPane()], 0);
+  await namer.consider(tabInfo("0:dotfiles"), [pane], 0);
 
   assert.deepEqual(requests, [
-    { tabId: "w1:t1", label: "0:Fix session labels" },
+    { tabId: "w1:t1", label: "🪻 When updating nvim mason" },
   ]);
-  assert.equal(namer.assignmentFor("w1:t1"), "0:Fix session labels");
+  assert.equal(namer.assignmentFor("w1:t1"), undefined);
 });
 
 test("prefixes a manual name without taking ownership of it", async () => {
@@ -233,7 +245,11 @@ test("prefixes a manual name without taking ownership of it", async () => {
     },
   });
 
-  await namer.consider(tabInfo("My manual name"), [piPane()], 0);
+  await namer.consider(
+    tabInfo("My manual name"),
+    [agentPane("Refactor auth")],
+    0,
+  );
 
   assert.deepEqual(requests, [{ tabId: "w1:t1", label: "0:My manual name" }]);
   assert.equal(namer.assignmentFor("w1:t1"), undefined);
@@ -248,7 +264,11 @@ test("preserves one correct index prefix on a manual name", async () => {
     },
   });
 
-  await namer.consider(tabInfo("7:My manual name", 7), [piPane()], 7);
+  await namer.consider(
+    tabInfo("7:My manual name", 7),
+    [agentPane("Refactor auth")],
+    7,
+  );
 
   assert.deepEqual(requests, []);
   assert.equal(namer.assignmentFor("w1:t7"), undefined);
@@ -263,7 +283,11 @@ test("replaces a stale position prefix on a manual name", async () => {
     },
   });
 
-  await namer.consider(tabInfo("0:My manual name", 7), [piPane()], 7);
+  await namer.consider(
+    tabInfo("0:My manual name", 7),
+    [agentPane("Refactor auth")],
+    7,
+  );
 
   assert.deepEqual(requests, [{ tabId: "w1:t7", label: "7:My manual name" }]);
   assert.equal(namer.assignmentFor("w1:t7"), undefined);
@@ -442,7 +466,11 @@ test("rename waits never block the Node event loop", async () => {
     },
   });
 
-  const operation = namer.consider(tabInfo("1"), [piPane()], 0);
+  const operation = namer.consider(
+    tabInfo("1"),
+    [agentPane("Fix session labels")],
+    0,
+  );
   await started;
   let eventLoopAdvanced = false;
   setImmediate(() => {
@@ -514,7 +542,9 @@ test("a transient sync snapshots and renames without an event subscription", asy
             result: {
               snapshot: {
                 tabs: [tabInfo("7", 7)],
-                panes: [{ ...piPane(), tab_id: "w1:t7" }],
+                panes: [
+                  { ...agentPane("Fix session labels"), tab_id: "w1:t7" },
+                ],
               },
             },
           })}\n`,

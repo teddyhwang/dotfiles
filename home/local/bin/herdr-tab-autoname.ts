@@ -180,6 +180,22 @@ export function piSessionNameFromTitle(pane: PaneInfo): string | undefined {
     .split(/\s+/u)
     .filter(Boolean)
     .join(" ");
+  if (!title.startsWith("π")) return undefined;
+
+  // session-banner owns current Pi titles and renders them after an em dash.
+  // Keep its task emoji, but remove a positional prefix left by older versions
+  // of this plugin so the index does not become part of the session topic.
+  const modernSeparator = " — ";
+  const separatorIndex = title.lastIndexOf(modernSeparator);
+  if (separatorIndex >= 0) {
+    const modernName = title.slice(separatorIndex + modernSeparator.length);
+    const name = modernName.replace(
+      /^([^\p{L}\p{N}]*)\d+:/u,
+      "$1",
+    ).trim();
+    return name || undefined;
+  }
+
   const cwd = asString(pane.cwd) ?? "";
   const cwdName = basename(cwd.replace(/\/+$/u, ""));
   const prefix = "π - ";
@@ -524,6 +540,21 @@ export class TabNamer {
     if (!tabId || index === undefined) return;
     const label = asString(tab.label) ?? "";
     const assigned = this.assigned.get(tabId);
+
+    // session-banner is the sole owner of active Pi tab names. Prefixing its
+    // label makes session-banner treat the prefix as a manual rename and copy
+    // it back into Pi's session name. Only migrate a label that this plugin
+    // previously owned, then stop managing the tab while Pi is active.
+    if (panes.some((pane) => pane.agent === "pi")) {
+      if (assigned === undefined) return;
+      if (label === assigned) {
+        const piLabel = piSessionLabelFor(panes);
+        if (!piLabel || !(await this.renameLabel(tabId, label, piLabel))) return;
+      }
+      await this.forgetAssignment(tabId);
+      return;
+    }
+
     let automatic =
       !label ||
       /^\d+$/u.test(label) ||

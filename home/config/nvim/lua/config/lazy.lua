@@ -38,7 +38,7 @@ require("lazy").setup({
   },
   install = { colorscheme = { "tokyonight", "habamax" } },
   -- Keep startup deterministic and avoid background Git/network work. Updates
-  -- are explicit (`:Lazy update`) and the resulting lockfile is committed.
+  -- are explicit (`:Lazy update`) and the resulting lockfile stays machine-local.
   checker = { enabled = false },
   ui = {
     border = "rounded",

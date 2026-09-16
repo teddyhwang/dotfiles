@@ -44,15 +44,18 @@ if ! jq_bin=$(find_executable jq); then
   exit 1
 fi
 
-if [ ! -r "$lazy_lock" ]; then
-  print_error "Neovim lockfile is missing: $lazy_lock"
-  exit 1
+# Neovim's lockfile is machine-local and may not exist until its first run.
+# Prefer its revision when available; otherwise bootstrap with the last shared pin.
+plugin_ref=""
+if [ -e "$lazy_lock" ]; then
+  if ! plugin_ref=$("$jq_bin" -r '."herdr-splits.nvim".commit // empty' "$lazy_lock"); then
+    print_error "Could not read Neovim lockfile: $lazy_lock"
+    exit 1
+  fi
 fi
-
-plugin_ref=$("$jq_bin" -r '."herdr-splits.nvim".commit // empty' "$lazy_lock")
 if [ -z "$plugin_ref" ]; then
-  print_error "No herdr-splits.nvim commit is pinned in $lazy_lock"
-  exit 1
+  plugin_ref="94f30cf4e9ac76ddf185a3acd0977be728fa4106"
+  print_info "No local Neovim pin for $plugin_id; using setup's pinned revision $plugin_ref"
 fi
 
 plugin_matches() {
@@ -107,7 +110,7 @@ elif ! printf '%s' "$plugins_json" | plugin_enabled; then
     exit 1
   fi
 else
-  print_info "$plugin_id is installed, enabled, and matches the Neovim lockfile"
+  print_info "$plugin_id is installed, enabled, and matches revision $plugin_ref"
 fi
 
 if ! printf '%s' "$plugins_json" | plugin_matches || ! printf '%s' "$plugins_json" | plugin_enabled; then

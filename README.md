@@ -79,7 +79,7 @@ brew bundle upgrade --file ./Brewfile
 # Start heavyweight development services only when needed
 brew services start postgresql@14 # or mysql@8.4, redis, ollama
 
-# Update Neovim plugins, then review and commit lazy-lock.json
+# Update Neovim plugins (lazy-lock.json stays local to this machine)
 nvim '+Lazy update'
 ```
 
@@ -96,8 +96,12 @@ private, sessionless server and checks every declared plugin without touching
 your active tmux sessions.
 
 Database servers and Ollama are installed but deliberately not enabled at
-login by this setup. Previously enabled services are not stopped automatically. `home/config/nvim/lazy-lock.json` is committed so a fresh machine gets the same
-plugin revisions. Generated theme files, caches, machine-local configuration,
-and secret-bearing environment files are ignored. Never add credentials to the
-repository; use the system keychain, 1Password, or untracked local environment
-files instead.
+login by this setup. Previously enabled services are not stopped automatically.
+`home/config/nvim/lazy-lock.json` is machine-local and ignored by Git. Herdr setup
+uses its `herdr-splits.nvim` revision when present, or a pinned fallback from
+`scripts/herdr.sh` before Neovim has installed the plugin. Neovim's Herdr plugin
+also synchronizes the Herdr side when it builds or loads inside Herdr.
+
+Generated theme files, caches, machine-local configuration, and secret-bearing
+environment files are ignored. Never add credentials to the repository; use the
+system keychain, 1Password, or untracked local environment files instead.

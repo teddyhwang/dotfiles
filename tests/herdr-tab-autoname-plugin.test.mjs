@@ -75,9 +75,9 @@ test("plugin coalesces concurrent events across Herdr sessions", async (t) => {
     serverB.close();
   });
 
-  const staleLock = path.join(state, "scheduler.lock");
-  await mkdir(staleLock, { recursive: true });
-  await writeFile(path.join(staleLock, "owner"), "999999999\n");
+  await mkdir(state, { recursive: true });
+  const staleLock = path.join(state, "scheduler.lockfile");
+  await writeFile(staleLock, "999999999\n");
 
   const baseEnv = {
     ...process.env,

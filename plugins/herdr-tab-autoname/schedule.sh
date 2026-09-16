@@ -8,7 +8,8 @@ state_dir=${HERDR_PLUGIN_STATE_DIR:?HERDR_PLUGIN_STATE_DIR is required}
 socket_path=${HERDR_SOCKET_PATH:?HERDR_SOCKET_PATH is required}
 settle_seconds=${HERDR_TAB_AUTONAME_SETTLE_SECONDS:-0.75}
 worker=${HERDR_TAB_AUTONAME_WORKER:-$HOME/.local/bin/herdr-tab-autoname}
-lock_dir="$state_dir/scheduler.lock"
+lock_file="$state_dir/scheduler.lockfile"
+lock_candidate="$lock_file.$$"
 recovery_lock="$state_dir/scheduler.recovery.lock"
 owns_lock=false
 owns_recovery_lock=false
@@ -25,38 +26,44 @@ pending_exists() {
   [ -e "$1" ]
 }
 
-acquire_lock() {
-  if mkdir "$lock_dir" 2>/dev/null; then
-    printf '%s\n' "$$" >"$lock_dir/owner"
+try_acquire_lock() {
+  # Link a complete owner file into place so contenders can never observe a
+  # newly acquired lock before its PID has been written.
+  printf '%s\n' "$$" >"$lock_candidate"
+  if ln "$lock_candidate" "$lock_file" 2>/dev/null; then
+    rm -f "$lock_candidate"
     owns_lock=true
     return 0
   fi
+  rm -f "$lock_candidate"
+  return 1
+}
+
+acquire_lock() {
+  try_acquire_lock && return 0
 
   # Serialize stale-lock recovery so two hooks cannot both replace the same
   # dead owner and then run workers concurrently.
   mkdir "$recovery_lock" 2>/dev/null || return 1
   owns_recovery_lock=true
-  owner=$(cat "$lock_dir/owner" 2>/dev/null || true)
+  owner=$(cat "$lock_file" 2>/dev/null || true)
   if [ -z "$owner" ] || ! kill -0 "$owner" 2>/dev/null; then
-    rm -rf "$lock_dir"
+    rm -f "$lock_file"
   fi
   rmdir "$recovery_lock"
   owns_recovery_lock=false
 
-  if ! mkdir "$lock_dir" 2>/dev/null; then
-    return 1
-  fi
-  printf '%s\n' "$$" >"$lock_dir/owner"
-  owns_lock=true
+  try_acquire_lock
 }
 
 release_lock() {
+  rm -f "$lock_candidate"
   if [ "$owns_recovery_lock" = true ]; then
     rm -rf "$recovery_lock"
     owns_recovery_lock=false
   fi
   if [ "$owns_lock" = true ]; then
-    rm -rf "$lock_dir"
+    rm -f "$lock_file"
     owns_lock=false
   fi
 }
@@ -80,8 +87,12 @@ while :; do
   if [ -e "$1" ]; then
     for pending_file do
       [ -f "$pending_file" ] || continue
-      pending_socket=$(cat "$pending_file")
-      rm -f "$pending_file"
+      processing="$state_dir/processing.$$.${pending_file##*/}"
+      if ! mv "$pending_file" "$processing" 2>/dev/null; then
+        continue
+      fi
+      pending_socket=$(cat "$processing")
+      rm -f "$processing"
       if [ -S "$pending_socket" ]; then
         HERDR_SOCKET_PATH=$pending_socket \
           HERDR_TAB_AUTONAME_STATE_PATH=$ownership_state \

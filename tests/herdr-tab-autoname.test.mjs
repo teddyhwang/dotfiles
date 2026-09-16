@@ -176,7 +176,7 @@ test("prefixes the zero-based index on an automatically named Pi tab", async () 
   assert.equal(namer.assignmentFor("w1:t7"), "0:Fix session labels");
 });
 
-test("waits for a Pi session title before replacing its tab label", async () => {
+test("tracks session-banner's placeholder and refreshes it after Pi exits", async () => {
   const requests = [];
   const namer = createNamer({
     renameTab: async (tabId, label) => {
@@ -185,10 +185,24 @@ test("waits for a Pi session title before replacing its tab label", async () => 
     },
   });
 
-  await namer.consider(tabInfo("📭 Open"), [piPane("π —")], 0);
+  await namer.consider(
+    tabInfo("📭 Open"),
+    [{ ...piPane("π"), agent: null }],
+    0,
+  );
+  assert.equal(namer.assignmentFor("w1:t1"), "0:📭 Open");
 
-  assert.deepEqual(requests, []);
-  assert.equal(namer.assignmentFor("w1:t1"), undefined);
+  await namer.consider(
+    tabInfo("0:📭 Open"),
+    [{ ...piPane("π - dotfiles"), agent: null }],
+    0,
+  );
+
+  assert.deepEqual(requests, [
+    { tabId: "w1:t1", label: "0:📭 Open" },
+    { tabId: "w1:t1", label: "0:dotfiles" },
+  ]);
+  assert.equal(namer.assignmentFor("w1:t1"), "0:dotfiles");
 });
 
 test("indexes tabs by keyboard position within each workspace", async () => {
@@ -250,6 +264,28 @@ test("updates an existing automatic Pi tab from a session-banner title", async (
     namer.assignmentFor("w1:t1"),
     "0:🪻 When updating nvim mason",
   );
+});
+
+test("recovers and refreshes an indexed Pi title after Pi has exited", async () => {
+  const requests = [];
+  const namer = createNamer({
+    renameTab: async (tabId, label) => {
+      requests.push({ tabId, label });
+      return true;
+    },
+  });
+  const releasedPane = { ...piPane(), agent: null };
+
+  await namer.consider(
+    tabInfo("0:Fix session labels"),
+    [releasedPane],
+    0,
+  );
+
+  assert.deepEqual(requests, [
+    { tabId: "w1:t1", label: "0:dotfiles" },
+  ]);
+  assert.equal(namer.assignmentFor("w1:t1"), "0:dotfiles");
 });
 
 test("prefixes a manual name without taking ownership of it", async () => {

@@ -36,6 +36,7 @@ const GIT_CACHE_MS = 15_000;
 const SOCKET_TIMEOUT_MS = 2_000;
 const BRANCH_GLYPH = "";
 const BRANCH_IMPLIED = new Set(["main", "master"]);
+const PI_OPEN_LABEL = "📭 Open";
 const TITLE_SEPARATORS = [" - ", " — ", " – ", ": ", " | ", " • "];
 const GENERIC_TITLES = new Set([
   "claude",
@@ -544,22 +545,39 @@ export class TabNamer {
     // Pi's naming extension publishes a session title shortly after startup.
     // Until it does, preserve the current label instead of replacing it with a
     // repository fallback that can be mistaken for the real session topic.
-    if (
-      panes.some((pane) => pane.agent === "pi") &&
-      piSessionLabelFor(panes) === undefined
-    ) {
-      return;
+    const hasActivePi = panes.some((pane) => pane.agent === "pi");
+    const piLabel = piSessionLabelFor(panes);
+    const isPiOpenLabel = label.replace(/^\d+:/u, "") === PI_OPEN_LABEL;
+    if (isPiOpenLabel) {
+      const solePane = panes.length === 1 ? panes[0] : undefined;
+      const terminalTitle = String(
+        solePane?.terminal_title_stripped ?? solePane?.terminal_title ?? "",
+      );
+      const piIsStarting =
+        hasActivePi ||
+        (terminalTitle.startsWith("π") && !terminalTitle.includes(" - "));
+      if (piIsStarting) {
+        const desired = indexedTabLabel(index, piLabel ?? PI_OPEN_LABEL);
+        if (!(await this.renameLabel(tabId, label, desired))) return;
+        await this.rememberAssignment(tabId, desired);
+        return;
+      }
     }
+    if (hasActivePi && piLabel === undefined) return;
 
     let automatic =
       !label ||
       /^\d+$/u.test(label) ||
+      isPiOpenLabel ||
       label === assigned ||
       (assigned !== undefined && indexedTabLabel(index, assigned) === label);
 
-    if (!automatic) {
-      const piLabel = panes.length === 1 ? piSessionLabelFor(panes) : undefined;
-      if (label === piLabel) {
+    if (!automatic && panes.length === 1) {
+      const piLabel = piSessionNameFromTitle(panes[0]!);
+      if (
+        piLabel !== undefined &&
+        (label === piLabel || label === indexedTabLabel(index, piLabel))
+      ) {
         automatic = true;
         log(`${tabId}: adopted Pi session label ${JSON.stringify(label)}`);
       }

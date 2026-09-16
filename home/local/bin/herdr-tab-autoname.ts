@@ -541,17 +541,13 @@ export class TabNamer {
     const label = asString(tab.label) ?? "";
     const assigned = this.assigned.get(tabId);
 
-    // session-banner is the sole owner of active Pi tab names. Prefixing its
-    // label makes session-banner treat the prefix as a manual rename and copy
-    // it back into Pi's session name. Only migrate a label that this plugin
-    // previously owned, then stop managing the tab while Pi is active.
-    if (panes.some((pane) => pane.agent === "pi")) {
-      if (assigned === undefined) return;
-      if (label === assigned) {
-        const piLabel = piSessionLabelFor(panes);
-        if (!piLabel || !(await this.renameLabel(tabId, label, piLabel))) return;
-      }
-      await this.forgetAssignment(tabId);
+    // Pi's naming extension publishes a session title shortly after startup.
+    // Until it does, preserve the current label instead of replacing it with a
+    // repository fallback that can be mistaken for the real session topic.
+    if (
+      panes.some((pane) => pane.agent === "pi") &&
+      piSessionLabelFor(panes) === undefined
+    ) {
       return;
     }
 

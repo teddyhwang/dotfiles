@@ -159,7 +159,7 @@ test("rejects a generic Pi title", () => {
   assert.equal(topicFromTitle(pane), undefined);
 });
 
-test("leaves active Pi tab naming to session-banner", async () => {
+test("prefixes the zero-based index on an automatically named Pi tab", async () => {
   const requests = [];
   const namer = createNamer({
     renameTab: async (tabId, label) => {
@@ -170,8 +170,25 @@ test("leaves active Pi tab naming to session-banner", async () => {
 
   await namer.consider(tabInfo("7", 7), [piPane()], 0);
 
+  assert.deepEqual(requests, [
+    { tabId: "w1:t7", label: "0:Fix session labels" },
+  ]);
+  assert.equal(namer.assignmentFor("w1:t7"), "0:Fix session labels");
+});
+
+test("waits for a Pi session title before replacing its tab label", async () => {
+  const requests = [];
+  const namer = createNamer({
+    renameTab: async (tabId, label) => {
+      requests.push({ tabId, label });
+      return true;
+    },
+  });
+
+  await namer.consider(tabInfo("📭 Open"), [piPane("π —")], 0);
+
   assert.deepEqual(requests, []);
-  assert.equal(namer.assignmentFor("w1:t7"), undefined);
+  assert.equal(namer.assignmentFor("w1:t1"), undefined);
 });
 
 test("indexes tabs by keyboard position within each workspace", async () => {
@@ -210,7 +227,7 @@ test("indexes tabs by keyboard position within each workspace", async () => {
   ]);
 });
 
-test("hands an existing automatic Pi tab back to session-banner", async () => {
+test("updates an existing automatic Pi tab from a session-banner title", async () => {
   const ownership = new MemoryOwnership(
     new Map([[SESSION_PATH, new Map([["w1:t1", "0:dotfiles"]])]]),
   );
@@ -227,9 +244,12 @@ test("hands an existing automatic Pi tab back to session-banner", async () => {
   await namer.consider(tabInfo("0:dotfiles"), [pane], 0);
 
   assert.deepEqual(requests, [
-    { tabId: "w1:t1", label: "🪻 When updating nvim mason" },
+    { tabId: "w1:t1", label: "0:🪻 When updating nvim mason" },
   ]);
-  assert.equal(namer.assignmentFor("w1:t1"), undefined);
+  assert.equal(
+    namer.assignmentFor("w1:t1"),
+    "0:🪻 When updating nvim mason",
+  );
 });
 
 test("prefixes a manual name without taking ownership of it", async () => {

@@ -9,4 +9,8 @@ else
 fi
 
 # Added by tec agent
-[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init bash)"
+_tec_init="$HOME/.local/state/tec/profiles/base/current/global/init"
+if [[ -x "$_tec_init" ]]; then
+  eval "$("$_tec_init" bash)"
+fi
+unset _tec_init

@@ -128,7 +128,10 @@ function createNamer({
 
 test("extracts legacy and session-banner Pi session names", () => {
   const legacyPane = piPane();
-  const bannerPane = piPane("π — 🪻 0:When updating nvim mason");
+  const indexedLegacyPane = piPane(
+    "π - 0:0:Fix session labels - dotfiles",
+  );
+  const bannerPane = piPane("π — 🌊 0:0:When updating nvim mason");
   const worldBannerPane = piPane(
     "π root //areas/core/shopify — 🪻 Show me which file",
   );
@@ -136,8 +139,12 @@ test("extracts legacy and session-banner Pi session names", () => {
   assert.equal(piSessionNameFromTitle(legacyPane), "Fix session labels");
   assert.equal(piSessionLabelFor([legacyPane]), "Fix session labels");
   assert.equal(
+    piSessionNameFromTitle(indexedLegacyPane),
+    "Fix session labels",
+  );
+  assert.equal(
     piSessionNameFromTitle(bannerPane),
-    "🪻 When updating nvim mason",
+    "🌊 When updating nvim mason",
   );
   assert.equal(
     piSessionNameFromTitle(worldBannerPane),
@@ -263,6 +270,40 @@ test("updates an existing automatic Pi tab from a session-banner title", async (
   assert.equal(
     namer.assignmentFor("w1:t1"),
     "0:🪻 When updating nvim mason",
+  );
+});
+
+test("collapses repeated indexes restored by pi --continue", async () => {
+  const ownership = new MemoryOwnership(
+    new Map([
+      [
+        SESSION_PATH,
+        new Map([["w1:t1", "0:🌊 0:When updating nvim mason"]]),
+      ],
+    ]),
+  );
+  const requests = [];
+  const namer = createNamer({
+    ownership,
+    renameTab: async (tabId, label) => {
+      requests.push({ tabId, label });
+      return true;
+    },
+  });
+  const pane = piPane("π — 🌊 0:0:When updating nvim mason");
+
+  await namer.consider(
+    tabInfo("0:🌊 0:When updating nvim mason"),
+    [pane],
+    0,
+  );
+
+  assert.deepEqual(requests, [
+    { tabId: "w1:t1", label: "0:🌊 When updating nvim mason" },
+  ]);
+  assert.equal(
+    namer.assignmentFor("w1:t1"),
+    "0:🌊 When updating nvim mason",
   );
 });
 

@@ -174,6 +174,10 @@ function comparePaneOrder(left: PaneInfo, right: PaneInfo): number {
   return String(leftValue).localeCompare(String(rightValue));
 }
 
+function withoutTabIndexes(name: string): string {
+  return name.replace(/^([^\p{L}\p{N}]*)(?:\d+:)+/u, "$1").trim();
+}
+
 export function piSessionNameFromTitle(pane: PaneInfo): string | undefined {
   const title = String(
     pane.terminal_title_stripped ?? pane.terminal_title ?? "",
@@ -190,10 +194,7 @@ export function piSessionNameFromTitle(pane: PaneInfo): string | undefined {
   const separatorIndex = title.lastIndexOf(modernSeparator);
   if (separatorIndex >= 0) {
     const modernName = title.slice(separatorIndex + modernSeparator.length);
-    const name = modernName.replace(
-      /^([^\p{L}\p{N}]*)\d+:/u,
-      "$1",
-    ).trim();
+    const name = withoutTabIndexes(modernName);
     return name || undefined;
   }
 
@@ -205,7 +206,9 @@ export function piSessionNameFromTitle(pane: PaneInfo): string | undefined {
   if (!title.toLocaleLowerCase().endsWith(suffix.toLocaleLowerCase())) {
     return undefined;
   }
-  const name = title.slice(prefix.length, title.length - suffix.length).trim();
+  const name = withoutTabIndexes(
+    title.slice(prefix.length, title.length - suffix.length),
+  );
   return name || undefined;
 }
 

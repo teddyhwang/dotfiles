@@ -7,3 +7,6 @@ if [[ $- == *i* ]]; then
 else
   [[ -f "$HOME/.shared/env" ]] && . "$HOME/.shared/env"
 fi
+
+# Added by tec agent
+[[ -x /Users/teddyhwang/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/teddyhwang/.local/state/tec/profiles/base/current/global/init bash)"

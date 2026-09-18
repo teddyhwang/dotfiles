@@ -100,10 +100,16 @@ if [[ "$_shared_init_regen" == "1" ]]; then
   if [[ -f "$_shared_init_cache" ]]; then
     # Stale cache exists — use it now, regen in background for next shell
     source "$_shared_init_cache"
-    _shared_init_regen_cache "$_shared_init_cache" "$_shell" </dev/null >/dev/null 2>&1 &
-    _shared_init_pid=$!
-    disown "$_shared_init_pid" 2>/dev/null || true
-    unset _shared_init_pid
+    if [[ -n "$ZSH_VERSION" ]]; then
+      # Detach at launch: zsh's disown takes job specs, not process IDs.
+      # Keep zsh-only syntax inside eval so Bash can still parse this file.
+      eval '_shared_init_regen_cache "$_shared_init_cache" "$_shell" </dev/null >/dev/null 2>&1 &!'
+    else
+      _shared_init_regen_cache "$_shared_init_cache" "$_shell" </dev/null >/dev/null 2>&1 &
+      _shared_init_pid=$!
+      disown "$_shared_init_pid" 2>/dev/null || true
+      unset _shared_init_pid
+    fi
   else
     # No cache at all — must regen synchronously.
     if _shared_init_regen_cache "$_shared_init_cache" "$_shell"; then

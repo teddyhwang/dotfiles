@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, copyFile, mkdir, mkdtemp, readFile, readdir, readlink, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, copyFile, mkdir, mkdtemp, readFile, readdir, readlink, rm, symlink, utimes, writeFile } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -80,6 +80,39 @@ for (const shell of ["bash", "zsh"]) {
       assert.deepEqual(await readdir(path.dirname(cache)), [`shared_init_cache.${shell}`]);
     });
   }
+
+  test(`${shell} refreshes a stale cache without leaving a tracked background job`, async (t) => {
+    const { home, env } = await fixture(t);
+    const cache = path.join(home, ".cache", `shared_init_cache.${shell}`);
+    await mkdir(path.dirname(cache));
+    await writeFile(cache, "export LAST_GOOD=1\n");
+    await utimes(cache, 1, 1);
+    // Hold the generator until the parent inspects its job table. A synchronous
+    // refresh would time out, and an attached job cannot finish before inspection.
+    await executable(path.join(home, "bin/gh"), `attempt=0
+while [ ! -f "$HOME/release" ]; do
+  attempt=$((attempt + 1))
+  [ "$attempt" -lt 100 ] || exit 1
+  sleep 0.05
+done
+printf '%s\\n' 'export CACHE_REFRESHED=yes'`);
+    const result = run(shell, `. "${repo}/home/shared/init"
+printf '%s\\n' "$LAST_GOOD"
+jobs >"$HOME/jobs"
+touch "$HOME/release"
+attempt=0
+while ! grep -q 'export CACHE_REFRESHED=yes' "${cache}" || [ -d "${cache}.lock" ]; do
+  attempt=$((attempt + 1))
+  [ "$attempt" -lt 100 ] || exit 1
+  sleep 0.05
+done
+jobs`, env, true);
+    ok(result);
+    assert.equal(await readFile(path.join(home, "jobs"), "utf8"), "");
+    assert.equal(result.stdout, "1\n");
+    assert.doesNotMatch(result.stderr, /_shared_init_regen_cache|job not found/);
+    assert.match(await readFile(cache, "utf8"), /export CACHE_REFRESHED=yes/);
+  });
 
   test(`${shell} never sources invalid output on the first cache generation`, async (t) => {
     const { home, env } = await fixture(t);

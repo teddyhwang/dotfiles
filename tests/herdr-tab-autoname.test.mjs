@@ -15,6 +15,8 @@ import {
   topicFromTitle,
 } from "../home/local/bin/herdr-tab-autoname.ts";
 
+import { toHerdrLabel } from "../home/pi-agent/extensions/session-tab-name.ts";
+
 const SESSION_PATH = "/tmp/herdr-test.sock";
 
 class MemoryOwnership {
@@ -328,6 +330,75 @@ test("recovers and refreshes an indexed Pi title after Pi has exited", async () 
   ]);
   assert.equal(namer.assignmentFor("w1:t1"), "0:dotfiles");
 });
+
+for (const topic of [
+  "Investigate Stuck Development Agent",
+  "Investigate Unexpected Shutdown Crash",
+]) {
+  test(`retains ownership of Pi's shortened label: ${topic}`, async (t) => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-pi-exit-"));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const statePath = path.join(directory, "ownership.json");
+    const store = await OwnershipStore.load(statePath);
+    await store.set(SESSION_PATH, "w1:t1", "0:dotfiles");
+
+    let label = toHerdrLabel(topic);
+    const requests = [];
+    async function pass(pane) {
+      // Each event launches a fresh worker; nothing survives except disk state.
+      const ownership = await OwnershipStore.load(statePath);
+      const namer = createNamer({
+        ownership,
+        renameTab: async (_tabId, desired) => {
+          label = desired;
+          requests.push(desired);
+          return true;
+        },
+      });
+      await namer.consider(tabInfo(label), [pane], 0);
+      await ownership.flush();
+      const persisted = await OwnershipStore.load(statePath);
+      assert.equal(persisted.stateFor(SESSION_PATH).labels.get("w1:t1"), label);
+    }
+
+    await pass(piPane(`π - ${topic} - dotfiles`));
+    // Exit before a second pass can recover ownership from Pi's OSC title.
+    await pass({ pane_id: "w1:p1", cwd: "/src/dotfiles" });
+    assert.equal(label, "0:dotfiles");
+    await pass(agentPane("Review the README", "w1:p1"));
+    assert.equal(label, "0:Review the README");
+    await pass({ pane_id: "w1:p1", cwd: "/src/dotfiles" });
+    assert.equal(label, "0:dotfiles");
+    assert.equal(requests.length, 4);
+  });
+}
+
+test("recovers an already-indexed shortened Pi label after exit", async () => {
+  const topic = "Investigate Unexpected Shutdown Crash";
+  const namer = createNamer();
+  await namer.consider(
+    tabInfo(indexedTabLabel(0, toHerdrLabel(topic))),
+    [{ ...piPane(`π - ${topic} - dotfiles`), agent: null }],
+    0,
+  );
+  assert.equal(namer.assignmentFor("w1:t1"), "0:dotfiles");
+});
+
+for (const manualLabel of ["My manual name…", "Investigate Stuck…"]) {
+  test(`does not adopt a shortened manual Pi tab label: ${manualLabel}`, async () => {
+    const ownership = new MemoryOwnership(
+      new Map([[SESSION_PATH, new Map([["w1:t1", "0:dotfiles"]])]]),
+    );
+    const namer = createNamer({ ownership });
+    await namer.consider(
+      tabInfo(manualLabel),
+      [piPane("π - Investigate Stuck Development Agent - dotfiles")],
+      0,
+    );
+    assert.equal(namer.assignmentFor("w1:t1"), undefined);
+    assert.equal(ownership.stateFor(SESSION_PATH).labels.has("w1:t1"), false);
+  });
+}
 
 test("prefixes a manual name without taking ownership of it", async () => {
   const ownership = new MemoryOwnership(

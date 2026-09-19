@@ -61,7 +61,7 @@ test("plugin coalesces concurrent events across Herdr sessions", async (t) => {
   const worker = path.join(directory, "worker.sh");
   await writeFile(
     worker,
-    "#!/bin/sh\nprintf '%s\\n' \"$HERDR_SOCKET_PATH\" >>\"$CALL_LOG\"\nsleep 0.05\n",
+    "#!/bin/sh\n[ \"$*\" = '--once --verbose' ] || exit 1\nprintf '%s\\n' \"$HERDR_SOCKET_PATH\" >>\"$CALL_LOG\"\nsleep 0.05\n",
   );
   await chmod(worker, 0o755);
 

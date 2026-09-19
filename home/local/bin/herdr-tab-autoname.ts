@@ -223,6 +223,26 @@ export function piSessionLabelFor(
   return undefined;
 }
 
+function matchesPiSessionLabel(
+  label: string,
+  name: string,
+  index: number,
+): boolean {
+  const variants = new Set([name, truncateLabel(name)]);
+  if (name.length > MAX_LABEL) {
+    // Pi's fallback writer (toHerdrLabel) always backs up to a word boundary,
+    // even when the hard cutoff already ends at one. Its unindexed label can
+    // therefore differ from both the full OSC title and our truncated label.
+    let cut = name.slice(0, MAX_LABEL - 1).trimEnd();
+    const space = cut.lastIndexOf(" ");
+    if (space >= Math.floor(MAX_LABEL / 2)) cut = cut.slice(0, space);
+    variants.add(`${cut.replace(/[\s\-—–:|,;]+$/u, "")}…`);
+  }
+  return [...variants].some(
+    (variant) => label === variant || label === indexedTabLabel(index, variant),
+  );
+}
+
 export function topicFromTitle(pane: PaneInfo): string | undefined {
   let title = String(pane.terminal_title_stripped ?? pane.terminal_title ?? "");
   while (title && !/[\p{L}\p{N}"'#]/u.test(title[0] ?? "")) {
@@ -579,7 +599,7 @@ export class TabNamer {
       const piLabel = piSessionNameFromTitle(panes[0]!);
       if (
         piLabel !== undefined &&
-        (label === piLabel || label === indexedTabLabel(index, piLabel))
+        matchesPiSessionLabel(label, piLabel, index)
       ) {
         automatic = true;
         log(`${tabId}: adopted Pi session label ${JSON.stringify(label)}`);
@@ -605,7 +625,9 @@ export class TabNamer {
       const previous = await this.forgetAssignment(tabId);
       if (previous !== undefined) {
         log(
-          `${tabId} renamed by hand to ${JSON.stringify(label)}; preserving its name`,
+          `${tabId}: label differs from owned ${JSON.stringify(previous)}; ` +
+            `treating ${JSON.stringify(label)} as manual ` +
+            `(agents: ${JSON.stringify(panes.map((pane) => pane.agent ?? null))})`,
         );
       }
       await this.renameLabel(
@@ -673,6 +695,9 @@ export class TabNamer {
     tabId: string,
     label: string,
   ): Promise<void> {
+    if (this.assigned.get(tabId) !== label) {
+      log(`${tabId}: retaining automatic ownership of ${JSON.stringify(label)}`);
+    }
     this.assigned.set(tabId, label);
     if (this.canPersist()) {
       await this.ownership.set(this.sessionPath, tabId, label);

@@ -94,9 +94,11 @@ while :; do
       pending_socket=$(cat "$processing")
       rm -f "$processing"
       if [ -S "$pending_socket" ]; then
+        # Herdr captures stderr in plugin logs. Keep ownership decisions there
+        # so an unexpected manual-name classification is diagnosable later.
         HERDR_SOCKET_PATH=$pending_socket \
           HERDR_TAB_AUTONAME_STATE_PATH=$ownership_state \
-          "$worker" --once
+          "$worker" --once --verbose
       fi
     done
   fi

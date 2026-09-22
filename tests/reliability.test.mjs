@@ -73,6 +73,10 @@ for (const shell of ["bash", "zsh"]) {
       const cache = path.join(home, ".cache", `shared_init_cache.${shell}`);
       await mkdir(path.dirname(cache));
       await writeFile(cache, "export LAST_GOOD=1\n");
+      // Only exercise gh's bad output, not installed generators' cache side effects.
+      for (const command of ["zoxide", "gt", "carapace", "tv", "atuin", "tinty", "shadowenv", "try"]) {
+        await executable(path.join(home, "bin", command), "exit 0");
+      }
       await executable(path.join(home, "bin/gh"), `printf '%s\\n' '${output}'; exit ${exitCode}`);
       const result = run(shell, `. "${repo}/home/shared/init"; _shared_init_regen_cache "${cache}" ${shell}`, env);
       assert.notEqual(result.status, 0);

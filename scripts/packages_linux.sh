@@ -24,6 +24,9 @@ package_count=0
 for package in $packages; do
   if pacman -Q "$package" >/dev/null 2>&1; then
     print_info "$package is already installed"
+  elif [ "$package" = shellcheck ] && command -v shellcheck >/dev/null 2>&1; then
+    # Mason and other tool managers can already provide the validator.
+    print_info "shellcheck is already available on PATH; skipping the pacman package"
   else
     print_progress "$package needs to be installed"
     packages_to_install="$packages_to_install $package"

@@ -25,7 +25,9 @@ separate maintenance action.
 - **macOS:** Homebrew packages, app configuration, launch agents, and shared
   shell/editor configuration.
 - **Arch/Omarchy Linux:** `pacman`/`yay` packages, Hyprland, keyd, Omarchy, and
-  shared shell/editor configuration.
+  shared shell/editor configuration. ShellCheck already available on `PATH`
+  (for example, through Neovim's Mason) is reused instead of installing its
+  pacman package.
 
 Linux T2 suspend support requires an explicit privileged run after the normal
 user setup:

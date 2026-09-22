@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -53,6 +53,62 @@ test("symlink helper rejects unsafe source and target paths", async () => {
     await rm(home, { recursive: true, force: true });
   }
 });
+
+for (const scenario of [
+  { name: "reuses ShellCheck from Mason's PATH", available: true, expected: "" },
+  { name: "installs ShellCheck when neither PATH nor pacman provides it", expected: "shellcheck" },
+  { name: "keeps an existing pacman ShellCheck package", installed: true, expected: "" },
+  { name: "still installs other missing packages with ShellCheck on PATH", available: true, missingJq: true, expected: "jq" },
+]) {
+  test(`Linux package setup ${scenario.name}`, async (t) => {
+    const home = await mkdtemp(path.join(tmpdir(), "dotfiles-linux-packages-"));
+    t.after(() => rm(home, { recursive: true, force: true }));
+    const bin = path.join(home, "bin");
+    const masonBin = path.join(home, ".local/share/nvim/mason/bin");
+    const log = path.join(home, "yay.log");
+    await mkdir(bin);
+    await mkdir(masonBin, { recursive: true });
+    await writeFile(log, "");
+
+    // Keep PATH isolated so the host's ShellCheck cannot satisfy the missing case.
+    for (const command of ["dirname", "grep"]) {
+      await symlink(`/usr/bin/${command}`, path.join(bin, command));
+    }
+    const commands = {
+      [path.join(bin, "pacman")]: `test "$1" = -Q || exit 99
+case "$2" in
+  shellcheck) test "$SHELLCHECK_INSTALLED" = 1 ;;
+  jq) test "$JQ_MISSING" != 1 ;;
+  *) exit 0 ;;
+esac`,
+      [path.join(bin, "yay")]: 'printf "%s\\n" "$*" >>"$YAY_LOG"',
+    };
+    if (scenario.available) commands[path.join(masonBin, "shellcheck")] = "exit 0";
+    for (const [filename, contents] of Object.entries(commands)) {
+      await writeFile(filename, `#!/bin/sh\n${contents}\n`);
+      await chmod(filename, 0o755);
+    }
+
+    const result = run("/bin/sh", [path.join(repo, "scripts/packages_linux.sh")], {
+      cwd: tmpdir(),
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${masonBin}:${bin}`,
+        SHELLCHECK_INSTALLED: scenario.installed ? "1" : "0",
+        JQ_MISSING: scenario.missingJq ? "1" : "0",
+        YAY_LOG: log,
+      },
+      input: "",
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.equal(
+      await readFile(log, "utf8"),
+      scenario.expected ? `-S --needed --noconfirm ${scenario.expected}\n` : "",
+    );
+    if (scenario.available) assert.match(result.stdout, /shellcheck is already available on PATH/);
+  });
+}
 
 test("macOS package setup selects the personal or work Brewfile without implicit upgrades", async () => {
   const home = await mkdtemp(path.join(tmpdir(), "dotfiles-macos-home-"));

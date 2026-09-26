@@ -17,3 +17,7 @@ hl.config({
     },
   },
 })
+
+-- Deskflow's libei pointer emits discrete wheel ticks, so scale them at the
+-- compositor rather than with Deskflow's ineffective client scroll setting.
+hl.device({ name = "unknown-device", scroll_factor = 0.05 })

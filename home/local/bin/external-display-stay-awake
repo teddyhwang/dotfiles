@@ -1,0 +1,61 @@
+#!/bin/sh
+# Keep the machine awake while an external display is physically connected.
+#
+# systemd-logind continuously rechecks a closed lid and only treats an external
+# display as docked while its DRM connector is enabled. A transient modeset can
+# therefore look undocked even though the cable is still connected. Holding the
+# low-level lid inhibitor avoids that race; the sleep inhibitor also makes the
+# existing "stay awake" preference apply to system sleep, not only shell idle.
+
+POLL_INTERVAL=${EXTERNAL_DISPLAY_STAY_AWAKE_INTERVAL:-1}
+RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp/external-display-stay-awake-$(id -u)}
+LOCK_FILE=$RUNTIME_DIR/external-display-stay-awake.lock
+INHIBITOR_PID=
+
+for command_name in flock omarchy systemd-inhibit; do
+  command -v "$command_name" >/dev/null 2>&1 || exit 0
+done
+
+mkdir -p "$RUNTIME_DIR"
+exec 9>"$LOCK_FILE"
+flock -n 9 || exit 0
+
+inhibitor_running() {
+  [ -n "$INHIBITOR_PID" ] && kill -0 "$INHIBITOR_PID" 2>/dev/null
+}
+
+start_inhibitor() {
+  inhibitor_running && return
+
+  if [ -n "$INHIBITOR_PID" ]; then
+    wait "$INHIBITOR_PID" 2>/dev/null || true
+  fi
+
+  systemd-inhibit \
+    --what=sleep:handle-lid-switch \
+    --mode=block \
+    --who="External display" \
+    --why="Keep the laptop awake while an external display is connected" \
+    sleep infinity &
+  INHIBITOR_PID=$!
+}
+
+stop_inhibitor() {
+  if inhibitor_running; then
+    kill "$INHIBITOR_PID" 2>/dev/null || true
+    wait "$INHIBITOR_PID" 2>/dev/null || true
+  fi
+  INHIBITOR_PID=
+}
+
+trap 'exit 0' HUP INT TERM
+trap stop_inhibitor EXIT
+
+while :; do
+  if omarchy hw external monitors >/dev/null 2>&1; then
+    start_inhibitor
+  else
+    stop_inhibitor
+  fi
+  sleep "$POLL_INTERVAL"
+done

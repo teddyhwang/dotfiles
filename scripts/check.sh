@@ -30,6 +30,7 @@ for file in \
   home/shared/env \
   home/shared/functions \
   home/shared/init \
+  home/local/bin/external-display-stay-awake \
   home/local/bin/fix-windows.sh \
   home/local/bin/tinty-herdr-hook \
   home/local/bin/tinty-opencode-hook \
@@ -47,6 +48,7 @@ shellcheck -x -S warning \
   setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh \
   home/.bash_profile home/.bashrc \
   home/shared/aliases home/shared/env home/shared/functions home/shared/init \
+  home/local/bin/external-display-stay-awake \
   home/local/bin/fix-windows.sh \
   home/local/bin/herdr-tab-autoname \
   home/local/bin/tinty-herdr-hook \

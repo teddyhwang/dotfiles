@@ -9,7 +9,7 @@ hl.config({
     repeat_delay = 200,
 
     -- Bump trackpad/mouse sensitivity off the 0 default.
-    sensitivity = 0.7,
+    sensitivity = 0.35,
 
     touchpad = {
       -- Much slower than the 0.4 default.

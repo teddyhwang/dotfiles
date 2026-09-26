@@ -59,6 +59,10 @@ _path_prepend "$HOME/.opencode/bin"
 _path_prepend "$BUN_INSTALL/bin"
 _path_prepend "$PNPM_HOME"
 _path_prepend "$HOME/.gem/ruby/4.0.0/bin"
+# Omarchy activates mise for graphical sessions through UWSM. SSH shells start
+# with a fresh PATH, so expose the same shims there to keep clients such as
+# Herdr on the server's pinned version.
+_path_prepend "${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims"
 unset -f _path_prepend
 export PATH
 

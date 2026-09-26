@@ -244,17 +244,25 @@ test("shared initialization cache is atomic and cleans interrupted generations",
   }
 });
 
-test("shared environment does not grow PATH when sourced repeatedly", async () => {
+test("shared environment keeps PATH unique and exposes mise tools to SSH shells", async () => {
   const home = await mkdtemp(path.join(tmpdir(), "dotfiles-env-"));
   try {
     const localBin = path.join(home, ".local/bin");
-    const script = `mkdir -p "${localBin}"; . "${repo}/home/shared/env"; . "${repo}/home/shared/env"; printf '%s\\n' "$PATH"`;
+    const miseShims = path.join(home, ".local/share/mise/shims");
+    const script = `mkdir -p "${localBin}" "${miseShims}"; . "${repo}/home/shared/env"; . "${repo}/home/shared/env"; printf '%s\\n' "$PATH"`;
     const result = run("bash", ["--noprofile", "--norc", "-c", script], {
-      env: { ...process.env, HOME: home, PATH: `/usr/bin:/bin:${localBin}` },
+      env: {
+        ...process.env,
+        HOME: home,
+        XDG_DATA_HOME: path.join(home, ".local/share"),
+        PATH: `/usr/bin:/bin:${localBin}`,
+      },
     });
     assert.equal(result.status, 0, result.stderr);
     const entries = result.stdout.trim().split(":");
+    assert.equal(entries[0], miseShims);
     assert.equal(entries.filter((entry) => entry === localBin).length, 1);
+    assert.equal(entries.filter((entry) => entry === miseShims).length, 1);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

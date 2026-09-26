@@ -29,5 +29,5 @@ alias critique='bunx critique'
 
 alias mini='ssh teddys-mac-mini.local'
 alias work='ssh teddys-shopify-macBook-pro.local'
-alias mbp='ssh omarchy-mbp'
+alias mbp='ssh omarchy-mbp.local'
 alias nicole='ssh nicolepaik@nicoles-macbook-air.local'

@@ -45,10 +45,23 @@ export PNPM_HOME="$HOME/.local/share/pnpm"
 
 _path_prepend() {
   [[ -d "$1" ]] || return 0
-  case ":$PATH:" in
-    *":$1:"*) ;;
-    *) PATH="$1${PATH:+:$PATH}" ;;
-  esac
+  local directory="$1" entry remaining="${PATH:-}" reordered=""
+
+  # pam_env can provide known paths after /usr/bin. Remove every existing
+  # occurrence before prepending so the requested directory actually wins.
+  while [[ -n "$remaining" ]]; do
+    entry=${remaining%%:*}
+    if [[ "$remaining" == *:* ]]; then
+      remaining=${remaining#*:}
+    else
+      remaining=""
+    fi
+    if [[ -n "$entry" && "$entry" != "$directory" ]]; then
+      reordered="${reordered}${reordered:+:}${entry}"
+    fi
+  done
+
+  PATH="$directory${reordered:+:$reordered}"
 }
 
 _path_prepend "$HOME/.local/bin"

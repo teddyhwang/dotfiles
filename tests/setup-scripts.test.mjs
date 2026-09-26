@@ -255,7 +255,9 @@ test("shared environment keeps PATH unique and exposes mise tools to SSH shells"
         ...process.env,
         HOME: home,
         XDG_DATA_HOME: path.join(home, ".local/share"),
-        PATH: `/usr/bin:/bin:${localBin}`,
+        // Match this machine's pam_env ordering: system binaries precede
+        // mise shims when an SSH session starts.
+        PATH: `/usr/bin:/bin:${miseShims}:${localBin}`,
       },
     });
     assert.equal(result.status, 0, result.stderr);

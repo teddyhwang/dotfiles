@@ -36,6 +36,14 @@ test("external display helper holds and releases the sleep inhibitor", async (t)
   await mkdir(runtime);
   await writeFile(status, "connected\n");
 
+  // This test exercises inhibitor lifecycle, not locking. Stub flock as well as
+  // the other Linux-only dependencies so the fixture also works on macOS.
+  await writeFile(
+    path.join(bin, "flock"),
+    `#!/bin/sh
+[ "$*" = "-n 9" ]
+`,
+  );
   await writeFile(
     path.join(bin, "omarchy"),
     `#!/bin/sh
@@ -52,6 +60,7 @@ while :; do sleep 0.02; done
 `,
   );
   await Promise.all([
+    chmod(path.join(bin, "flock"), 0o755),
     chmod(path.join(bin, "omarchy"), 0o755),
     chmod(path.join(bin, "systemd-inhibit"), 0o755),
   ]);

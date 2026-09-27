@@ -15,8 +15,8 @@ for command_name in pacman yay; do
   fi
 done
 
-# socat backs home/local/bin/trackpad-auto-toggle, which reads Hyprland's event socket.
-packages="atuin bash-preexec bat carapace-bin claude-code git-delta google-chrome herdr jq keychain keyd lsof nodejs python ruby rust seahorse shellcheck socat tailscale tig tmux ttf-firacode-nerd ttf-meslo-nerd wayvnc yazi zellij zsh"
+# socat backs trackpad-auto-toggle; grim lets WayVNC verify that Hyprland exports its output.
+packages="atuin bash-preexec bat carapace-bin claude-code git-delta google-chrome grim herdr jq keychain keyd lsof nodejs python ruby rust seahorse shellcheck socat tailscale tig tmux ttf-firacode-nerd ttf-meslo-nerd wayvnc yazi zellij zsh"
 
 packages_to_install=""
 package_count=0

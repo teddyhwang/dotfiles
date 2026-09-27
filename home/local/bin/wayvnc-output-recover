@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+output=$(hyprctl -j monitors all | jq -r '
+  [.[] | select(.disabled == false and .mirrorOf == "none")][0].name // empty
+')
+
+if [[ -z $output ]]; then
+  echo "wayvnc-output-recover: no active source output" >&2
+  exit 1
+fi
+
+if [[ ! $output =~ ^[[:alnum:]_.-]+$ ]]; then
+  echo "wayvnc-output-recover: unsafe output name: $output" >&2
+  exit 1
+fi
+
+output_is_visible() {
+  grim -l 0 -o "$output" - >/dev/null 2>&1
+}
+
+if output_is_visible; then
+  exit 0
+fi
+
+echo "wayvnc-output-recover: recreating the missing wl_output for $output" >&2
+hyprctl eval "hl.monitor({ output = \"$output\", disabled = true })" >/dev/null
+sleep 0.5
+hyprctl reload >/dev/null
+
+for _ in {1..10}; do
+  output_is_visible && exit 0
+  sleep 0.5
+done
+
+echo "wayvnc-output-recover: $output is still unavailable to Wayland clients" >&2
+exit 1

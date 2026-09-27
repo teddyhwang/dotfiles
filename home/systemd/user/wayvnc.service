@@ -7,8 +7,11 @@ ConditionPathExists=%h/.config/wayvnc/config
 
 [Service]
 Type=simple
+ExecStartPre=%h/.local/bin/wayvnc-output-recover
 ExecStart=/usr/bin/wayvnc --gpu --render-cursor
-Restart=on-failure
+# WayVNC exits successfully when its captured output disappears, so restart
+# clean exits as well as crashes after KVM/display reconnects.
+Restart=always
 RestartSec=5
 
 [Install]

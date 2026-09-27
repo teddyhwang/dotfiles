@@ -34,6 +34,7 @@ for file in \
   home/local/bin/fix-windows.sh \
   home/local/bin/tinty-herdr-hook \
   home/local/bin/tinty-opencode-hook \
+  home/local/bin/wayvnc-output-recover \
   home/config/tmux/resurrect-guard.sh \
   home/omarchy/hooks/theme-set; do
   bash -n "$file"
@@ -54,6 +55,7 @@ shellcheck -x -S warning \
   home/local/bin/tinty-herdr-hook \
   home/local/bin/tinty-opencode-hook \
   home/local/bin/trackpad-auto-toggle \
+  home/local/bin/wayvnc-output-recover \
   home/config/tmux/resurrect-guard.sh \
   home/omarchy/hooks/theme-set
 

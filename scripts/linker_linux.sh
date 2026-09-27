@@ -95,14 +95,17 @@ if [ -n "${OMARCHY_PATH:-}" ]; then
   validate_and_symlink "$DOTFILES_DIR/home/omarchy/extensions/omarchy-menu.jsonc" "$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
   validate_and_symlink "$DOTFILES_DIR/home/omarchy/hooks/theme-set" "$HOME/.config/omarchy/hooks/theme-set"
   validate_and_symlink "$DOTFILES_DIR/home/omarchy/plugins/teddyhwang.menu" "$HOME/.config/omarchy/plugins/teddyhwang.menu"
+  validate_and_symlink "$DOTFILES_DIR/home/omarchy/plugins/teddyhwang.workspaces" "$HOME/.config/omarchy/plugins/teddyhwang.workspaces"
 
   # The menu clone adds Vim-style Ctrl+J/K navigation. Enabling it replaces
   # the built-in menu while preserving its stable omarchy.menu IPC target.
+  # The workspaces clone always shows 1-4 instead of the built-in 1-5.
   if omarchy-shell shell rescanPlugins >/dev/null 2>&1; then
     omarchy plugin enable teddyhwang.menu >/dev/null
+    omarchy plugin enable teddyhwang.workspaces >/dev/null
     omarchy restart shell >/dev/null
   else
-    print_warning "Omarchy shell is not running; enable teddyhwang.menu after login."
+    print_warning "Omarchy shell is not running; enable teddyhwang.menu and teddyhwang.workspaces after login."
   fi
 fi
 

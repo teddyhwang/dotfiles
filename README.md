@@ -30,7 +30,8 @@ separate maintenance action.
   pacman package.
 
 Linux T2 suspend support requires an explicit privileged run after the normal
-user setup:
+user setup. The same step keeps a closed laptop awake on external power even
+when an EDID-less KVM briefly drops its display connection:
 
 ```sh
 sudo ./scripts/macbook_t2_linux.sh

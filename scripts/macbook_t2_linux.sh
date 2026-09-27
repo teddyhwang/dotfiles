@@ -4,6 +4,7 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
+DOTFILES_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd -P)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
@@ -32,7 +33,21 @@ print_progress "Configuring T2 suspend/resume support..."
 tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-t2.XXXXXX")
 trap 'rm -rf "$tmp_dir"' 0 HUP INT TERM
 
-# Lid handling stays with Omarchy's lock/suspend and clamshell hooks.
+# This Mac's EDID-less KVM can make the external DRM connector disappear while
+# the lid stays closed. On AC, that is still clamshell mode, not a suspend cue.
+logind_source="$DOTFILES_DIR/systemd/logind.conf.d/30-stay-awake-on-external-power.conf"
+logind_target="/etc/systemd/logind.conf.d/30-stay-awake-on-external-power.conf"
+if ! cmp -s "$logind_source" "$logind_target"; then
+  install -d -m 0755 "$(dirname -- "$logind_target")"
+  install -m 0644 "$logind_source" "$logind_target"
+  systemctl reload systemd-logind.service
+  track_change
+  print_success "  ✓ Configured powered clamshell lid handling"
+else
+  print_info "  → Powered clamshell lid handling is current"
+fi
+
+# Locking and display reconciliation stay with Omarchy's clamshell hooks.
 touchbar_source="$tmp_dir/restart-tiny-dfr-when-ready.sh"
 touchbar_target="/usr/local/bin/restart-tiny-dfr-when-ready.sh"
 cat >"$touchbar_source" <<'EOF'

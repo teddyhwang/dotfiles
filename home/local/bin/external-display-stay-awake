@@ -1,13 +1,14 @@
 #!/bin/sh
-# Keep the machine awake while an external display is physically connected.
+# Keep the machine awake while an external display or external power is present.
 #
 # systemd-logind continuously rechecks a closed lid and only treats an external
-# display as docked while its DRM connector is enabled. A transient modeset can
-# therefore look undocked even though the cable is still connected. Holding the
-# low-level lid inhibitor avoids that race; the sleep inhibitor also makes the
-# existing "stay awake" preference apply to system sleep, not only shell idle.
+# display as docked while its DRM connector is enabled. The KVM can report DP-3
+# disconnected long enough for a display-only inhibitor to be released even
+# though the laptop remains plugged into AC. External power is the stable signal;
+# the display check also covers externally driven setups that are not charging.
 
 POLL_INTERVAL=${EXTERNAL_DISPLAY_STAY_AWAKE_INTERVAL:-1}
+POWER_SUPPLY_PATH=${EXTERNAL_DISPLAY_STAY_AWAKE_POWER_SUPPLY_PATH:-/sys/class/power_supply}
 RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp/external-display-stay-awake-$(id -u)}
 LOCK_FILE=$RUNTIME_DIR/external-display-stay-awake.lock
 INHIBITOR_PID=
@@ -24,6 +25,20 @@ inhibitor_running() {
   [ -n "$INHIBITOR_PID" ] && kill -0 "$INHIBITOR_PID" 2>/dev/null
 }
 
+external_power_online() {
+  for power_supply in "$POWER_SUPPLY_PATH"/*; do
+    [ -r "$power_supply/type" ] && [ -r "$power_supply/online" ] || continue
+
+    IFS= read -r power_type <"$power_supply/type"
+    [ "$power_type" = "Battery" ] && continue
+
+    IFS= read -r online <"$power_supply/online"
+    [ "$online" = "1" ] && return 0
+  done
+
+  return 1
+}
+
 start_inhibitor() {
   inhibitor_running && return
 
@@ -34,8 +49,8 @@ start_inhibitor() {
   systemd-inhibit \
     --what=sleep:handle-lid-switch \
     --mode=block \
-    --who="External display" \
-    --why="Keep the laptop awake while an external display is connected" \
+    --who="Plugged in" \
+    --why="Keep the laptop awake while external display or power is connected" \
     sleep infinity &
   INHIBITOR_PID=$!
 }
@@ -52,7 +67,7 @@ trap 'exit 0' HUP INT TERM
 trap stop_inhibitor EXIT
 
 while :; do
-  if omarchy hw external monitors >/dev/null 2>&1; then
+  if external_power_online || omarchy hw external monitors >/dev/null 2>&1; then
     start_inhibitor
   else
     stop_inhibitor

@@ -3,8 +3,8 @@
 -- Palm rejection: touchpad off in terminals, on in browsers.
 o.exec_on_start(os.getenv("HOME") .. "/.local/bin/trackpad-auto-toggle")
 
--- A physically connected external display must keep the laptop awake even if
--- its DRM output is briefly disabled during a modeset while the lid is closed.
+-- External power or a physically connected display keeps the laptop awake even
+-- if the KVM briefly disconnects its DRM output while the lid is closed.
 o.launch_on_start("external-display-stay-awake")
 
 o.launch_on_start("google-chrome-stable")

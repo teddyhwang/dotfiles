@@ -31,6 +31,22 @@ for filepath in "$DOTFILES_DIR"/home/local/bin/*; do
   validate_and_symlink "$filepath" "$dst_path"
 done
 
+print_progress "\nSymlinking systemd user services..."
+
+mkdir -p "$HOME/.config/systemd/user"
+for filepath in "$DOTFILES_DIR"/home/systemd/user/*; do
+  [ -e "$filepath" ] || [ -L "$filepath" ] || continue
+  [ -d "$filepath" ] && [ ! -L "$filepath" ] && continue
+  entry_name=$(basename -- "$filepath")
+  dst_path="$HOME/.config/systemd/user/$entry_name"
+
+  validate_and_symlink "$filepath" "$dst_path"
+done
+
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user daemon-reload || print_warning "Could not reload the systemd user manager"
+fi
+
 print_progress "\nInstalling keyd config..."
 
 validate_and_symlink "$DOTFILES_DIR/home/keyd/app.conf" "$HOME/.config/keyd/app.conf"

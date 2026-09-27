@@ -8,7 +8,9 @@ ConditionPathExists=%h/.config/wayvnc/config
 [Service]
 Type=simple
 ExecStartPre=%h/.local/bin/wayvnc-output-recover
-ExecStart=/usr/bin/wayvnc --gpu --render-cursor
+# macOS Screen Sharing sends Command as Alt and never sends Super; the macvnc
+# layout (~/.config/xkb/symbols/macvnc) maps it back to Super for Hyprland.
+ExecStart=/usr/bin/wayvnc --gpu --render-cursor --keyboard=macvnc
 # WayVNC exits successfully when its captured output disappears, so restart
 # clean exits as well as crashes after KVM/display reconnects.
 Restart=always

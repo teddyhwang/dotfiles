@@ -1,0 +1,28 @@
+// US layout for WayVNC sessions from macOS Screen Sharing.
+//
+// Screen Sharing sends Command as Alt_L and Option as Meta_L, and never sends
+// Super. WayVNC types a modifier by pressing the lowest keycode that has its
+// keysym on any level, then Hyprland reads that key's base level. Parking
+// Alt_L above Super_L on <LALT> therefore turns Command into Super, and giving
+// <META> a base Alt_L turns Option into Alt.
+default partial alphanumeric_keys modifier_keys
+xkb_symbols "basic" {
+    include "us"
+    name[Group1] = "English (US, macOS Screen Sharing)";
+
+    key <LALT> {
+        type[Group1] = "TWO_LEVEL",
+        symbols[Group1] = [ Super_L, Alt_L ],
+        actions[Group1] = [ SetMods(modifiers=Mod4), SetMods(modifiers=Mod4) ]
+    };
+
+    key <META> {
+        type[Group1] = "TWO_LEVEL",
+        symbols[Group1] = [ Alt_L, Meta_L ],
+        actions[Group1] = [ SetMods(modifiers=Mod1), SetMods(modifiers=Mod1) ]
+    };
+
+    // Super_L now resolves to <LALT>, so keep a real Win key working for
+    // clients that do send Super.
+    modifier_map Mod4 { <LWIN> };
+};

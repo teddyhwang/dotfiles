@@ -104,6 +104,7 @@ cases.push(
   ["prefix+shift+v", shell, [openPicker("join-pane")]],
   ["prefix+a", shell, [openPicker("agent")]],
   ["prefix+s", shell, [openPicker("workspace")]],
+  ["prefix+g", shell, [openPicker("worktree")]],
   ["prefix+shift+b", shell, [["pane", "move", "w1:p1", "--new-tab", "--focus"]]],
   ["prefix+shift+t", shell, [["pane", "move", "w1:p1", "--new-tab", "--focus"]]],
   ["prefix+x", shell, [["pane", "close", "w1:p1"]]],

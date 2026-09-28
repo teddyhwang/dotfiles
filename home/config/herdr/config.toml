@@ -84,7 +84,9 @@ workspace_picker = "prefix+w"       # tmux: bind w choose-tree -Zs
 switch_workspace = ""
 rename_workspace = "prefix+$"       # tmux default: rename-session
 # Worktrees: lowercase picks, uppercase creates, X deletes (D only closes).
-open_worktree = "prefix+g"          # pick/reopen a worktree of this repo
+# prefix+g opens the fzf worktree picker below; the native picker only moves
+# with the arrow keys and would take precedence over keys.command if bound.
+open_worktree = ""
 new_worktree = "prefix+shift+g"     # herdr default, pinned explicitly
 remove_worktree = "prefix+shift+x"  # git worktree remove; never deletes the branch
 previous_workspace = "prefix+ctrl+k"
@@ -189,6 +191,12 @@ key = "prefix+s"
 type = "shell"
 description = "switch workspace"
 command = 'exec "${HERDR_BIN_PATH:-herdr}" plugin pane open --plugin teddyhwang.pickers --entrypoint workspace'
+
+[[keys.command]]
+key = "prefix+g"
+type = "shell"
+description = "open worktree"
+command = 'exec "${HERDR_BIN_PATH:-herdr}" plugin pane open --plugin teddyhwang.pickers --entrypoint worktree'
 
 [[keys.command]]
 key = "prefix+shift+b"

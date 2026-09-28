@@ -16,7 +16,7 @@ tab_autoname_plugin_path="$DOTFILES_DIR/plugins/herdr-tab-autoname"
 tab_autoname_events='["workspace.focused","tab.created","tab.closed","tab.renamed","tab.moved","tab.focused","pane.created","pane.closed","pane.moved","pane.exited","pane.agent_detected","pane.agent_status_changed"]'
 pickers_plugin_id="teddyhwang.pickers"
 pickers_plugin_path="$DOTFILES_DIR/plugins/herdr-pickers"
-pickers_panes='["workspace","agent","join-pane"]'
+pickers_panes='["workspace","agent","join-pane","worktree"]'
 
 print_progress "Ensuring Herdr plugins are installed..."
 

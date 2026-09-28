@@ -141,12 +141,78 @@ pick_join_pane() {
   [ -z "$selected" ] || "$herdr" pane move "$selected" --tab "$tab_id" --split right --focus >/dev/null
 }
 
+# Shows a Herdr toast for a failed CLI call. Errors arrive as JSON on stderr.
+notify_error() {
+  local title=$1 output=$2 message
+  message=$(jq -r '.error.message // empty' <<<"$output" 2>/dev/null || true)
+  [ -n "$message" ] || message=${output:-"herdr exited with an error"}
+  "$herdr" notification show "$title" --body "$message" >/dev/null 2>&1 || true
+}
+
+# Replaces Herdr's native open-worktree picker, which only moves with the
+# arrow keys. Rows and statuses match the native picker.
+pick_worktree() {
+  local workspace_id listing worktrees selected entry open_id source_id source_path path output
+  workspace_id=$(jq -r '.workspace_id // empty' <<<"$context")
+  if ! listing=$("$herdr" worktree list ${workspace_id:+--workspace "$workspace_id"} 2>&1); then
+    notify_error "open worktree" "$listing"
+    return 0
+  fi
+  # Same filter as the native picker: bare and prunable checkouts cannot open.
+  worktrees=$(jq -c '[.result.worktrees[] | select((.is_bare | not) and (.is_prunable | not))]' <<<"$listing")
+  if [ "$(jq length <<<"$worktrees")" = 0 ]; then
+    "$herdr" notification show "open worktree" --body "No Git worktrees found for this repo." >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  selected=$(jq -c --arg current "$workspace_id" "$jq_defs"'
+    # World checkouts live at <world>/trees/<id>/src and are all labelled
+    # "git", so name them by tree id. Other checkouts use their directory.
+    def checkout_name: (.path | split("/") | map(select(. != ""))) as $parts
+      | if ($parts | length) >= 3 and $parts[-1] == "src" and $parts[-3] == "trees"
+        then $parts[-2] else ($parts[-1] // .path) end;
+    to_entries[]
+    | .key as $index | .value
+    | {
+        key: $index,
+        label: (.branch // checkout_name),
+        detail: (.path | tilde),
+        status: (if .open_workspace_id and .open_workspace_id == $current then "current"
+          elif .open_workspace_id then "open"
+          elif .branch then ""
+          elif .is_detached and .is_linked_worktree then "detached"
+          else "root" end)
+      }' <<<"$worktrees" | pick checkout "filter worktrees" open)
+  [ -n "$selected" ] || return 0
+
+  entry=$(jq -c --argjson index "$selected" '.[$index]' <<<"$worktrees")
+  open_id=$(jq -r '.open_workspace_id // empty' <<<"$entry")
+  if [ -n "$open_id" ]; then
+    output=$("$herdr" workspace focus "$open_id" 2>&1 >/dev/null) || notify_error "open worktree" "$output"
+    return 0
+  fi
+
+  # Open from the repo's parent workspace. When that is closed, point Herdr at
+  # the parent checkout and it reopens the group around it.
+  path=$(jq -r '.path' <<<"$entry")
+  source_id=$(jq -r '.result.source.source_workspace_id // empty' <<<"$listing")
+  source_path=$(jq -r '.result.source.source_checkout_path // .result.source.repo_root' <<<"$listing")
+  if [ -n "$source_id" ]; then
+    set -- --workspace "$source_id"
+  else
+    set -- --cwd "$source_path"
+  fi
+  output=$("$herdr" worktree open "$@" --path "$path" --focus 2>&1 >/dev/null) ||
+    notify_error "open worktree" "$output"
+}
+
 case ${1:-} in
   workspace) pick_workspace ;;
   agent) pick_agent ;;
   join-pane) pick_join_pane ;;
+  worktree) pick_worktree ;;
   *)
-    printf 'usage: %s workspace|agent|join-pane\n' "${0##*/}" >&2
+    printf 'usage: %s workspace|agent|join-pane|worktree\n' "${0##*/}" >&2
     exit 2
     ;;
 esac

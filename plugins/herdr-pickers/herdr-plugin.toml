@@ -30,3 +30,11 @@ placement = "popup"
 width = 96
 height = 26
 command = ["./picker.sh", "join-pane"]
+
+[[panes]]
+id = "worktree"
+title = "open worktree"
+placement = "popup"
+width = 96
+height = 26
+command = ["./picker.sh", "worktree"]

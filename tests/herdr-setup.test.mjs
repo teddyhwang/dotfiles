@@ -9,7 +9,7 @@ const repo = process.cwd();
 const fallbackRef = "94f30cf4e9ac76ddf185a3acd0977be728fa4106";
 const localRef = "0123456789abcdef0123456789abcdef01234567";
 const actions = ["nav-left", "nav-down", "nav-up", "nav-right", "resize-left", "resize-down", "resize-up", "resize-right"];
-const panes = ["workspace", "agent", "join-pane"];
+const panes = ["workspace", "agent", "join-pane", "worktree"];
 const events = ["workspace.focused", "tab.created", "tab.closed", "tab.renamed", "tab.moved", "tab.focused", "pane.created", "pane.closed", "pane.moved", "pane.exited", "pane.agent_detected", "pane.agent_status_changed"];
 
 async function fixture(t, lockfile) {

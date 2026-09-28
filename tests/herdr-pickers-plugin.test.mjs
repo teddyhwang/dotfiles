@@ -11,11 +11,12 @@ const parsed = spawnSync("python3", ["-c", `
 import json, pathlib, tomllib
 print(json.dumps({
     "manifest": tomllib.loads(pathlib.Path("plugins/herdr-pickers/herdr-plugin.toml").read_text()),
-    "commands": tomllib.loads(pathlib.Path("home/config/herdr/config.toml").read_text())["keys"]["command"],
+    "keys": tomllib.loads(pathlib.Path("home/config/herdr/config.toml").read_text())["keys"],
 }))
 `], { encoding: "utf8" });
 assert.equal(parsed.status, 0, parsed.stderr);
-const { manifest, commands } = JSON.parse(parsed.stdout);
+const { manifest, keys } = JSON.parse(parsed.stdout);
+const commands = keys.command;
 const jq = spawnSync("sh", ["-c", "command -v jq"], { encoding: "utf8" });
 assert.equal(jq.status, 0, "Herdr picker tests require jq");
 
@@ -65,6 +66,36 @@ const results = {
     { pane_id: "w2:p1", workspace_id: "w2", tab_id: "w2:t1", cwd: "/elsewhere" },
   ] },
 };
+const worktrees = {
+  repo: {
+    source: { source_workspace_id: "w1", source_checkout_path: home + "/src/dotfiles", repo_root: home + "/src/dotfiles" },
+    worktrees: [
+      { path: home + "/src/dotfiles", branch: "main", open_workspace_id: "w1", is_linked_worktree: false },
+      { path: home + "/.herdr/worktrees/dotfiles/review", branch: "teddyhwang/review", open_workspace_id: "w3", is_linked_worktree: true },
+      { path: home + "/.herdr/worktrees/dotfiles/feature", branch: "teddyhwang/feature", is_linked_worktree: true },
+      { path: home + "/.herdr/worktrees/dotfiles/gone", branch: "gone", is_linked_worktree: true, is_prunable: true },
+      { path: home + "/bare.git", is_bare: true },
+    ],
+  },
+  // World checkouts come from the dev-tree provider and are all labelled "git".
+  world: {
+    source: { source_workspace_id: null, source_checkout_path: home + "/world/trees/root/src", repo_root: home + "/world/trees/root/src" },
+    worktrees: [
+      { path: home + "/world/trees/pool-1/src", branch: "group-sort", label: "git", is_linked_worktree: true },
+      { path: home + "/world/trees/pool-2/src", label: "git", is_detached: true, is_linked_worktree: true },
+      { path: home + "/world/trees/root/src", label: "git", is_detached: true, is_linked_worktree: false },
+    ],
+  },
+  empty: { source: { source_workspace_id: "w1" }, worktrees: [{ path: "/bare.git", is_bare: true }] },
+};
+if (args[0] === "worktree" && args[1] === "list") {
+  if (process.env.HERDR_TEST_WORKTREES === "error") {
+    console.error(JSON.stringify({ id: "cli:worktree:list", error: { code: "not_git_worktree", message: "Herdr worktree actions require a workspace inside a Git work tree" } }));
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ result: { type: "worktree_list", ...worktrees[process.env.HERDR_TEST_WORKTREES ?? "repo"] } }));
+  process.exit(0);
+}
 console.log(JSON.stringify({ result: results[args.slice(0, 2).join(" ")] ?? {} }));
 `);
   // Record what fzf receives, then choose an item by index or cancel.
@@ -84,7 +115,7 @@ console.log(items[Number(process.env.HERDR_TEST_SELECT ?? 0)].split("\\t")[0]);
 import { appendFileSync } from "node:fs";
 appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", process.argv[2]]) + "\\n");
 `);
-  const run = async (kind, { select = "0", context } = {}) => {
+  const run = async (kind, { select = "0", context, worktrees = "repo" } = {}) => {
     await writeFile(log, "");
     const result = spawnSync(picker, [kind], {
       cwd: pluginRoot,
@@ -97,6 +128,7 @@ appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", proc
         HERDR_TEST_LOG: log,
         HERDR_TEST_FZF_LOG: fzfLog,
         HERDR_TEST_SELECT: select,
+        HERDR_TEST_WORKTREES: worktrees,
         FZF_DEFAULT_OPTS: "--color=bg:#123456",
         LANG: "en_US.UTF-8",
       },
@@ -167,12 +199,65 @@ test("the join-pane picker lists other tabs in the workspace and joins the choic
   ]);
 });
 
+test("the worktree picker mirrors Herdr's rows and opens a closed checkout from the repo parent", async (t) => {
+  const { home, run } = await fixture(t);
+  const { calls, fzf } = await run("worktree", { select: "2" });
+  assert.deepEqual(fzf.items, [
+    item("0", "main", "current", "~/src/dotfiles"),
+    item("1", "teddyhwang/review", "open", "~/.herdr/worktrees/dotfiles/review"),
+    item("2", "teddyhwang/feature", "", "~/.herdr/worktrees/dotfiles/feature"),
+  ], "bare and prunable checkouts are hidden like in the native picker");
+  assert.equal(fzf.noun, "checkout");
+  assert.ok(fzf.args.includes("--ghost=filter worktrees"));
+  assert.match(fzf.args.find((arg) => arg.startsWith("--footer=")), /↵ open .* esc cancel /);
+  assert.deepEqual(calls, [
+    ["worktree", "list", "--workspace", "w1"],
+    ["worktree", "open", "--workspace", "w1", "--path", path.join(home, ".herdr/worktrees/dotfiles/feature"), "--focus"],
+  ]);
+});
+
+test("the worktree picker focuses a checkout that is already open", async (t) => {
+  const { run } = await fixture(t);
+  const { calls } = await run("worktree", { select: "1" });
+  assert.deepEqual(calls, [["worktree", "list", "--workspace", "w1"], ["workspace", "focus", "w3"]]);
+});
+
+test("the worktree picker names World trees and opens them when the parent is closed", async (t) => {
+  const { home, run } = await fixture(t);
+  const { calls, fzf } = await run("worktree", { select: "1", worktrees: "world" });
+  assert.deepEqual(fzf.items, [
+    item("0", "group-sort", "", "~/world/trees/pool-1/src"),
+    item("1", "pool-2", "detached", "~/world/trees/pool-2/src"),
+    item("2", "root", "root", "~/world/trees/root/src"),
+  ]);
+  assert.deepEqual(calls, [
+    ["worktree", "list", "--workspace", "w1"],
+    ["worktree", "open", "--cwd", path.join(home, "world/trees/root/src"), "--path", path.join(home, "world/trees/pool-2/src"), "--focus"],
+  ]);
+});
+
+test("the worktree picker reports errors as Herdr toasts instead of opening fzf", async (t) => {
+  const { run } = await fixture(t);
+  for (const [worktrees, message] of [
+    ["error", "Herdr worktree actions require a workspace inside a Git work tree"],
+    ["empty", "No Git worktrees found for this repo."],
+  ]) {
+    const { calls, fzf } = await run("worktree", { worktrees });
+    assert.equal(fzf, undefined, worktrees);
+    assert.deepEqual(calls, [
+      ["worktree", "list", "--workspace", "w1"],
+      ["notification", "show", "open worktree", "--body", message],
+    ], worktrees);
+  }
+});
+
 test("cancelling a picker changes nothing", async (t) => {
   const { run } = await fixture(t);
   for (const [kind, reads] of [
     ["workspace", [["workspace", "list"]]],
     ["agent", [["workspace", "list"], ["tab", "list"], ["agent", "list"]]],
     ["join-pane", [["pane", "list"], ["tab", "list", "--workspace", "w1"]]],
+    ["worktree", [["worktree", "list", "--workspace", "w1"]]],
   ]) {
     const { calls } = await run(kind, { select: "cancel" });
     assert.deepEqual(calls, reads, kind);
@@ -198,4 +283,6 @@ test("every picker keybinding opens a titled popup pane of the plugin", () => {
     .map((binding) => binding.command.match(/plugin pane open --plugin teddyhwang\.pickers --entrypoint (\S+)/)?.[1])
     .filter(Boolean);
   assert.deepEqual(bound.sort(), [...panes.keys()].sort());
+  // A bound native action wins over keys.command and would shadow the picker.
+  assert.equal(keys.open_worktree, "", "native open_worktree must stay unbound");
 });

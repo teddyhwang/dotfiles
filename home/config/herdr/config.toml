@@ -83,6 +83,10 @@ goto = "prefix+shift+s"             # tmux: bind S sessions + windows popup
 workspace_picker = "prefix+w"       # tmux: bind w choose-tree -Zs
 switch_workspace = ""
 rename_workspace = "prefix+$"       # tmux default: rename-session
+# Worktrees: lowercase picks, uppercase creates, X deletes (D only closes).
+open_worktree = "prefix+g"          # pick/reopen a worktree of this repo
+new_worktree = "prefix+shift+g"     # herdr default, pinned explicitly
+remove_worktree = "prefix+shift+x"  # git worktree remove; never deletes the branch
 previous_workspace = "prefix+ctrl+k"
 next_workspace = "prefix+ctrl+j"
 previous_agent = "prefix+alt+k"

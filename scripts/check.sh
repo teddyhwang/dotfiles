@@ -36,7 +36,8 @@ for file in \
   home/local/bin/tinty-opencode-hook \
   home/local/bin/wayvnc-output-recover \
   home/config/tmux/resurrect-guard.sh \
-  home/omarchy/hooks/theme-set; do
+  home/omarchy/hooks/theme-set \
+  plugins/herdr-pickers/picker.sh; do
   bash -n "$file"
 done
 for file in home/.zshrc home/.p10k.zsh home/shared/aliases home/shared/env home/shared/functions home/shared/init; do
@@ -46,7 +47,7 @@ done
 printf 'Running ShellCheck...\n'
 shellcheck -x -S warning \
   -e SC1090,SC1091,SC2262,SC2263 \
-  setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh \
+  setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh plugins/herdr-pickers/picker.sh \
   home/.bash_profile home/.bashrc \
   home/shared/aliases home/shared/env home/shared/functions home/shared/init \
   home/local/bin/external-display-stay-awake \

@@ -14,6 +14,9 @@ expected_actions='["nav-left","nav-down","nav-up","nav-right","resize-left","res
 tab_autoname_plugin_id="teddyhwang.tab-autoname"
 tab_autoname_plugin_path="$DOTFILES_DIR/plugins/herdr-tab-autoname"
 tab_autoname_events='["workspace.focused","tab.created","tab.closed","tab.renamed","tab.moved","tab.focused","pane.created","pane.closed","pane.moved","pane.exited","pane.agent_detected","pane.agent_status_changed"]'
+pickers_plugin_id="teddyhwang.pickers"
+pickers_plugin_path="$DOTFILES_DIR/plugins/herdr-pickers"
+pickers_panes='["workspace","agent","join-pane"]'
 
 print_progress "Ensuring Herdr plugins are installed..."
 
@@ -140,22 +143,48 @@ tab_autoname_plugin_matches() {
     ' >/dev/null
 }
 
-if ! printf '%s' "$plugins_json" | tab_autoname_plugin_matches; then
-  print_progress "Linking local $tab_autoname_plugin_id plugin..."
-  "$herdr_bin" plugin link "$tab_autoname_plugin_path" --enabled
+pickers_plugin_matches() {
+  # shellcheck disable=SC2016
+  "$jq_bin" -e \
+    --arg id "$pickers_plugin_id" \
+    --arg manifest "$pickers_plugin_path/herdr-plugin.toml" \
+    --argjson panes "$pickers_panes" '
+      any(.result.plugins[]?;
+        .plugin_id == $id and
+        .manifest_path == $manifest and
+        .enabled == true and
+        (($panes - [.panes[]?.id]) | length == 0) and
+        ((.warnings // []) | length == 0)
+      )
+    ' >/dev/null
+}
+
+# Relinking a local plugin re-reads its manifest, so this also picks up
+# manifest changes such as new events or panes.
+ensure_linked_plugin() {
+  linked_id=$1
+  linked_path=$2
+  linked_matches=$3
+  if printf '%s' "$plugins_json" | "$linked_matches"; then
+    print_info "$linked_id is linked and enabled"
+    return
+  fi
+
+  print_progress "Linking local $linked_id plugin..."
+  "$herdr_bin" plugin link "$linked_path" --enabled
   track_change
   if ! plugins_json=$(list_plugins); then
-    print_error "Could not list Herdr plugins after linking $tab_autoname_plugin_id"
+    print_error "Could not list Herdr plugins after linking $linked_id"
     exit 1
   fi
-else
-  print_info "$tab_autoname_plugin_id is linked and enabled"
-fi
+  if ! printf '%s' "$plugins_json" | "$linked_matches"; then
+    print_error "$linked_id failed post-link verification"
+    exit 1
+  fi
+}
 
-if ! printf '%s' "$plugins_json" | tab_autoname_plugin_matches; then
-  print_error "$tab_autoname_plugin_id failed post-link verification"
-  exit 1
-fi
+ensure_linked_plugin "$tab_autoname_plugin_id" "$tab_autoname_plugin_path" tab_autoname_plugin_matches
+ensure_linked_plugin "$pickers_plugin_id" "$pickers_plugin_path" pickers_plugin_matches
 
 # Linux autostart used to leave a resident event subscriber running. Its Unix
 # socket is an unambiguous marker, so stop only that legacy process during the

@@ -9,6 +9,7 @@ const repo = process.cwd();
 const fallbackRef = "94f30cf4e9ac76ddf185a3acd0977be728fa4106";
 const localRef = "0123456789abcdef0123456789abcdef01234567";
 const actions = ["nav-left", "nav-down", "nav-up", "nav-right", "resize-left", "resize-down", "resize-up", "resize-right"];
+const panes = ["workspace", "agent", "join-pane"];
 const events = ["workspace.focused", "tab.created", "tab.closed", "tab.renamed", "tab.moved", "tab.focused", "pane.created", "pane.closed", "pane.moved", "pane.exited", "pane.agent_detected", "pane.agent_status_changed"];
 
 async function fixture(t, lockfile) {
@@ -48,14 +49,24 @@ switch (args[1]) {
     });
     break;
   case "link":
-    plugins.push({
-      plugin_id: "teddyhwang.tab-autoname",
-      manifest_path: args[2] + "/herdr-plugin.toml",
-      enabled: true,
-      actions: [{ id: "refresh" }],
-      events: ${JSON.stringify(events)}.map((on) => ({ on })),
-      warnings: [],
-    });
+    if (args[2].endsWith("/herdr-pickers")) {
+      plugins.push({
+        plugin_id: "teddyhwang.pickers",
+        manifest_path: args[2] + "/herdr-plugin.toml",
+        enabled: true,
+        panes: ${JSON.stringify(panes)}.map((id) => ({ id })),
+        warnings: null,
+      });
+    } else {
+      plugins.push({
+        plugin_id: "teddyhwang.tab-autoname",
+        manifest_path: args[2] + "/herdr-plugin.toml",
+        enabled: true,
+        actions: [{ id: "refresh" }],
+        events: ${JSON.stringify(events)}.map((on) => ({ on })),
+        warnings: [],
+      });
+    }
     break;
   default:
     process.exit(1);
@@ -98,6 +109,7 @@ for (const [name, lockfile, ref] of [
     ]);
     assert.deepEqual(calls.filter((args) => args[1] === "link"), [
       ["plugin", "link", path.join(fixtureData.root, "plugins/herdr-tab-autoname"), "--enabled"],
+      ["plugin", "link", path.join(fixtureData.root, "plugins/herdr-pickers"), "--enabled"],
     ]);
     if (lockfile === undefined) {
       await assert.rejects(readFile(fixtureData.lockPath), { code: "ENOENT" });

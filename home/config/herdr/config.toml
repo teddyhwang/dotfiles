@@ -163,18 +163,14 @@ type = "shell"
 description = "select tab 9"
 command = 'exec "${HERDR_BIN_PATH:-herdr}" tab focus "$HERDR_ACTIVE_WORKSPACE_ID:10"'
 
+# The fzf pickers live in the teddyhwang.pickers plugin (plugins/herdr-pickers).
+# Plugin popups get a titled border and are styled like Herdr's own pickers;
+# keys.command popups are always labelled "popup".
 [[keys.command]]
 key = "prefix+shift+v"
-type = "popup"
+type = "shell"
 description = "join pane"
-width = "70%"
-height = "50%"
-command = '''
-TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
-[ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
-sel=$("${HERDR_BIN_PATH:-herdr}" pane list | jq -r --arg ws "$HERDR_ACTIVE_WORKSPACE_ID" --arg tab "$HERDR_ACTIVE_TAB_ID" '.result.panes[] | select(.workspace_id == $ws and .tab_id != $tab) | "\(.pane_id)\t\(.agent // "shell")\t\(.cwd)"' | fzf --delimiter='\t' --with-nth=2.. --reverse --prompt='join pane> ' | cut -f1)
-[ -n "$sel" ] && "${HERDR_BIN_PATH:-herdr}" pane move "$sel" --tab "$HERDR_ACTIVE_TAB_ID" --split right --focus >/dev/null 2>&1
-'''
+command = 'exec "${HERDR_BIN_PATH:-herdr}" plugin pane open --plugin teddyhwang.pickers --entrypoint join-pane'
 
 [[keys.command]]
 key = "prefix+="
@@ -184,32 +180,15 @@ command = 'herdr-even-layout'
 
 [[keys.command]]
 key = "prefix+a"
-type = "popup"
+type = "shell"
 description = "switch agent"
-width = "70%"
-height = "50%"
-command = '''
-TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
-[ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
-# Herdr 0.9.0's agent focus updates server state without moving the attached
-# client's viewport (herdrdev/herdr#3760). The raw pane.focus method still
-# projects to the client and also selects the exact pane in a split tab.
-sel=$(jq -rn --argjson ws "$("${HERDR_BIN_PATH:-herdr}" workspace list | jq -c '.result.workspaces')" --argjson ag "$("${HERDR_BIN_PATH:-herdr}" agent list | jq -c '.result.agents')" '($ws | map({key: .workspace_id, value: .label}) | from_entries) as $labels | $ag[] | "\(.pane_id)\t\(if .focused then "\u2192" else " " end) \($labels[.workspace_id] // .workspace_id)  \(.agent)  \(.agent_status)  \(.terminal_title_stripped // "")"' | fzf --delimiter='\t' --with-nth=2.. --reverse --no-sort --prompt='agent> ' | cut -f1)
-[ -n "$sel" ] && "$HOME/.local/bin/herdr-focus-pane" "$sel" >/dev/null 2>&1
-'''
+command = 'exec "${HERDR_BIN_PATH:-herdr}" plugin pane open --plugin teddyhwang.pickers --entrypoint agent'
 
 [[keys.command]]
 key = "prefix+s"
-type = "popup"
+type = "shell"
 description = "switch workspace"
-width = "70%"
-height = "50%"
-command = '''
-TINTY_FZF="$HOME/.local/share/tinted-theming/tinty/tinted-fzf-sh-file.sh"
-[ -f "$TINTY_FZF" ] && . "$TINTY_FZF"
-sel=$("${HERDR_BIN_PATH:-herdr}" workspace list | jq -r '.result.workspaces[] | "\(.workspace_id)\t\(if .focused then "\u2192" else " " end) \(.label)  \(.tab_count) tab\(if .tab_count == 1 then "" else "s" end), \(.pane_count) pane\(if .pane_count == 1 then "" else "s" end)\(if .agent_status == "unknown" then "" else "  " + .agent_status end)"' | fzf --delimiter='\t' --with-nth=2.. --reverse --no-sort --prompt='workspace> ' | cut -f1)
-[ -n "$sel" ] && "${HERDR_BIN_PATH:-herdr}" workspace focus "$sel" >/dev/null 2>&1
-'''
+command = 'exec "${HERDR_BIN_PATH:-herdr}" plugin pane open --plugin teddyhwang.pickers --entrypoint workspace'
 
 [[keys.command]]
 key = "prefix+shift+b"

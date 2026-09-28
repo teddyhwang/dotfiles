@@ -1,0 +1,32 @@
+id = "teddyhwang.pickers"
+name = "Pickers"
+version = "1.0.0"
+min_herdr_version = "0.9.0"
+description = "fzf pickers styled like Herdr's built-in overlays"
+platforms = ["linux", "macos"]
+
+# Plugin popups show their title on the border, unlike keys.command popups,
+# which are always labelled "popup". 96 columns matches Herdr's own pickers.
+[[panes]]
+id = "workspace"
+title = "switch workspace"
+placement = "popup"
+width = 96
+height = 26
+command = ["./picker.sh", "workspace"]
+
+[[panes]]
+id = "agent"
+title = "switch agent"
+placement = "popup"
+width = 96
+height = 26
+command = ["./picker.sh", "agent"]
+
+[[panes]]
+id = "join-pane"
+title = "join pane"
+placement = "popup"
+width = 96
+height = 26
+command = ["./picker.sh", "join-pane"]

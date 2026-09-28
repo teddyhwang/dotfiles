@@ -86,6 +86,7 @@ const processInfo = ["pane", "process-info", "--pane", "w1:p1"];
 const shell = [{ argv0: "/bin/zsh", name: "zsh" }];
 const vim = [{ argv0: "/usr/local/bin/nvim", name: "nvim" }];
 const sendKeys = (key) => ["pane", "send-keys", "w1:p1", key];
+const openPicker = (entrypoint) => ["plugin", "pane", "open", "--plugin", "teddyhwang.pickers", "--entrypoint", entrypoint];
 const cases = [];
 for (let index = 0; index <= 9; index += 1) {
   cases.push([
@@ -99,11 +100,10 @@ cases.push(
   ["ctrl+x", vim, [processInfo, sendKeys("ctrl+x")]],
   ["ctrl+x", [{ name: "vim" }], [processInfo, sendKeys("ctrl+x")]],
   ["ctrl+x", [], [processInfo, sendKeys("ctrl+l")]],
-  ["prefix+shift+v", shell, [["pane", "list"], ["pane", "move", "w1:p2", "--tab", "w1:t1", "--split", "right", "--focus"]]],
-  // Herdr 0.9.0 does not project agent.focus to the attached client. The
-  // helper uses the working raw pane.focus path instead.
-  ["prefix+a", shell, [["workspace", "list"], ["agent", "list"], ["pane", "focus", "w1:p2"]]],
-  ["prefix+s", shell, [["workspace", "list"], ["workspace", "focus", "w1"]]],
+  // The pickers themselves are covered by herdr-pickers-plugin.test.mjs.
+  ["prefix+shift+v", shell, [openPicker("join-pane")]],
+  ["prefix+a", shell, [openPicker("agent")]],
+  ["prefix+s", shell, [openPicker("workspace")]],
   ["prefix+shift+b", shell, [["pane", "move", "w1:p1", "--new-tab", "--focus"]]],
   ["prefix+shift+t", shell, [["pane", "move", "w1:p1", "--new-tab", "--focus"]]],
   ["prefix+x", shell, [["pane", "close", "w1:p1"]]],

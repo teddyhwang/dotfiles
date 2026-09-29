@@ -10,6 +10,12 @@
  * active agents, falling back to repository + branch. Manual names opt out of
  * automatic naming, but keep the position prefix; renaming a tab back to a
  * bare number opts it in again.
+ *
+ * Monorepos such as shop/world are one Git checkout (`<world>/trees/<id>/src`)
+ * with many tec zones, each marked by a `zone.nix`. Herdr labels a workspace
+ * after the checkout root, so every World workspace would be called `src`.
+ * Inside a zone, the tab project name and the workspace label use the zone's
+ * directory name instead (`areas/core/shopify` -> `shopify`).
  */
 
 import { execFile } from "node:child_process";
@@ -25,7 +31,15 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { homedir } from "node:os";
-import { basename, dirname, join, normalize, resolve } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  normalize,
+  relative,
+  resolve,
+} from "node:path";
 import { fileURLToPath } from "node:url";
 import net from "node:net";
 
@@ -89,17 +103,32 @@ export type TabInfo = {
   label?: string | null;
   [key: string]: unknown;
 };
+export type WorkspaceInfo = {
+  workspace_id?: string;
+  label?: string | null;
+  [key: string]: unknown;
+};
 export type Snapshot = {
+  workspaces?: unknown;
   tabs?: unknown;
   panes?: unknown;
 };
 
-type GitDescription = readonly [string | undefined, string | undefined];
+/** Checkout root, branch, and the name of the innermost tec zone, if any. */
+type GitDescription = readonly [
+  string | undefined,
+  string | undefined,
+  (string | undefined)?,
+];
 type OwnershipState = {
   labels: Map<string, string>;
   known: boolean;
 };
 type RenameTab = (tabId: string, label: string) => Promise<boolean>;
+type RenameWorkspace = (
+  workspaceId: string,
+  label: string,
+) => Promise<boolean>;
 
 export interface GitDescriber {
   describe(cwd: string): Promise<GitDescription>;
@@ -138,7 +167,11 @@ export function truncateLabel(label: string): string {
   let cut = label.slice(0, MAX_LABEL - 1);
   if (!/\s/u.test(label[MAX_LABEL - 1] ?? "")) {
     const space = cut.lastIndexOf(" ");
-    if (space >= Math.floor(MAX_LABEL / 2)) cut = cut.slice(0, space);
+    // Backing up to the space before a branch would keep only its glyph.
+    const dropsBranch = cut.slice(0, space).trimEnd().endsWith(BRANCH_GLYPH);
+    if (space >= Math.floor(MAX_LABEL / 2) && !dropsBranch) {
+      cut = cut.slice(0, space);
+    }
   }
   return `${cut.replace(/[ \-—–:|]+$/u, "")}…`;
 }
@@ -291,6 +324,55 @@ export function activeTopics(panes: readonly PaneInfo[]): string[] {
   return topics;
 }
 
+/**
+ * Name the innermost tec zone (a directory with `zone.nix`) that contains
+ * `cwd`, below the checkout root. The root itself never counts: its name is
+ * already the repository name.
+ */
+export async function zoneNameFor(
+  cwd: string,
+  root: string | undefined,
+): Promise<string | undefined> {
+  if (!root) return undefined;
+  // Git reports the resolved root, while a shell may report a symlinked path.
+  const [realCwd, realRoot] = await Promise.all([
+    realpath(cwd).catch(() => normalize(cwd)),
+    realpath(root).catch(() => normalize(root)),
+  ]);
+  const inside = relative(realRoot, realCwd);
+  if (!inside || inside.startsWith("..") || isAbsolute(inside)) {
+    return undefined;
+  }
+
+  for (let directory = realCwd; directory !== realRoot; ) {
+    if (await pathExists(join(directory, "zone.nix"))) {
+      return basename(directory);
+    }
+    const parent = dirname(directory);
+    if (parent === directory) break;
+    directory = parent;
+  }
+  return undefined;
+}
+
+/** Herdr's own workspace label: the checkout root, else the directory. */
+export function herdrWorkspaceLabel(
+  cwd: string,
+  root: string | undefined,
+): string {
+  const rootName = root ? basename(root.replace(/\/+$/u, "")) : "";
+  return rootName || herdrFallbackLabel(cwd);
+}
+
+/**
+ * Herdr shows this label before it has inspected a new cwd, and for a cwd that
+ * is not in a Git checkout.
+ */
+function herdrFallbackLabel(cwd: string): string {
+  if (normalize(cwd) === normalize(homedir())) return "~";
+  return basename(cwd.replace(/\/+$/u, "")) || cwd;
+}
+
 export class GitCache implements GitDescriber {
   private readonly entries = new Map<
     string,
@@ -307,7 +389,13 @@ export class GitCache implements GitDescriber {
     const result = Promise.all([
       this.run(cwd, "rev-parse", "--show-toplevel"),
       this.branch(cwd),
-    ]) as Promise<GitDescription>;
+    ]).then(
+      async ([root, branch]): Promise<GitDescription> => [
+        root,
+        branch,
+        await zoneNameFor(cwd, root),
+      ],
+    );
     this.entries.set(cwd, { createdAt: now, result });
     return result;
   }
@@ -661,8 +749,8 @@ export class TabNamer {
   }
 
   private async projectLabel(cwd: string): Promise<string> {
-    const [root, branch] = await this.git.describe(cwd);
-    let name = basename((root ?? cwd).replace(/\/+$/u, "")) || "/";
+    const [root, branch, zone] = await this.git.describe(cwd);
+    let name = zone ?? (basename((root ?? cwd).replace(/\/+$/u, "")) || "/");
     if (!root && normalize(cwd) === normalize(homedir())) name = "~";
     if (!branch || BRANCH_IMPLIED.has(branch)) return name;
     return `${name} ${BRANCH_GLYPH} ${branch}`;
@@ -717,6 +805,160 @@ export class TabNamer {
     if (!this.recoverExisting) return;
     this.recoverExisting = false;
     if (this.canPersist()) await this.ownership.markKnown(this.sessionPath);
+  }
+}
+
+export type WorkspaceNamerOptions = {
+  sessionPath: string;
+  git: GitDescriber;
+  ownership: OwnershipRegistry;
+  persistOwnership: boolean;
+  dryRun: boolean;
+  renameWorkspace: RenameWorkspace;
+};
+
+/**
+ * Label workspaces after the tec zone of their first pane.
+ *
+ * Herdr names a workspace after the checkout root of its first tab's root
+ * pane and keeps that label current by itself. This only steps in when a zone
+ * gives a better name. Herdr cannot clear a name set over the API, so once a
+ * label is owned here it is also kept current here, including a return to
+ * Herdr's own label when the pane leaves the zone.
+ */
+export class WorkspaceNamer {
+  private readonly ownershipKey: string;
+  private readonly git: GitDescriber;
+  private readonly ownership: OwnershipRegistry;
+  private readonly persistOwnership: boolean;
+  private readonly dryRun: boolean;
+  private readonly renameWorkspace: RenameWorkspace;
+  private readonly assigned: Map<string, string>;
+
+  constructor(options: WorkspaceNamerOptions) {
+    // Keep workspace ownership apart from tab ownership, which prunes every
+    // entry that is not a live tab.
+    this.ownershipKey = `${options.sessionPath}#workspaces`;
+    this.git = options.git;
+    this.ownership = options.ownership;
+    this.persistOwnership = options.persistOwnership;
+    this.dryRun = options.dryRun;
+    this.renameWorkspace = options.renameWorkspace;
+    this.assigned = this.ownership.stateFor(this.ownershipKey).labels;
+  }
+
+  assignmentFor(workspaceId: string): string | undefined {
+    return this.assigned.get(workspaceId);
+  }
+
+  async apply(snapshot: Snapshot): Promise<void> {
+    const workspaces = Array.isArray(snapshot.workspaces)
+      ? snapshot.workspaces.filter(isRecord)
+      : [];
+    const tabs = Array.isArray(snapshot.tabs)
+      ? snapshot.tabs.filter(isRecord)
+      : [];
+    const panes = Array.isArray(snapshot.panes)
+      ? snapshot.panes.filter(isRecord)
+      : [];
+
+    // Snapshot tabs are in keyboard order, so the first one per workspace is
+    // the tab Herdr takes the workspace identity from.
+    const firstTabs = new Map<string, string>();
+    for (const tab of tabs) {
+      const tabId = asString(tab.tab_id);
+      const workspaceId = asString(tab.workspace_id);
+      if (tabId && workspaceId && !firstTabs.has(workspaceId)) {
+        firstTabs.set(workspaceId, tabId);
+      }
+    }
+
+    const liveWorkspaces = new Set<string>();
+    for (const workspace of workspaces) {
+      const workspaceId = asString(workspace.workspace_id);
+      if (!workspaceId) continue;
+      liveWorkspaces.add(workspaceId);
+      const tabId = firstTabs.get(workspaceId);
+      const rootPane = panes
+        .filter((pane) => asString(pane.tab_id) === tabId)
+        .sort(comparePaneOrder)[0];
+      const cwd = asString(rootPane?.cwd);
+      if (tabId && cwd) {
+        await this.consider(workspaceId, asString(workspace.label) ?? "", cwd);
+      }
+    }
+
+    for (const workspaceId of this.assigned.keys()) {
+      if (!liveWorkspaces.has(workspaceId)) this.assigned.delete(workspaceId);
+    }
+    if (this.canPersist()) {
+      await this.ownership.retain(this.ownershipKey, liveWorkspaces);
+    }
+  }
+
+  async consider(
+    workspaceId: string,
+    label: string,
+    cwd: string,
+  ): Promise<void> {
+    const [root, , zone] = await this.git.describe(cwd);
+    const herdrLabel = herdrWorkspaceLabel(cwd, root);
+    const desired = zone ?? herdrLabel;
+    const assigned = this.assigned.get(workspaceId);
+    const automatic =
+      !label ||
+      label === assigned ||
+      label === desired ||
+      label === herdrLabel ||
+      label === herdrFallbackLabel(cwd);
+
+    if (!automatic) {
+      if (assigned !== undefined) {
+        log(
+          `${workspaceId}: label differs from owned ${JSON.stringify(assigned)}; ` +
+            `treating ${JSON.stringify(label)} as manual`,
+        );
+        await this.forgetAssignment(workspaceId);
+      }
+      return;
+    }
+    // Herdr already maintains its own label; only take over for a zone.
+    if (assigned === undefined && desired === herdrLabel) return;
+
+    if (label !== desired) {
+      log(
+        `${workspaceId}: ${JSON.stringify(label)} -> ${JSON.stringify(desired)}${
+          this.dryRun ? " [dry-run]" : ""
+        }`,
+      );
+      if (!this.dryRun && !(await this.renameWorkspace(workspaceId, desired))) {
+        return;
+      }
+    }
+    await this.rememberAssignment(workspaceId, desired);
+  }
+
+  private canPersist(): boolean {
+    return this.persistOwnership && !this.dryRun;
+  }
+
+  private async rememberAssignment(
+    workspaceId: string,
+    label: string,
+  ): Promise<void> {
+    if (this.assigned.get(workspaceId) === label) return;
+    log(`${workspaceId}: owning workspace label ${JSON.stringify(label)}`);
+    this.assigned.set(workspaceId, label);
+    if (this.canPersist()) {
+      await this.ownership.set(this.ownershipKey, workspaceId, label);
+    }
+  }
+
+  private async forgetAssignment(workspaceId: string): Promise<void> {
+    this.assigned.delete(workspaceId);
+    if (this.canPersist()) {
+      await this.ownership.remove(this.ownershipKey, workspaceId);
+    }
   }
 }
 
@@ -812,6 +1054,22 @@ export async function syncSession(
     },
   });
   await namer.apply(snapshot);
+
+  const workspaceNamer = new WorkspaceNamer({
+    sessionPath: path,
+    git: options.git,
+    ownership: options.ownership,
+    persistOwnership: options.persistOwnership,
+    dryRun: options.dryRun,
+    renameWorkspace: async (workspaceId, label) => {
+      const renameResponse = await herdrCall(path, "workspace.rename", {
+        workspace_id: workspaceId,
+        label,
+      });
+      return renameResponse !== undefined && renameResponse.error === undefined;
+    },
+  });
+  await workspaceNamer.apply(snapshot);
   return true;
 }
 

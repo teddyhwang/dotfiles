@@ -252,7 +252,7 @@ gwd() {
 # happens. Ask the tab-autoname plugin to refresh when either changes. The
 # check only reads files, so prompts where nothing changed never fork.
 _herdr_tab_git_context() {
-  local dir="$PWD" git_dir="" line="" head=""
+  local dir="$PWD" git_dir="" line="" head="" zone=""
   while :; do
     if [[ -d "$dir/.git" ]]; then
       git_dir="$dir/.git"
@@ -270,12 +270,16 @@ _herdr_tab_git_context() {
       _herdr_tab_context="$PWD"
       return 0
     fi
+    # A monorepo checkout such as shop/world holds many tec zones. The plugin
+    # names tabs and workspaces after the innermost one, so moving between
+    # zones must refresh too.
+    [[ -z "$zone" && -f "$dir/zone.nix" ]] && zone="$dir"
     dir="${dir%/*}"
   done
   # HEAD names the branch, or holds the commit when detached. It does not
-  # change for commands inside the same checkout, such as a cd to a subdirectory.
+  # change for commands inside the same zone, such as a cd to a subdirectory.
   IFS= read -r head 2>/dev/null <"$git_dir/HEAD"
-  _herdr_tab_context="${dir:-/}"$'\n'"$head"
+  _herdr_tab_context="${dir:-/}"$'\n'"$head"$'\n'"$zone"
 }
 
 _herdr_tab_autoname_precmd() {

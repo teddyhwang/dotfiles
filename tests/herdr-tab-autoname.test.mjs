@@ -1,18 +1,23 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
+  GitCache,
   OwnershipStore,
   TabNamer,
+  WorkspaceNamer,
   herdrCall,
+  herdrWorkspaceLabel,
   indexedTabLabel,
   piSessionLabelFor,
   piSessionNameFromTitle,
   syncSession,
   topicFromTitle,
+  zoneNameFor,
 } from "../home/local/bin/herdr-tab-autoname.ts";
 
 import { toHerdrLabel } from "../home/pi-agent/extensions/session-tab-name.ts";
@@ -63,13 +68,14 @@ class MemoryOwnership {
 }
 
 class FakeGit {
-  constructor(root = "/src/dotfiles", branch = "main") {
+  constructor(root = "/src/dotfiles", branch = "main", zone = undefined) {
     this.root = root;
     this.branch = branch;
+    this.zone = zone;
   }
 
   async describe() {
-    return [this.root, this.branch];
+    return [this.root, this.branch, this.zone];
   }
 
   forgetMissing() {}
@@ -744,4 +750,305 @@ test("a transient sync snapshots and renames without an event subscription", asy
   assert.deepEqual(renames, [
     { tab_id: "w1:t7", label: "0:Fix session labels" },
   ]);
+});
+
+const WORLD_ROOT = "/world/trees/root/src";
+const SHOPIFY_ZONE = `${WORLD_ROOT}/areas/core/shopify`;
+
+class PathGit {
+  constructor(entries) {
+    this.entries = new Map(Object.entries(entries));
+  }
+
+  async describe(cwd) {
+    return this.entries.get(cwd) ?? [undefined, undefined, undefined];
+  }
+
+  forgetMissing() {}
+}
+
+const worldGit = () =>
+  new PathGit({
+    [WORLD_ROOT]: [WORLD_ROOT, "main", undefined],
+    [SHOPIFY_ZONE]: [WORLD_ROOT, "main", "shopify"],
+    [`${SHOPIFY_ZONE}/app`]: [WORLD_ROOT, "main", "shopify"],
+    "/src/dotfiles": ["/src/dotfiles", "main", undefined],
+    "/src/dotfiles/home": ["/src/dotfiles", "main", undefined],
+  });
+
+function createWorkspaceNamer({
+  ownership = new MemoryOwnership(),
+  git = worldGit(),
+  renameWorkspace = async () => true,
+} = {}) {
+  return new WorkspaceNamer({
+    sessionPath: SESSION_PATH,
+    git,
+    ownership,
+    persistOwnership: true,
+    dryRun: false,
+    renameWorkspace,
+  });
+}
+
+function recordRenames() {
+  const requests = [];
+  return {
+    requests,
+    renameWorkspace: async (workspaceId, label) => {
+      requests.push({ workspaceId, label });
+      return true;
+    },
+  };
+}
+
+test("finds the innermost tec zone below the checkout root", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-zone-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const root = path.join(directory, "trees/root/src");
+  for (const zone of ["", "areas/core/shopify", "areas/core/shopify/inner"]) {
+    await mkdir(path.join(root, zone), { recursive: true });
+    await writeFile(path.join(root, zone, "zone.nix"), "{ }\n");
+  }
+  await mkdir(path.join(root, "areas/core/shopify/app/models"), {
+    recursive: true,
+  });
+  await mkdir(path.join(root, "areas/core/shopify/inner/lib"), {
+    recursive: true,
+  });
+  await mkdir(path.join(root, "docs"), { recursive: true });
+  await symlink(
+    path.join(root, "areas/core/shopify/app"),
+    path.join(directory, "shortcut"),
+  );
+
+  const zone = (cwd) => zoneNameFor(path.join(root, cwd), root);
+  assert.equal(await zone("areas/core/shopify"), "shopify");
+  assert.equal(await zone("areas/core/shopify/app/models"), "shopify");
+  assert.equal(await zone("areas/core/shopify/inner/lib"), "inner");
+  assert.equal(await zone(""), undefined);
+  assert.equal(await zone("docs"), undefined);
+  assert.equal(
+    await zoneNameFor(path.join(directory, "shortcut"), root),
+    "shopify",
+  );
+  assert.equal(await zoneNameFor(directory, root), undefined);
+  assert.equal(await zoneNameFor(root, undefined), undefined);
+});
+
+test("describes a checkout with the tec zone of the cwd", async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-zone-git-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const root = path.join(directory, "src");
+  const zone = path.join(root, "areas/core/shopify");
+  await mkdir(path.join(zone, "app"), { recursive: true });
+  await writeFile(path.join(zone, "zone.nix"), "{ }\n");
+  execFileSync("git", ["-c", "init.defaultBranch=main", "init", "-q", root], {
+    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+  });
+
+  const [describedRoot, branch, zoneName] = await new GitCache().describe(
+    path.join(zone, "app"),
+  );
+  assert.equal(path.basename(describedRoot), "src");
+  assert.equal(branch, "main");
+  assert.equal(zoneName, "shopify");
+});
+
+test("mirrors Herdr's own workspace label", () => {
+  assert.equal(herdrWorkspaceLabel(`${SHOPIFY_ZONE}/app`, WORLD_ROOT), "src");
+  assert.equal(herdrWorkspaceLabel("/tmp/scratch", undefined), "scratch");
+  assert.equal(herdrWorkspaceLabel(os.homedir(), undefined), "~");
+});
+
+test("truncation keeps part of a branch instead of a bare glyph", () => {
+  assert.equal(
+    indexedTabLabel(
+      1,
+      "agent-server  teddyhwang/agent-server-mcp-graphql-prototype",
+    ),
+    "1:agent-server  teddyhwang/age…",
+  );
+});
+
+test("tabs in a tec zone use the zone as the project name", async () => {
+  const namer = createNamer({
+    git: new FakeGit(WORLD_ROOT, "main", "shopify"),
+  });
+  assert.equal(await namer.labelFor([shellPane()]), "shopify");
+
+  const branchNamer = createNamer({
+    git: new FakeGit(WORLD_ROOT, "teddyhwang/fix", "shopify"),
+  });
+  assert.equal(
+    await branchNamer.labelFor([shellPane()]),
+    "shopify  teddyhwang/fix",
+  );
+});
+
+test("renames Herdr's checkout label to the tec zone", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const namer = createWorkspaceNamer({ renameWorkspace });
+  await namer.consider("w1", "src", SHOPIFY_ZONE);
+  assert.deepEqual(requests, [{ workspaceId: "w1", label: "shopify" }]);
+  assert.equal(namer.assignmentFor("w1"), "shopify");
+});
+
+test("renames Herdr's label for an uninspected cwd to the tec zone", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const namer = createWorkspaceNamer({ renameWorkspace });
+  await namer.consider("w1", "app", `${SHOPIFY_ZONE}/app`);
+  assert.deepEqual(requests, [{ workspaceId: "w1", label: "shopify" }]);
+});
+
+test("adopts a workspace label that already names the zone", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const namer = createWorkspaceNamer({ renameWorkspace });
+  await namer.consider("w1", "shopify", SHOPIFY_ZONE);
+  assert.deepEqual(requests, []);
+  assert.equal(namer.assignmentFor("w1"), "shopify");
+});
+
+test("leaves a manual workspace name alone and releases it", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const ownership = new MemoryOwnership(
+    new Map([[`${SESSION_PATH}#workspaces`, new Map([["w1", "shopify"]])]]),
+  );
+  const namer = createWorkspaceNamer({ ownership, renameWorkspace });
+  await namer.consider("w1", "Checkout work", SHOPIFY_ZONE);
+  assert.deepEqual(requests, []);
+  assert.equal(namer.assignmentFor("w1"), undefined);
+  assert.equal(
+    ownership.stateFor(`${SESSION_PATH}#workspaces`).labels.has("w1"),
+    false,
+  );
+});
+
+test("leaves workspaces outside a zone to Herdr", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const namer = createWorkspaceNamer({ renameWorkspace });
+  await namer.consider("w1", "dotfiles", "/src/dotfiles");
+  await namer.consider("w2", "home", "/src/dotfiles/home");
+  await namer.consider("w3", "src", WORLD_ROOT);
+  assert.deepEqual(requests, []);
+  assert.equal(namer.assignmentFor("w1"), undefined);
+  assert.equal(namer.assignmentFor("w2"), undefined);
+  assert.equal(namer.assignmentFor("w3"), undefined);
+});
+
+test("an owned workspace label follows its pane out of and into a zone", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const ownership = new MemoryOwnership(
+    new Map([[`${SESSION_PATH}#workspaces`, new Map([["w1", "shopify"]])]]),
+  );
+  const namer = createWorkspaceNamer({ ownership, renameWorkspace });
+  // Herdr cannot clear a name set over the API, so restore its label here.
+  await namer.consider("w1", "shopify", "/src/dotfiles");
+  await namer.consider("w1", "dotfiles", SHOPIFY_ZONE);
+  assert.deepEqual(requests, [
+    { workspaceId: "w1", label: "dotfiles" },
+    { workspaceId: "w1", label: "shopify" },
+  ]);
+  assert.equal(namer.assignmentFor("w1"), "shopify");
+});
+
+test("names a workspace from the root pane of its first tab", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const ownership = new MemoryOwnership(
+    new Map([[`${SESSION_PATH}#workspaces`, new Map([["w9", "closed"]])]]),
+  );
+  const namer = createWorkspaceNamer({ ownership, renameWorkspace });
+  await namer.apply({
+    workspaces: [
+      { workspace_id: "w1", label: "src" },
+      { workspace_id: "w2", label: "dotfiles" },
+    ],
+    tabs: [tabInfo("0:one", 1, "w1"), tabInfo("1:two", 2, "w1"), tabInfo("0", 1, "w2")],
+    panes: [
+      { pane_id: "w1:p3", tab_id: "w1:t1", cwd: "/src/dotfiles" },
+      { pane_id: "w1:p1", tab_id: "w1:t1", cwd: SHOPIFY_ZONE },
+      { pane_id: "w1:p2", tab_id: "w1:t2", cwd: "/src/dotfiles" },
+      { pane_id: "w2:p1", tab_id: "w2:t1", cwd: "/src/dotfiles" },
+    ],
+  });
+  assert.deepEqual(requests, [{ workspaceId: "w1", label: "shopify" }]);
+  assert.deepEqual(
+    Object.fromEntries(ownership.stateFor(`${SESSION_PATH}#workspaces`).labels),
+    { w1: "shopify" },
+  );
+});
+
+test("a transient sync renames tabs and workspaces with separate ownership", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("Unix socket fixture");
+    return;
+  }
+  const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-sync-"));
+  const socketPath = path.join(directory, "herdr.sock");
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const requests = [];
+  const server = net.createServer((socket) => {
+    let buffer = "";
+    socket.on("data", (chunk) => {
+      buffer += chunk.toString("utf8");
+      const newline = buffer.indexOf("\n");
+      if (newline < 0) return;
+      const request = JSON.parse(buffer.slice(0, newline));
+      if (request.method === "session.snapshot") {
+        socket.end(
+          `${JSON.stringify({
+            id: request.id,
+            result: {
+              snapshot: {
+                workspaces: [{ workspace_id: "w1", label: "src" }],
+                tabs: [tabInfo("0", 1)],
+                panes: [
+                  {
+                    pane_id: "w1:p1",
+                    tab_id: "w1:t1",
+                    agent: null,
+                    cwd: SHOPIFY_ZONE,
+                    terminal_title_stripped: "zsh",
+                  },
+                ],
+              },
+            },
+          })}\n`,
+        );
+      } else {
+        requests.push({ method: request.method, params: request.params });
+        socket.end(`${JSON.stringify({ id: request.id, result: {} })}\n`);
+      }
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(socketPath, resolve);
+  });
+  t.after(() => server.close());
+
+  const ownership = new MemoryOwnership(new Map([[socketPath, new Map()]]));
+  assert.equal(
+    await syncSession(socketPath, {
+      git: worldGit(),
+      ownership,
+      persistOwnership: true,
+      dryRun: false,
+    }),
+    true,
+  );
+  assert.deepEqual(requests, [
+    { method: "tab.rename", params: { tab_id: "w1:t1", label: "0:shopify" } },
+    {
+      method: "workspace.rename",
+      params: { workspace_id: "w1", label: "shopify" },
+    },
+  ]);
+  assert.deepEqual(Object.fromEntries(ownership.stateFor(socketPath).labels), {
+    "w1:t1": "0:shopify",
+  });
+  assert.deepEqual(
+    Object.fromEntries(ownership.stateFor(`${socketPath}#workspaces`).labels),
+    { w1: "shopify" },
+  );
 });

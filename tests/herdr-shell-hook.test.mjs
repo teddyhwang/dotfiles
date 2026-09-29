@@ -53,6 +53,13 @@ async function fixture(t) {
     assert.equal(result.status, 0, result.stderr);
   };
   await mkdir(path.join(checkout, "sub"), { recursive: true });
+  // tec zones in a monorepo checkout, one nested inside another.
+  await mkdir(path.join(checkout, "zones/alpha/deep"), { recursive: true });
+  await mkdir(path.join(checkout, "zones/alpha/inner"), { recursive: true });
+  await mkdir(path.join(checkout, "zones/beta"), { recursive: true });
+  for (const zone of ["zones/alpha", "zones/alpha/inner", "zones/beta"]) {
+    await writeFile(path.join(checkout, zone, "zone.nix"), "{ }\n");
+  }
   git("init", "-q", "-b", "main");
   git("commit", "-q", "--allow-empty", "-m", "init");
   git("branch", "feature");
@@ -76,7 +83,7 @@ async function settledCalls(callLog, expected) {
 }
 
 for (const [shell, command] of Object.entries(shells)) {
-  test(`${shell} prompt refreshes Herdr tab names when the checkout changes`, async (t) => {
+  test(`${shell} prompt refreshes Herdr tab names when the checkout or zone changes`, async (t) => {
     const { callLog, directory, env } = await fixture(t);
     const script = `
       . "$FUNCTIONS" || exit 1
@@ -84,6 +91,11 @@ for (const [shell, command] of Object.entries(shells)) {
       cd "$ROOT/repo" && prompt baseline
       prompt unchanged
       cd sub && prompt subdirectory
+      cd "$ROOT/repo/zones/alpha" && prompt zone
+      cd deep && prompt zone-subdirectory
+      cd "$ROOT/repo/zones/alpha/inner" && prompt nested-zone
+      cd "$ROOT/repo/zones/beta" && prompt other-zone
+      cd "$ROOT/repo" && prompt zone-exit
       git switch -q feature && prompt branch
       git checkout -q --detach && prompt detached
       cd "$ROOT/linked" && prompt worktree
@@ -97,11 +109,15 @@ for (const [shell, command] of Object.entries(shells)) {
     assert.equal(result.stdout, "status=7\n");
 
     const invoke = "plugin action invoke refresh --plugin teddyhwang.tab-autoname";
-    assert.deepEqual(await settledCalls(callLog, 4), [
+    assert.deepEqual(await settledCalls(callLog, 8), [
       `branch ${invoke}`,
       `detached ${invoke}`,
       `directory ${invoke}`,
+      `nested-zone ${invoke}`,
+      `other-zone ${invoke}`,
       `worktree ${invoke}`,
+      `zone ${invoke}`,
+      `zone-exit ${invoke}`,
     ]);
   });
 }

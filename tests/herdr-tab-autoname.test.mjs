@@ -1052,3 +1052,51 @@ test("a transient sync renames tabs and workspaces with separate ownership", asy
     { w1: "shopify" },
   );
 });
+
+const POOL_ZONE = "/world/trees/pool-1/src/areas/core/shopify";
+const poolGit = (branch = "worktree/bulk-flag") =>
+  new PathGit({
+    [SHOPIFY_ZONE]: [WORLD_ROOT, "main", "shopify"],
+    [POOL_ZONE]: ["/world/trees/pool-1/src", branch, "shopify"],
+  });
+
+test("leaves linked worktrees to Herdr, which lists them by branch", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const namer = createWorkspaceNamer({ git: poolGit(), renameWorkspace });
+  await namer.apply({
+    workspaces: [
+      { workspace_id: "w1", label: "src", worktree: { is_linked_worktree: false } },
+      { workspace_id: "w2", label: "src", worktree: { is_linked_worktree: true } },
+    ],
+    tabs: [tabInfo("0", 1, "w1"), tabInfo("0", 1, "w2")],
+    panes: [
+      { pane_id: "w1:p1", tab_id: "w1:t1", cwd: SHOPIFY_ZONE },
+      { pane_id: "w2:p1", tab_id: "w2:t1", cwd: POOL_ZONE },
+    ],
+  });
+  assert.deepEqual(requests, [{ workspaceId: "w1", label: "shopify" }]);
+  assert.equal(namer.assignmentFor("w2"), undefined);
+});
+
+test("an owned linked worktree takes its branch as the label", async () => {
+  const { requests, renameWorkspace } = recordRenames();
+  const ownership = new MemoryOwnership(
+    new Map([[`${SESSION_PATH}#workspaces`, new Map([["w2", "shopify"]])]]),
+  );
+  const namer = createWorkspaceNamer({ ownership, git: poolGit(), renameWorkspace });
+  // Herdr cannot clear the zone name, so follow the branch it would show.
+  await namer.consider("w2", "shopify", POOL_ZONE, true);
+  assert.deepEqual(requests, [{ workspaceId: "w2", label: "bulk-flag" }]);
+  assert.equal(namer.assignmentFor("w2"), "bulk-flag");
+
+  const renamed = createWorkspaceNamer({
+    ownership,
+    git: poolGit("teddyhwang/next"),
+    renameWorkspace,
+  });
+  await renamed.consider("w2", "bulk-flag", POOL_ZONE, true);
+  assert.deepEqual(requests.at(-1), { workspaceId: "w2", label: "teddyhwang/next" });
+
+  await renamed.consider("w2", "My review", POOL_ZONE, true);
+  assert.equal(renamed.assignmentFor("w2"), undefined);
+});

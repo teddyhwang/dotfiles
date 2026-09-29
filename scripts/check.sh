@@ -165,6 +165,8 @@ for filename in files:
         tomllib.loads(source)
 
 compile(pathlib.Path("home/local/bin/herdr-even-layout").read_text(), "herdr-even-layout", "exec")
+for path in ["home/local/bin/herdr-focus-pane", "plugins/herdr-pickers/agent-view.py"]:
+    compile(pathlib.Path(path).read_text(), path, "exec")
 for path in pathlib.Path("scripts").glob("*.py"):
     compile(path.read_text(), str(path), "exec")
 PY

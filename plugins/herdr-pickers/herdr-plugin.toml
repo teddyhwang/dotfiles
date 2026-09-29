@@ -1,9 +1,13 @@
 id = "teddyhwang.pickers"
 name = "Pickers"
-version = "1.0.0"
+version = "1.1.0"
 min_herdr_version = "0.9.0"
-description = "fzf pickers styled like Herdr's built-in overlays"
+description = "fzf pickers styled like Herdr's built-in overlays, and an attention-first agent order"
 platforms = ["linux", "macos"]
+
+# Herdr keeps agent views in memory, so set the agent order on every start.
+[[startup]]
+command = ["./agent-view.py"]
 
 # Plugin popups show their title on the border, unlike keys.command popups,
 # which are always labelled "popup". 96 columns matches Herdr's own pickers.

@@ -825,6 +825,10 @@ export type WorkspaceNamerOptions = {
  * gives a better name. Herdr cannot clear a name set over the API, so once a
  * label is owned here it is also kept current here, including a return to
  * Herdr's own label when the pane leaves the zone.
+ *
+ * Linked worktrees are left to Herdr: its sidebar lists them under their
+ * parent checkout by branch, but only while they have no custom name. A linked
+ * worktree named by an earlier version keeps its branch as the label instead.
  */
 export class WorkspaceNamer {
   private readonly ownershipKey: string;
@@ -883,8 +887,14 @@ export class WorkspaceNamer {
         .filter((pane) => asString(pane.tab_id) === tabId)
         .sort(comparePaneOrder)[0];
       const cwd = asString(rootPane?.cwd);
+      const worktree = isRecord(workspace.worktree) ? workspace.worktree : {};
       if (tabId && cwd) {
-        await this.consider(workspaceId, asString(workspace.label) ?? "", cwd);
+        await this.consider(
+          workspaceId,
+          asString(workspace.label) ?? "",
+          cwd,
+          worktree.is_linked_worktree === true,
+        );
       }
     }
 
@@ -900,11 +910,17 @@ export class WorkspaceNamer {
     workspaceId: string,
     label: string,
     cwd: string,
+    linkedWorktree = false,
   ): Promise<void> {
-    const [root, , zone] = await this.git.describe(cwd);
-    const herdrLabel = herdrWorkspaceLabel(cwd, root);
-    const desired = zone ?? herdrLabel;
     const assigned = this.assigned.get(workspaceId);
+    if (linkedWorktree && assigned === undefined) return;
+    const [root, branch, zone] = await this.git.describe(cwd);
+    const herdrLabel = herdrWorkspaceLabel(cwd, root);
+    // Herdr's sidebar labels a grouped linked worktree by its branch.
+    const branchLabel = branch?.replace(/^worktree\//u, "");
+    const desired = linkedWorktree
+      ? (branchLabel ?? herdrLabel)
+      : (zone ?? herdrLabel);
     const automatic =
       !label ||
       label === assigned ||

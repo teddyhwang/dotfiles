@@ -55,6 +55,7 @@ switch (args[1]) {
         manifest_path: args[2] + "/herdr-plugin.toml",
         enabled: true,
         panes: ${JSON.stringify(panes)}.map((id) => ({ id })),
+        startup: [{ command: ["./agent-view.py"] }],
         warnings: null,
       });
     } else {

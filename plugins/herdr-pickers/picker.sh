@@ -37,6 +37,7 @@ case $cols in '' | *[!0-9]*) cols=80 ;; esac
 # Shared jq helpers. render($cols) turns a {key, label, detail, status} object
 # into one NUL-terminated fzf item with two lines, like Herdr's worktree picker:
 # a bold label with the status right-aligned, then the detail underneath.
+# Optional {tree, stem} prefixes draw a nested row, as in Herdr's sidebar.
 # Widths count emoji and CJK as two cells so the status column stays aligned.
 jq_defs='
 def tilde: (env.HOME // "") as $home
@@ -52,9 +53,13 @@ def cells: explode | map(
     or (. >= 131072 and . <= 262141) then 2
   else 1 end) | add // 0;
 def render($cols): (.label | field) as $label | (.status | field) as $status
+  | (.tree // "") as $tree
   # One column each for the leading space, trailing space, and scrollbar.
-  | ([$cols - 3 - ($label | cells) - ($status | cells), 1] | max) as $pad
-  | "\(.key | field)\t\u001b[1m \($label)\u001b[22m\(" " * $pad)\($status)\n \(.detail | field)\u0000";
+  | ([$cols - 3 - ($tree | cells) - ($label | cells) - ($status | cells), 1] | max) as $pad
+  | (if $tree == "" then "\u001b[1m \($label)\u001b[22m"
+     else " \u001b[90m\($tree)\u001b[39;1m\($label)\u001b[22m" end) as $title
+  | (if $tree == "" then "" else "\u001b[90m\(.stem)\u001b[39m" end) as $stem
+  | "\(.key | field)\t\($title)\(" " * $pad)\($status)\n \($stem)\(.detail | field)\u0000";
 '
 
 # Reads rendered items on stdin and prints the chosen key. Extra arguments are
@@ -103,20 +108,75 @@ notify_error() {
   notify "$title" "$message"
 }
 
+# Sets $branch to the branch checked out at $1, or empty when detached. It
+# reads Git's files directly so a picker with many worktrees forks nothing.
+checkout_branch() {
+  local git_dir=$1/.git line="" head=""
+  branch=""
+  if [ -f "$git_dir" ]; then
+    IFS= read -r line <"$git_dir" 2>/dev/null || true
+    line=${line#gitdir: }
+    case $line in /*) git_dir=$line ;; *) git_dir=$1/$line ;; esac
+  fi
+  IFS= read -r head <"$git_dir/HEAD" 2>/dev/null || true
+  case $head in "ref: refs/heads/"*) branch=${head#ref: refs/heads/} ;; esac
+}
+
+# Rows follow Herdr's sidebar: a linked worktree whose parent checkout is open
+# is listed under it, and is labelled by its branch unless it was named by hand.
+workspace_rows='
+.result.workspaces // [] | . as $ws
+| (reduce range($ws | length) as $i ({};
+    ($ws[$i].worktree.repo_key // null) as $key
+    | if $key == null then . else .[$key] += [$i] end)) as $members
+| ($members | with_entries(select((.value | length) >= 2
+    and any(.value[]; $ws[.].worktree.is_linked_worktree | not)))) as $groups
+| (reduce range($ws | length) as $i ({seen: {}, rows: []};
+    ($ws[$i].worktree.repo_key // null) as $key
+    | if $key == null or $groups[$key] == null then .rows += [{i: $i}]
+      elif .seen[$key] then .
+      else
+        ([$groups[$key][] | select($ws[.].worktree.is_linked_worktree | not)][0]) as $parent
+        | ([$groups[$key][] | select(. != $parent)]) as $children
+        | .seen[$key] = true
+        | .rows += [{i: $parent}] + [range($children | length) as $n
+            | {i: $children[$n], last: ($n == ($children | length) - 1)}]
+      end)).rows[]
+| . as $row | $ws[$row.i]
+| (.worktree.checkout_path // "") as $path
+| {
+    key: .workspace_id,
+    label: (if $row.last == null then .label
+      # Herdr names an unnamed linked worktree after its checkout directory.
+      elif .label == ($path | split("/") | map(select(. != "")) | last)
+      then ($branches[$path] // .label | sub("^worktree/"; ""))
+      else .label end),
+    detail: ([count(.tab_count; "tab"), count(.pane_count; "pane")]
+      + (if $path != "" then [$path | tilde] else [] end)
+      | join(" · ")),
+    status: ([if .focused then "current" else empty end,
+      if .agent_status == "unknown" then empty else .agent_status end] | join(" · "))
+  }
+  + (if $row.last == null then {}
+    elif $row.last then {tree: "  └─ ", stem: "     "}
+    else {tree: "  ├─ ", stem: "  │  "} end)
+| render($cols)'
+
 pick_workspace() {
-  local selected
-  selected=$("$herdr" workspace list | jq -j --argjson cols "$cols" "$jq_defs"'
-    .result.workspaces[]
-    | {
-        key: .workspace_id,
-        label,
-        detail: ([count(.tab_count; "tab"), count(.pane_count; "pane")]
-          + (if .worktree.checkout_path then [.worktree.checkout_path | tilde] else [] end)
-          | join(" · ")),
-        status: ([if .focused then "current" else empty end,
-          if .agent_status == "unknown" then empty else .agent_status end] | join(" · "))
-      }
-    | render($cols)' | pick workspace "filter workspaces" switch)
+  local listing selected checkout branch
+  local -a branches=()
+  listing=$("$herdr" workspace list)
+  # Only linked worktrees need their branch, and most listings have none.
+  if [[ $listing == *'"is_linked_worktree":true'* ]]; then
+    while IFS= read -r checkout; do
+      checkout_branch "$checkout"
+      [ -z "$branch" ] || branches+=("$checkout" "$branch")
+    done < <(jq -r '.result.workspaces[]?.worktree | select(.is_linked_worktree == true) | .checkout_path' <<<"$listing")
+  fi
+  selected=$(jq -j --argjson cols "$cols" "$jq_defs"'
+    ($ARGS.positional | [range(0; length; 2) as $n | {key: .[$n], value: .[$n + 1]}] | from_entries) as $branches
+    | '"$workspace_rows" --args ${branches[@]+"${branches[@]}"} <<<"$listing" |
+    pick workspace "filter workspaces" switch)
   [ -z "$selected" ] || "$herdr" workspace focus "$selected" >/dev/null
 }
 
@@ -129,12 +189,12 @@ pick_agent() {
     --slurpfile agents <("$herdr" agent list) "$jq_defs"'
     ($workspaces[0].result.workspaces // [] | map({key: .workspace_id, value: .label}) | from_entries) as $workspace
     | ($tabs[0].result.tabs // [] | map({key: .tab_id, value: .label}) | from_entries) as $tab
-    # Match the sidebar (agent_panel_sort = "priority"): agents waiting for
-    # input first, then unseen completions, then running and idle ones, with
-    # the newest state change first in each group.
+    # Match the sidebar order set by agent-view.py: blocked agents first, then
+    # finished ones (done, then idle), then working ones, with the newest
+    # state change first in each group.
     | $agents[0].result.agents // []
     | sort_by(
-        ({blocked: 0, done: 1, working: 2, idle: 3}[.agent_status | tostring] // 4),
+        ({blocked: 0, done: 1, idle: 2, unknown: 3, working: 4}[.agent_status | tostring] // 5),
         -(.state_change_seq // 0))
     | .[]
     | {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { createServer } from "node:net";
 import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -109,6 +110,7 @@ if (args[0] === "worktree" && args[1] === "list") {
   process.exit(0);
 }
 if (process.env.HERDR_TEST_AGENTS) results["agent list"] = { agents: JSON.parse(process.env.HERDR_TEST_AGENTS) };
+if (process.env.HERDR_TEST_WORKSPACES) results["workspace list"] = { workspaces: JSON.parse(process.env.HERDR_TEST_WORKSPACES) };
 console.log(JSON.stringify({ result: results[args.slice(0, 2).join(" ")] ?? {} }));
 `);
   // Behaves like fzf for what the pickers use: it shows the items on stdin,
@@ -149,7 +151,7 @@ console.log(chosen.split("\\t")[0]);
 import { appendFileSync } from "node:fs";
 appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", process.argv[2]]) + "\\n");
 `);
-  const run = async (kind, { select = "0", context, worktrees = "repo", early = false, agents } = {}) => {
+  const run = async (kind, { select = "0", context, worktrees = "repo", early = false, agents, workspaces } = {}) => {
     await writeFile(log, "");
     const result = spawnSync(picker, [kind], {
       cwd: pluginRoot,
@@ -167,6 +169,7 @@ appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", proc
         HERDR_TEST_SELECT: select,
         HERDR_TEST_WORKTREES: worktrees,
         HERDR_TEST_AGENTS: agents ? JSON.stringify(agents) : "",
+        HERDR_TEST_WORKSPACES: workspaces ? JSON.stringify(workspaces) : "",
         HERDR_TEST_ENTER_EARLY: early ? "1" : "",
         HERDR_PICKER_REFRESH_DELAY: "0",
         FZF_DEFAULT_OPTS: "--color=bg:#123456",
@@ -198,6 +201,13 @@ function item(key, label, status, detail) {
   return `${key}\t${bold} ${label}${unbold}${" ".repeat(pad)}${status}\n ${detail}`;
 }
 
+// A row nested under its parent checkout, drawn like Herdr's sidebar.
+function childItem(key, label, status, detail, last) {
+  const [tree, stem] = last ? ["  └─ ", "     "] : ["  ├─ ", "  │  "];
+  const pad = Math.max(40 - 3 - cells(tree) - cells(label) - cells(status), 1);
+  return `${key}\t \u001b[90m${tree}\u001b[39;1m${label}${unbold}${" ".repeat(pad)}${status}\n \u001b[90m${stem}\u001b[39m${detail}`;
+}
+
 // Reads run in parallel, so only their set is fixed; actions follow in order.
 function assertCalls(calls, reads, actions = []) {
   const sorted = (list) => list.map((call) => JSON.stringify(call)).sort();
@@ -226,14 +236,14 @@ test("the workspace picker renders two-line rows and focuses the choice", async 
 test("the agent picker labels agents by tab and focuses the exact pane", async (t) => {
   const { run } = await fixture(t);
   const { calls, fzf } = await run("agent", { select: "1" });
-  assertCalls(calls, [["workspace", "list"], ["tab", "list"], ["agent", "list"]], [["pane", "focus", "w1:p2"]]);
+  assertCalls(calls, [["workspace", "list"], ["tab", "list"], ["agent", "list"]], [["pane", "focus", "w1:p1"]]);
   assert.deepEqual(fzf.items, [
-    item("w1:p1", "0:dotfiles", "current · pi · working", "dotfiles · π — fix pickers"),
     item("w1:p2", "1:🌵 review", "claude · idle", "dotfiles · ~/src/review"),
+    item("w1:p1", "0:dotfiles", "current · pi · working", "dotfiles · π — fix pickers"),
   ]);
 });
 
-test("the agent picker lists blocked, then done, then working agents, newest first", async (t) => {
+test("the agent picker lists blocked, then finished, then working agents, newest first", async (t) => {
   const { run } = await fixture(t);
   const agent = (pane, agent_status, state_change_seq) => ({
     pane_id: `w1:${pane}`, workspace_id: "w1", tab_id: "w1:t1", agent: "pi", agent_status, state_change_seq,
@@ -256,8 +266,103 @@ test("the agent picker lists blocked, then done, then working agents, newest fir
   assertCalls(calls, [["workspace", "list"], ["tab", "list"], ["agent", "list"]], [["pane", "focus", "w1:p7"]]);
   assert.deepEqual(
     fzf.items.map((row) => row.split("\t")[0]),
-    ["w1:p7", "w1:p4", "w1:p5", "w1:p3", "w1:p2", "w1:p8", "w1:p1", "w1:p6", "w1:p9"],
+    ["w1:p7", "w1:p4", "w1:p5", "w1:p3", "w1:p1", "w1:p6", "w1:p2", "w1:p8", "w1:p9"],
   );
+});
+
+test("the workspace picker nests linked worktrees under their open parent checkout", async (t) => {
+  const { home, run } = await fixture(t);
+  const checkout = async (name, head, linked = true) => {
+    const directory = path.join(home, name);
+    const gitDir = linked ? path.join(home, "git/worktrees", name.replaceAll("/", "-")) : path.join(directory, ".git");
+    await mkdir(directory, { recursive: true });
+    await mkdir(gitDir, { recursive: true });
+    if (linked) await writeFile(path.join(directory, ".git"), `gitdir: ${gitDir}\n`);
+    await writeFile(path.join(gitDir, "HEAD"), `${head}\n`);
+    return directory;
+  };
+  const root = await checkout("trees/root/src", "ref: refs/heads/main", false);
+  const pool = await checkout("trees/pool-1/src", "ref: refs/heads/worktree/feature-x");
+  const review = await checkout("trees/pool-2/src", "ref: refs/heads/review");
+  const detached = await checkout("trees/pool-3/src", "0123456789abcdef0123456789abcdef01234567");
+  const orphan = await checkout("other/linked", "ref: refs/heads/solo");
+  const worktree = (checkout_path, is_linked_worktree, repo_key = "/world/git") => ({ checkout_path, is_linked_worktree, repo_key });
+  const workspace = (workspace_id, label, extra = {}) => ({
+    workspace_id, label, tab_count: 1, pane_count: 1, focused: false, agent_status: "unknown", ...extra,
+  });
+
+  const { calls, fzf } = await run("workspace", {
+    select: "2",
+    workspaces: [
+      workspace("w1", "dotfiles"),
+      workspace("w2", "src", { worktree: worktree(pool, true) }),
+      workspace("w3", "notes"),
+      workspace("w4", "shopify", { worktree: worktree(root, false), agent_status: "working" }),
+      workspace("w5", "Review", { worktree: worktree(review, true) }),
+      workspace("w6", "src", { worktree: worktree(detached, true) }),
+      // A linked worktree whose parent checkout is not open stays top level.
+      workspace("w7", "linked", { worktree: worktree(orphan, true, "/other/.git") }),
+    ],
+  });
+  assertCalls(calls, [["workspace", "list"]], [["workspace", "focus", "w2"]]);
+  const detail = (directory) => `1 tab · 1 pane · ${directory.replace(home, "~")}`;
+  assert.deepEqual(fzf.items, [
+    item("w1", "dotfiles", "", "1 tab · 1 pane"),
+    item("w4", "shopify", "working", detail(root)),
+    // Unnamed children take their branch; a hand-picked name is kept.
+    childItem("w2", "feature-x", "", detail(pool), false),
+    childItem("w5", "Review", "", detail(review), false),
+    childItem("w6", "src", "", detail(detached), true),
+    item("w3", "notes", "", "1 tab · 1 pane"),
+    item("w7", "linked", "", detail(orphan)),
+  ]);
+});
+
+test("the pickers plugin sets the attention-first agent view on startup", async (t) => {
+  assert.deepEqual(manifest.startup, [{ command: ["./agent-view.py"] }]);
+  const directory = await mkdtemp(path.join(tmpdir(), "herdr-agent-view-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const socketPath = path.join(directory, "herdr.sock");
+  let request;
+  const server = createServer((connection) => {
+    let buffer = "";
+    connection.setEncoding("utf8");
+    connection.on("data", (chunk) => {
+      buffer += chunk;
+      const newline = buffer.indexOf("\n");
+      if (newline === -1) return;
+      request = JSON.parse(buffer.slice(0, newline));
+      connection.end(`${JSON.stringify({ id: request.id, result: { type: "agent_view", active: true } })}\n`);
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(socketPath, resolve);
+  });
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+
+  const result = await new Promise((resolve) => {
+    const child = spawn(path.join(pluginRoot, "agent-view.py"), [], {
+      cwd: pluginRoot,
+      env: { ...process.env, HERDR_SOCKET_PATH: socketPath },
+    });
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("close", (status) => resolve({ status, stderr }));
+  });
+  assert.deepEqual(result, { status: 0, stderr: "" });
+  assert.equal(request.method, "agent.view.set");
+  assert.deepEqual(request.params, {
+    source: "plugin:teddyhwang.pickers",
+    label: "priority",
+    sort: [
+      { field: "status", order: "asc" },
+      { field: "state_change_seq", order: "desc" },
+    ],
+  });
 });
 
 test("the join-pane picker lists other tabs in the workspace and joins the choice", async (t) => {

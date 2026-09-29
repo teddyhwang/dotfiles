@@ -4,27 +4,44 @@
 #
 # The colors are ANSI indices that mirror Herdr's "terminal" theme, so the
 # pickers follow the active tinty scheme the same way Herdr's own UI does.
+#
+# Every picker is on the path of a key press, so each one starts as few
+# processes as possible: one jq pass per list, parallel Herdr calls, and no jq
+# just to read the plugin context.
 
 set -euo pipefail
 
 herdr=${HERDR_BIN_PATH:-}
 [ -n "$herdr" ] || herdr=herdr
-context=${HERDR_PLUGIN_CONTEXT_JSON:-}
-[ -n "$context" ] || context='{}'
+self=${BASH_SOURCE[0]}
+case $self in /*) ;; *) self=$PWD/$self ;; esac
 tab=$'\t'
+separator=$'\037'
+state_dir=${HERDR_PLUGIN_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/herdr/plugins/teddyhwang.pickers}
 
-# Shared jq helpers: ~-relative paths and "1 tab"/"2 tabs".
+# Herdr ids are plain tokens, so a pattern match reads them without jq.
+context=${HERDR_PLUGIN_CONTEXT_JSON:-}
+context_workspace_id="" context_tab_id=""
+workspace_pattern='"workspace_id"[[:space:]]*:[[:space:]]*"([^"]*)"'
+tab_pattern='"tab_id"[[:space:]]*:[[:space:]]*"([^"]*)"'
+if [[ $context =~ $workspace_pattern ]]; then context_workspace_id=${BASH_REMATCH[1]}; fi
+if [[ $context =~ $tab_pattern ]]; then context_tab_id=${BASH_REMATCH[1]}; fi
+
+cols=${HERDR_PICKER_COLUMNS:-}
+if [ -z "$cols" ]; then
+  size=$(stty size </dev/tty 2>/dev/null || true)
+  cols=${size#* }
+fi
+case $cols in '' | *[!0-9]*) cols=80 ;; esac
+
+# Shared jq helpers. render($cols) turns a {key, label, detail, status} object
+# into one NUL-terminated fzf item with two lines, like Herdr's worktree picker:
+# a bold label with the status right-aligned, then the detail underneath.
+# Widths count emoji and CJK as two cells so the status column stays aligned.
 jq_defs='
 def tilde: (env.HOME // "") as $home
   | if $home != "" and startswith($home) then "~" + .[($home | length):] else . end;
 def count(n; noun): "\(n) \(noun)\(if n == 1 then "" else "s" end)";
-'
-
-# Renders {key, label, detail, status} objects as NUL-separated fzf items. Each
-# item is two lines like Herdr's worktree picker: a bold label with the status
-# right-aligned, then the detail underneath. Widths count emoji and CJK as two
-# cells so the status column stays aligned.
-render_items='
 def field: (. // "") | tostring | gsub("[\t\n\r]"; " ");
 def cells: explode | map(
   if . == 8205 or (. >= 768 and . <= 879) or (. >= 65024 and . <= 65039) then 0
@@ -34,26 +51,17 @@ def cells: explode | map(
     or (. >= 65504 and . <= 65510) or (. >= 127744 and . <= 129791)
     or (. >= 131072 and . <= 262141) then 2
   else 1 end) | add // 0;
-(.label | field) as $label | (.status | field) as $status
-# One column each for the leading space, trailing space, and scrollbar.
-| ([$cols - 3 - ($label | cells) - ($status | cells), 1] | max) as $pad
-| "\(.key | field)\t\u001b[1m \($label)\u001b[22m\(" " * $pad)\($status)\n \(.detail | field)\u0000"
+def render($cols): (.label | field) as $label | (.status | field) as $status
+  # One column each for the leading space, trailing space, and scrollbar.
+  | ([$cols - 3 - ($label | cells) - ($status | cells), 1] | max) as $pad
+  | "\(.key | field)\t\u001b[1m \($label)\u001b[22m\(" " * $pad)\($status)\n \(.detail | field)\u0000";
 '
 
-columns() {
-  local size cols=${HERDR_PICKER_COLUMNS:-}
-  if [ -z "$cols" ]; then
-    size=$(stty size </dev/tty 2>/dev/null || true)
-    cols=${size#* }
-  fi
-  case $cols in '' | *[!0-9]*) cols=80 ;; esac
-  printf '%s\n' "$cols"
-}
-
-# Reads rendered-item objects on stdin and prints the chosen key.
+# Reads rendered items on stdin and prints the chosen key. Extra arguments are
+# passed to fzf.
 pick() {
-  local noun=$1 placeholder=$2 action=$3 cols primary cancel left footer info
-  cols=$(columns)
+  local noun=$1 placeholder=$2 action=$3 primary cancel left footer info
+  shift 3
 
   primary=" ↵ $action "
   cancel=" esc cancel "
@@ -63,25 +71,41 @@ pick() {
 
   # shellcheck disable=SC2016 # Expanded by fzf's info command, not here.
   info='n=$FZF_MATCH_COUNT t=$FZF_TOTAL_COUNT w=$HERDR_PICKER_NOUN
+if [ "$t" = 0 ] && [ -n "${HERDR_PICKER_LOADED:-}" ] && [ ! -e "$HERDR_PICKER_LOADED" ]; then
+  printf "loading… "; exit
+fi
 [ "$t" = 1 ] || w="${w}s"
 if [ "$n" = "$t" ]; then printf "%s %s " "$t" "$w"; else printf "%s/%s %s " "$n" "$t" "$w"; fi'
 
-  jq -j --argjson cols "$cols" "$render_items" |
-    HERDR_PICKER_NOUN=$noun FZF_DEFAULT_OPTS="" FZF_DEFAULT_OPTS_FILE="" fzf \
-      --read0 --ansi --layout=reverse --no-sort \
-      --delimiter="$tab" --with-nth=2.. --accept-nth=1 \
-      --highlight-line --pointer='' --marker='' --scrollbar='│' \
-      --prompt=' / ' --ghost="$placeholder" \
-      --info=inline-right --info-command="$info" \
-      --footer="$footer" --footer-border=none \
-      --color='fg:-1,bg:-1,fg+:8:regular,bg+:4,gutter:-1,hl:4:regular,hl+:0:underline' \
-      --color='prompt:7:regular,query:-1:regular,ghost:7,info:7,separator:8,scrollbar:8' \
-      --color='header:-1,footer:-1,pointer:8,marker:8,spinner:4' || true
+  # fzf runs the info command on every redraw; bash starts faster than zsh.
+  HERDR_PICKER_NOUN=$noun FZF_DEFAULT_OPTS="" FZF_DEFAULT_OPTS_FILE="" fzf \
+    --read0 --ansi --layout=reverse --no-sort --with-shell='bash -c' \
+    --delimiter="$tab" --with-nth=2.. --accept-nth=1 \
+    --highlight-line --pointer='' --marker='' --scrollbar='│' \
+    --prompt=' / ' --ghost="$placeholder" \
+    --info=inline-right --info-command="$info" \
+    --footer="$footer" --footer-border=none \
+    --color='fg:-1,bg:-1,fg+:8:regular,bg+:4,gutter:-1,hl:4:regular,hl+:0:underline' \
+    --color='prompt:7:regular,query:-1:regular,ghost:7,info:7,separator:8,scrollbar:8' \
+    --color='header:-1,footer:-1,pointer:8,marker:8,spinner:4' \
+    "$@" || true
+}
+
+notify() {
+  "$herdr" notification show "$1" --body "$2" >/dev/null 2>&1 || true
+}
+
+# Shows a Herdr toast for a failed CLI call. Errors arrive as JSON on stderr.
+notify_error() {
+  local title=$1 output=$2 message
+  message=$(jq -r '.error.message // empty' <<<"$output" 2>/dev/null || true)
+  [ -n "$message" ] || message=${output:-"herdr exited with an error"}
+  notify "$title" "$message"
 }
 
 pick_workspace() {
   local selected
-  selected=$("$herdr" workspace list | jq -c "$jq_defs"'
+  selected=$("$herdr" workspace list | jq -j --argjson cols "$cols" "$jq_defs"'
     .result.workspaces[]
     | {
         key: .workspace_id,
@@ -91,19 +115,21 @@ pick_workspace() {
           | join(" · ")),
         status: ([if .focused then "current" else empty end,
           if .agent_status == "unknown" then empty else .agent_status end] | join(" · "))
-      }' | pick workspace "filter workspaces" switch)
+      }
+    | render($cols)' | pick workspace "filter workspaces" switch)
   [ -z "$selected" ] || "$herdr" workspace focus "$selected" >/dev/null
 }
 
 pick_agent() {
-  local workspaces tabs agents selected
-  workspaces=$("$herdr" workspace list)
-  tabs=$("$herdr" tab list)
-  agents=$("$herdr" agent list)
-  selected=$(jq -cn --argjson workspaces "$workspaces" --argjson tabs "$tabs" --argjson agents "$agents" "$jq_defs"'
-    ($workspaces.result.workspaces | map({key: .workspace_id, value: .label}) | from_entries) as $workspace
-    | ($tabs.result.tabs | map({key: .tab_id, value: .label}) | from_entries) as $tab
-    | $agents.result.agents[]
+  local selected
+  # Process substitution runs the three Herdr calls in parallel.
+  selected=$(jq -jn --argjson cols "$cols" \
+    --slurpfile workspaces <("$herdr" workspace list) \
+    --slurpfile tabs <("$herdr" tab list) \
+    --slurpfile agents <("$herdr" agent list) "$jq_defs"'
+    ($workspaces[0].result.workspaces // [] | map({key: .workspace_id, value: .label}) | from_entries) as $workspace
+    | ($tabs[0].result.tabs // [] | map({key: .tab_id, value: .label}) | from_entries) as $tab
+    | $agents[0].result.agents // [] | .[]
     | {
         key: .pane_id,
         label: ($tab[.tab_id] // .tab_id),
@@ -112,7 +138,8 @@ pick_agent() {
             // (.cwd // "" | tilde)] | join(" · ")),
         status: ([if .focused then "current" else empty end, .agent,
           if .agent_status == "unknown" then empty else .agent_status end] | join(" · "))
-      }' | pick agent "filter agents" switch)
+      }
+    | render($cols)' | pick agent "filter agents" switch)
   # Herdr 0.9.0's agent focus updates server state without moving the attached
   # client's viewport (herdrdev/herdr#3760). The raw pane.focus method still
   # projects to the client and also selects the exact pane in a split tab.
@@ -120,15 +147,13 @@ pick_agent() {
 }
 
 pick_join_pane() {
-  local workspace_id tab_id panes tabs selected
-  workspace_id=$(jq -r '.workspace_id // empty' <<<"$context")
-  tab_id=$(jq -r '.tab_id // empty' <<<"$context")
-  [ -n "$workspace_id" ] && [ -n "$tab_id" ] || return 0
-  panes=$("$herdr" pane list)
-  tabs=$("$herdr" tab list --workspace "$workspace_id")
-  selected=$(jq -cn --argjson panes "$panes" --argjson tabs "$tabs" --arg workspace "$workspace_id" --arg current_tab "$tab_id" "$jq_defs"'
-    ($tabs.result.tabs | map({key: .tab_id, value: .label}) | from_entries) as $tab
-    | $panes.result.panes[]
+  local selected
+  [ -n "$context_workspace_id" ] && [ -n "$context_tab_id" ] || return 0
+  selected=$(jq -jn --argjson cols "$cols" --arg workspace "$context_workspace_id" --arg current_tab "$context_tab_id" \
+    --slurpfile panes <("$herdr" pane list) \
+    --slurpfile tabs <("$herdr" tab list --workspace "$context_workspace_id") "$jq_defs"'
+    ($tabs[0].result.tabs // [] | map({key: .tab_id, value: .label}) | from_entries) as $tab
+    | $panes[0].result.panes // [] | .[]
     | select(.workspace_id == $workspace and .tab_id != $current_tab)
     | {
         key: .pane_id,
@@ -137,56 +162,133 @@ pick_join_pane() {
         status: (if .agent then
           [.agent, if .agent_status == "unknown" then empty else .agent_status end] | join(" · ")
         else "shell" end)
-      }' | pick pane "filter panes" join)
-  [ -z "$selected" ] || "$herdr" pane move "$selected" --tab "$tab_id" --split right --focus >/dev/null
+      }
+    | render($cols)' | pick pane "filter panes" join)
+  [ -z "$selected" ] ||
+    "$herdr" pane move "$selected" --tab "$context_tab_id" --split right --focus >/dev/null
 }
 
-# Shows a Herdr toast for a failed CLI call. Errors arrive as JSON on stderr.
-notify_error() {
-  local title=$1 output=$2 message
-  message=$(jq -r '.error.message // empty' <<<"$output" 2>/dev/null || true)
-  [ -n "$message" ] || message=${output:-"herdr exited with an error"}
-  "$herdr" notification show "$title" --body "$message" >/dev/null 2>&1 || true
+# Rows match Herdr's native worktree picker: bare and prunable checkouts are
+# hidden, and the status is current, open, detached, or root. Items are keyed by
+# path so a refresh can keep the cursor on the same checkout.
+worktree_rows='
+# World checkouts live at <world>/trees/<id>/src and are all labelled "git",
+# so name them by tree id. Other checkouts use their directory.
+def checkout_name: (.path | split("/") | map(select(. != ""))) as $parts
+  | if ($parts | length) >= 3 and $parts[-1] == "src" and $parts[-3] == "trees"
+    then $parts[-2] else ($parts[-1] // .path) end;
+.result.worktrees // [] | .[]
+| select((.is_bare | not) and (.is_prunable | not))
+| {
+    key: .path,
+    label: (.branch // checkout_name),
+    detail: (.path | tilde),
+    status: (if .open_workspace_id and .open_workspace_id == $current then "current"
+      elif .open_workspace_id then "open"
+      elif .branch then ""
+      elif .is_detached and .is_linked_worktree then "detached"
+      else "root" end)
+  }
+| render($cols)'
+
+render_worktrees() {
+  jq -j --argjson cols "$cols" --arg current "$context_workspace_id" "$jq_defs$worktree_rows"
+}
+
+list_worktrees() {
+  "$herdr" worktree list ${context_workspace_id:+--workspace "$context_workspace_id"}
+}
+
+worktree_cache() {
+  local session=${HERDR_SESSION:-default} workspace=${context_workspace_id:-none}
+  printf '%s/worktrees/%s.%s.json\n' "$state_dir" "${session//[^A-Za-z0-9._-]/_}" "${workspace//[^A-Za-z0-9._-]/_}"
+}
+
+# Stores a fresh listing for this picker run and as the next run's cache.
+save_listing() {
+  local run=$1 listing=$2 cache
+  printf '%s\n' "$listing" >"$run/listing.tmp" && mv -f "$run/listing.tmp" "$run/listing.json"
+  cache=$(worktree_cache)
+  mkdir -p "${cache%/*}" &&
+    printf '%s\n' "$listing" >"$cache.$$" &&
+    mv -f "$cache.$$" "$cache" || rm -f "$cache.$$"
+}
+
+# Runs inside fzf after the cached rows are shown, and swaps in the fresh rows
+# without moving the cursor. The Herdr server answers `worktree list` on its
+# main loop, running git and any worktree provider (World's dev-tree provider
+# takes about 250 ms), and draws nothing else meanwhile. Starting the refresh
+# after a short delay lets the cached rows reach the screen first.
+refresh_worktrees() {
+  local run=$1 delay=${2:-0} listing
+  [ "$delay" = 0 ] || sleep "$delay"
+  if ! listing=$(list_worktrees 2>"$run/stderr"); then
+    mv -f "$run/stderr" "$run/error"
+    echo abort
+    return 0
+  fi
+  save_listing "$run" "$listing"
+  render_worktrees <<<"$listing" >"$run/items"
+  if [ ! -s "$run/items" ]; then
+    : >"$run/empty"
+    echo abort
+    return 0
+  fi
+  printf 'track-current+reload-sync:cat %q\n' "$run/items"
 }
 
 # Replaces Herdr's native open-worktree picker, which only moves with the
-# arrow keys. Rows and statuses match the native picker.
+# arrow keys.
 pick_worktree() {
-  local workspace_id listing worktrees selected entry open_id source_id source_path path output
-  workspace_id=$(jq -r '.workspace_id // empty' <<<"$context")
-  if ! listing=$("$herdr" worktree list ${workspace_id:+--workspace "$workspace_id"} 2>&1); then
-    notify_error "open worktree" "$listing"
-    return 0
-  fi
-  # Same filter as the native picker: bare and prunable checkouts cannot open.
-  worktrees=$(jq -c '[.result.worktrees[] | select((.is_bare | not) and (.is_prunable | not))]' <<<"$listing")
-  if [ "$(jq length <<<"$worktrees")" = 0 ]; then
-    "$herdr" notification show "open worktree" --body "No Git worktrees found for this repo." >/dev/null 2>&1 || true
-    return 0
-  fi
+  local run cache delay refresh selected listing fields found open_id source_id source_path path output
+  run=$(mktemp -d "${TMPDIR:-/tmp}/herdr-worktree.XXXXXX")
+  # shellcheck disable=SC2064 # Expand the run directory now.
+  trap "rm -rf '$run'" EXIT
+  cache=$(worktree_cache)
+  # With nothing cached there is nothing to draw first, so refresh at once.
+  delay=0
+  [ ! -s "$cache" ] || delay=${HERDR_PICKER_REFRESH_DELAY:-0.15}
+  printf -v refresh 'exec %q _refresh-worktree %q %q' "$self" "$run" "$delay"
+  export HERDR_PICKER_COLUMNS=$cols HERDR_PICKER_LOADED=$run/listing.json
 
-  selected=$(jq -c --arg current "$workspace_id" "$jq_defs"'
-    # World checkouts live at <world>/trees/<id>/src and are all labelled
-    # "git", so name them by tree id. Other checkouts use their directory.
-    def checkout_name: (.path | split("/") | map(select(. != ""))) as $parts
-      | if ($parts | length) >= 3 and $parts[-1] == "src" and $parts[-3] == "trees"
-        then $parts[-2] else ($parts[-1] // .path) end;
-    to_entries[]
-    | .key as $index | .value
-    | {
-        key: $index,
-        label: (.branch // checkout_name),
-        detail: (.path | tilde),
-        status: (if .open_workspace_id and .open_workspace_id == $current then "current"
-          elif .open_workspace_id then "open"
-          elif .branch then ""
-          elif .is_detached and .is_linked_worktree then "detached"
-          else "root" end)
-      }' <<<"$worktrees" | pick checkout "filter worktrees" open)
+  selected=$({ if [ -s "$cache" ]; then render_worktrees <"$cache" 2>/dev/null || true; fi; } |
+    pick checkout "filter worktrees" open --id-nth=1 \
+      --bind "load:unbind(load)+bg-transform:$refresh")
+
+  if [ -e "$run/error" ]; then
+    notify_error "open worktree" "$(<"$run/error")"
+    return 0
+  fi
+  if [ -e "$run/empty" ]; then
+    notify "open worktree" "No Git worktrees found for this repo."
+    return 0
+  fi
   [ -n "$selected" ] || return 0
 
-  entry=$(jq -c --argjson index "$selected" '.[$index]' <<<"$worktrees")
-  open_id=$(jq -r '.open_workspace_id // empty' <<<"$entry")
+  # Act on fresh data only. When Enter beats the refresh, fzf has already
+  # stopped it, so list again before acting on a possibly stale cached row.
+  if [ -s "$run/listing.json" ]; then
+    listing=$(<"$run/listing.json")
+  elif listing=$(list_worktrees 2>"$run/stderr"); then
+    save_listing "$run" "$listing"
+  else
+    notify_error "open worktree" "$(<"$run/stderr")"
+    return 0
+  fi
+
+  fields=$(jq -r --arg path "$selected" "$jq_defs"'
+    [.result.worktrees // [] | .[] | select((.path | field) == $path)][0] as $entry
+    | [if $entry then "found" else "" end, ($entry.open_workspace_id // ""),
+        (.result.source.source_workspace_id // ""),
+        (.result.source.source_checkout_path // .result.source.repo_root // ""),
+        ($entry.path // "")]
+    | join("\u001f")' <<<"$listing")
+  IFS=$separator read -r found open_id source_id source_path path <<<"$fields"
+  if [ -z "$found" ]; then
+    notify "open worktree" "That worktree no longer exists."
+    return 0
+  fi
+
   if [ -n "$open_id" ]; then
     output=$("$herdr" workspace focus "$open_id" 2>&1 >/dev/null) || notify_error "open worktree" "$output"
     return 0
@@ -194,9 +296,6 @@ pick_worktree() {
 
   # Open from the repo's parent workspace. When that is closed, point Herdr at
   # the parent checkout and it reopens the group around it.
-  path=$(jq -r '.path' <<<"$entry")
-  source_id=$(jq -r '.result.source.source_workspace_id // empty' <<<"$listing")
-  source_path=$(jq -r '.result.source.source_checkout_path // .result.source.repo_root' <<<"$listing")
   if [ -n "$source_id" ]; then
     set -- --workspace "$source_id"
   else
@@ -211,6 +310,7 @@ case ${1:-} in
   agent) pick_agent ;;
   join-pane) pick_join_pane ;;
   worktree) pick_worktree ;;
+  _refresh-worktree) refresh_worktrees "$2" "${3:-0}" ;;
   *)
     printf 'usage: %s workspace|agent|join-pane|worktree\n' "${0##*/}" >&2
     exit 2

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -33,8 +33,11 @@ async function fixture(t) {
   t.after(() => rm(home, { recursive: true, force: true }));
   const bin = path.join(home, "bin");
   const localBin = path.join(home, ".local/bin");
+  const temporary = path.join(home, "tmp");
+  const stateDir = path.join(home, "state");
   await mkdir(bin);
   await mkdir(localBin, { recursive: true });
+  await mkdir(temporary);
   const log = path.join(home, "calls.jsonl");
   const fzfLog = path.join(home, "fzf.json");
   const herdr = path.join(bin, "herdr");
@@ -66,15 +69,24 @@ const results = {
     { pane_id: "w2:p1", workspace_id: "w2", tab_id: "w2:t1", cwd: "/elsewhere" },
   ] },
 };
+const repoSource = { source_workspace_id: "w1", source_checkout_path: home + "/src/dotfiles", repo_root: home + "/src/dotfiles" };
 const worktrees = {
   repo: {
-    source: { source_workspace_id: "w1", source_checkout_path: home + "/src/dotfiles", repo_root: home + "/src/dotfiles" },
+    source: repoSource,
     worktrees: [
       { path: home + "/src/dotfiles", branch: "main", open_workspace_id: "w1", is_linked_worktree: false },
       { path: home + "/.herdr/worktrees/dotfiles/review", branch: "teddyhwang/review", open_workspace_id: "w3", is_linked_worktree: true },
       { path: home + "/.herdr/worktrees/dotfiles/feature", branch: "teddyhwang/feature", is_linked_worktree: true },
       { path: home + "/.herdr/worktrees/dotfiles/gone", branch: "gone", is_linked_worktree: true, is_prunable: true },
       { path: home + "/bare.git", is_bare: true },
+    ],
+  },
+  // The same repo later: review was removed and feature was opened elsewhere.
+  changed: {
+    source: repoSource,
+    worktrees: [
+      { path: home + "/src/dotfiles", branch: "main", open_workspace_id: "w1", is_linked_worktree: false },
+      { path: home + "/.herdr/worktrees/dotfiles/feature", branch: "teddyhwang/feature", open_workspace_id: "w4", is_linked_worktree: true },
     ],
   },
   // World checkouts come from the dev-tree provider and are all labelled "git".
@@ -98,37 +110,63 @@ if (args[0] === "worktree" && args[1] === "list") {
 }
 console.log(JSON.stringify({ result: results[args.slice(0, 2).join(" ")] ?? {} }));
 `);
-  // Record what fzf receives, then choose an item by index or cancel.
+  // Behaves like fzf for what the pickers use: it shows the items on stdin,
+  // runs the load-time bg-transform refresh, follows its reload-sync or abort,
+  // then accepts an item by index. HERDR_TEST_ENTER_EARLY accepts before the
+  // refresh runs, which fzf does when Enter beats the refresh.
   await executable(path.join(bin, "fzf"), `#!${process.execPath}
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-const items = readFileSync(0, "utf8").split("\\0").filter(Boolean);
+const args = process.argv.slice(2);
+const split = (text) => text.split("\\0").filter(Boolean);
+const initial = split(readFileSync(0, "utf8"));
+let items = initial;
+let aborted = false;
+const bind = args.find((arg) => arg.startsWith("load:"));
+if (bind && process.env.HERDR_TEST_ENTER_EARLY !== "1") {
+  const command = bind.slice(bind.indexOf("bg-transform:") + "bg-transform:".length);
+  const actions = execFileSync("bash", ["-c", command], { encoding: "utf8" }).trim();
+  const reload = actions.match(/^track-current\\+reload-sync:(.*)$/);
+  if (actions === "abort") aborted = true;
+  else if (reload) items = split(execFileSync("bash", ["-c", reload[1]], { encoding: "utf8" }));
+  else throw new Error("unexpected fzf actions: " + actions);
+}
 writeFileSync(process.env.HERDR_TEST_FZF_LOG, JSON.stringify({
-  args: process.argv.slice(2),
+  args,
   defaultOpts: process.env.FZF_DEFAULT_OPTS,
   noun: process.env.HERDR_PICKER_NOUN,
+  initial,
   items,
+  aborted,
 }));
-if (process.env.HERDR_TEST_SELECT === "cancel") process.exit(130);
-console.log(items[Number(process.env.HERDR_TEST_SELECT ?? 0)].split("\\t")[0]);
+if (aborted || process.env.HERDR_TEST_SELECT === "cancel") process.exit(130);
+const chosen = items[Number(process.env.HERDR_TEST_SELECT ?? 0)];
+if (chosen === undefined) process.exit(1);
+console.log(chosen.split("\\t")[0]);
 `);
   await executable(path.join(localBin, "herdr-focus-pane"), `#!${process.execPath}
 import { appendFileSync } from "node:fs";
 appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", process.argv[2]]) + "\\n");
 `);
-  const run = async (kind, { select = "0", context, worktrees = "repo" } = {}) => {
+  const run = async (kind, { select = "0", context, worktrees = "repo", early = false } = {}) => {
     await writeFile(log, "");
     const result = spawnSync(picker, [kind], {
       cwd: pluginRoot,
       env: {
         HOME: home,
         PATH: `${bin}:${path.dirname(jq.stdout.trim())}:/usr/bin:/bin`,
+        TMPDIR: temporary,
         HERDR_BIN_PATH: herdr,
+        HERDR_SESSION: "test session",
+        HERDR_PLUGIN_STATE_DIR: stateDir,
         HERDR_PICKER_COLUMNS: "40",
         HERDR_PLUGIN_CONTEXT_JSON: JSON.stringify(context ?? { workspace_id: "w1", tab_id: "w1:t1" }),
         HERDR_TEST_LOG: log,
         HERDR_TEST_FZF_LOG: fzfLog,
         HERDR_TEST_SELECT: select,
         HERDR_TEST_WORKTREES: worktrees,
+        HERDR_TEST_ENTER_EARLY: early ? "1" : "",
+        HERDR_PICKER_REFRESH_DELAY: "0",
         FZF_DEFAULT_OPTS: "--color=bg:#123456",
         LANG: "en_US.UTF-8",
       },
@@ -144,9 +182,10 @@ appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", proc
       fzf = undefined;
     }
     await rm(fzfLog, { force: true });
+    assert.deepEqual(await readdir(temporary), [], "picker run directories are removed");
     return { calls, fzf };
   };
-  return { home, run };
+  return { home, stateDir, run };
 }
 
 // Mirrors the renderer's cell widths for the characters these tests use.
@@ -155,6 +194,13 @@ const cells = (text) => [...text].reduce((width, char) => width + (char.codePoin
 function item(key, label, status, detail) {
   const pad = Math.max(40 - 3 - cells(label) - cells(status), 1);
   return `${key}\t${bold} ${label}${unbold}${" ".repeat(pad)}${status}\n ${detail}`;
+}
+
+// Reads run in parallel, so only their set is fixed; actions follow in order.
+function assertCalls(calls, reads, actions = []) {
+  const sorted = (list) => list.map((call) => JSON.stringify(call)).sort();
+  assert.deepEqual(sorted(calls.slice(0, reads.length)), sorted(reads));
+  assert.deepEqual(calls.slice(reads.length), actions);
 }
 
 test("the workspace picker renders two-line rows and focuses the choice", async (t) => {
@@ -168,7 +214,7 @@ test("the workspace picker renders two-line rows and focuses the choice", async 
   assert.ok(!fzf.items.join("").includes(home), "paths under HOME are shown relative to ~");
   assert.equal(fzf.noun, "workspace");
   assert.equal(fzf.defaultOpts, "", "user fzf defaults must not restyle the picker");
-  for (const option of ["--read0", "--ansi", "--accept-nth=1", "--with-nth=2..", "--highlight-line", "--ghost=filter workspaces"]) {
+  for (const option of ["--read0", "--ansi", "--accept-nth=1", "--with-nth=2..", "--highlight-line", "--ghost=filter workspaces", "--with-shell=bash -c"]) {
     assert.ok(fzf.args.includes(option), `missing fzf option: ${option}`);
   }
   const footer = fzf.args.find((arg) => arg.startsWith("--footer="));
@@ -178,7 +224,7 @@ test("the workspace picker renders two-line rows and focuses the choice", async 
 test("the agent picker labels agents by tab and focuses the exact pane", async (t) => {
   const { run } = await fixture(t);
   const { calls, fzf } = await run("agent", { select: "1" });
-  assert.deepEqual(calls, [["workspace", "list"], ["tab", "list"], ["agent", "list"], ["pane", "focus", "w1:p2"]]);
+  assertCalls(calls, [["workspace", "list"], ["tab", "list"], ["agent", "list"]], [["pane", "focus", "w1:p2"]]);
   assert.deepEqual(fzf.items, [
     item("w1:p1", "0:dotfiles", "current · pi · working", "dotfiles · π — fix pickers"),
     item("w1:p2", "1:🌵 review", "claude · idle", "dotfiles · ~/src/review"),
@@ -188,9 +234,7 @@ test("the agent picker labels agents by tab and focuses the exact pane", async (
 test("the join-pane picker lists other tabs in the workspace and joins the choice", async (t) => {
   const { run } = await fixture(t);
   const { calls, fzf } = await run("join-pane", { select: "1" });
-  assert.deepEqual(calls, [
-    ["pane", "list"],
-    ["tab", "list", "--workspace", "w1"],
+  assertCalls(calls, [["pane", "list"], ["tab", "list", "--workspace", "w1"]], [
     ["pane", "move", "w1:p3", "--tab", "w1:t1", "--split", "right", "--focus"],
   ]);
   assert.deepEqual(fzf.items, [
@@ -199,36 +243,64 @@ test("the join-pane picker lists other tabs in the workspace and joins the choic
   ]);
 });
 
+const repoRows = (home) => [
+  item(path.join(home, "src/dotfiles"), "main", "current", "~/src/dotfiles"),
+  item(path.join(home, ".herdr/worktrees/dotfiles/review"), "teddyhwang/review", "open", "~/.herdr/worktrees/dotfiles/review"),
+  item(path.join(home, ".herdr/worktrees/dotfiles/feature"), "teddyhwang/feature", "", "~/.herdr/worktrees/dotfiles/feature"),
+];
+
 test("the worktree picker mirrors Herdr's rows and opens a closed checkout from the repo parent", async (t) => {
-  const { home, run } = await fixture(t);
+  const { home, stateDir, run } = await fixture(t);
   const { calls, fzf } = await run("worktree", { select: "2" });
-  assert.deepEqual(fzf.items, [
-    item("0", "main", "current", "~/src/dotfiles"),
-    item("1", "teddyhwang/review", "open", "~/.herdr/worktrees/dotfiles/review"),
-    item("2", "teddyhwang/feature", "", "~/.herdr/worktrees/dotfiles/feature"),
-  ], "bare and prunable checkouts are hidden like in the native picker");
+  assert.deepEqual(fzf.initial, [], "nothing is cached on the first run");
+  assert.deepEqual(fzf.items, repoRows(home), "bare and prunable checkouts are hidden like in the native picker");
   assert.equal(fzf.noun, "checkout");
   assert.ok(fzf.args.includes("--ghost=filter worktrees"));
+  assert.ok(fzf.args.includes("--id-nth=1"), "the refresh keeps the cursor on the same checkout");
   assert.match(fzf.args.find((arg) => arg.startsWith("--footer=")), /↵ open .* esc cancel /);
   assert.deepEqual(calls, [
     ["worktree", "list", "--workspace", "w1"],
     ["worktree", "open", "--workspace", "w1", "--path", path.join(home, ".herdr/worktrees/dotfiles/feature"), "--focus"],
   ]);
+  const cache = JSON.parse(await readFile(path.join(stateDir, "worktrees/test_session.w1.json"), "utf8"));
+  assert.equal(cache.result.worktrees.length, 5, "the listing is cached per session and workspace");
 });
 
-test("the worktree picker focuses a checkout that is already open", async (t) => {
-  const { run } = await fixture(t);
-  const { calls } = await run("worktree", { select: "1" });
-  assert.deepEqual(calls, [["worktree", "list", "--workspace", "w1"], ["workspace", "focus", "w3"]]);
+test("the worktree picker shows cached rows at once and acts on the refreshed ones", async (t) => {
+  const { home, run } = await fixture(t);
+  await run("worktree", { select: "cancel" });
+  const { calls, fzf } = await run("worktree", { select: "1", worktrees: "changed" });
+  assert.deepEqual(fzf.initial, repoRows(home), "the last listing renders before Herdr answers");
+  assert.deepEqual(fzf.items, [
+    item(path.join(home, "src/dotfiles"), "main", "current", "~/src/dotfiles"),
+    item(path.join(home, ".herdr/worktrees/dotfiles/feature"), "teddyhwang/feature", "open", "~/.herdr/worktrees/dotfiles/feature"),
+  ]);
+  assert.deepEqual(calls, [["worktree", "list", "--workspace", "w1"], ["workspace", "focus", "w4"]]);
+});
+
+test("the worktree picker lists again when Enter beats the refresh", async (t) => {
+  const { home, run } = await fixture(t);
+  await run("worktree", { select: "cancel" });
+  // The cached row says feature is closed, but it is now open in w4.
+  let result = await run("worktree", { select: "2", worktrees: "changed", early: true });
+  assert.deepEqual(result.fzf.items, repoRows(home));
+  assert.deepEqual(result.calls, [["worktree", "list", "--workspace", "w1"], ["workspace", "focus", "w4"]]);
+  // review was cached but has since been removed.
+  await run("worktree", { select: "cancel" });
+  result = await run("worktree", { select: "1", worktrees: "changed", early: true });
+  assert.deepEqual(result.calls, [
+    ["worktree", "list", "--workspace", "w1"],
+    ["notification", "show", "open worktree", "--body", "That worktree no longer exists."],
+  ]);
 });
 
 test("the worktree picker names World trees and opens them when the parent is closed", async (t) => {
   const { home, run } = await fixture(t);
   const { calls, fzf } = await run("worktree", { select: "1", worktrees: "world" });
   assert.deepEqual(fzf.items, [
-    item("0", "group-sort", "", "~/world/trees/pool-1/src"),
-    item("1", "pool-2", "detached", "~/world/trees/pool-2/src"),
-    item("2", "root", "root", "~/world/trees/root/src"),
+    item(path.join(home, "world/trees/pool-1/src"), "group-sort", "", "~/world/trees/pool-1/src"),
+    item(path.join(home, "world/trees/pool-2/src"), "pool-2", "detached", "~/world/trees/pool-2/src"),
+    item(path.join(home, "world/trees/root/src"), "root", "root", "~/world/trees/root/src"),
   ]);
   assert.deepEqual(calls, [
     ["worktree", "list", "--workspace", "w1"],
@@ -236,14 +308,14 @@ test("the worktree picker names World trees and opens them when the parent is cl
   ]);
 });
 
-test("the worktree picker reports errors as Herdr toasts instead of opening fzf", async (t) => {
+test("the worktree picker closes and reports errors as Herdr toasts", async (t) => {
   const { run } = await fixture(t);
   for (const [worktrees, message] of [
     ["error", "Herdr worktree actions require a workspace inside a Git work tree"],
     ["empty", "No Git worktrees found for this repo."],
   ]) {
     const { calls, fzf } = await run("worktree", { worktrees });
-    assert.equal(fzf, undefined, worktrees);
+    assert.equal(fzf.aborted, true, worktrees);
     assert.deepEqual(calls, [
       ["worktree", "list", "--workspace", "w1"],
       ["notification", "show", "open worktree", "--body", message],
@@ -260,7 +332,7 @@ test("cancelling a picker changes nothing", async (t) => {
     ["worktree", [["worktree", "list", "--workspace", "w1"]]],
   ]) {
     const { calls } = await run(kind, { select: "cancel" });
-    assert.deepEqual(calls, reads, kind);
+    assertCalls(calls, reads);
   }
 });
 

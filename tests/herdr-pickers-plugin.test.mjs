@@ -108,6 +108,7 @@ if (args[0] === "worktree" && args[1] === "list") {
   console.log(JSON.stringify({ result: { type: "worktree_list", ...worktrees[process.env.HERDR_TEST_WORKTREES ?? "repo"] } }));
   process.exit(0);
 }
+if (process.env.HERDR_TEST_AGENTS) results["agent list"] = { agents: JSON.parse(process.env.HERDR_TEST_AGENTS) };
 console.log(JSON.stringify({ result: results[args.slice(0, 2).join(" ")] ?? {} }));
 `);
   // Behaves like fzf for what the pickers use: it shows the items on stdin,
@@ -148,7 +149,7 @@ console.log(chosen.split("\\t")[0]);
 import { appendFileSync } from "node:fs";
 appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", process.argv[2]]) + "\\n");
 `);
-  const run = async (kind, { select = "0", context, worktrees = "repo", early = false } = {}) => {
+  const run = async (kind, { select = "0", context, worktrees = "repo", early = false, agents } = {}) => {
     await writeFile(log, "");
     const result = spawnSync(picker, [kind], {
       cwd: pluginRoot,
@@ -165,6 +166,7 @@ appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(["pane", "focus", proc
         HERDR_TEST_FZF_LOG: fzfLog,
         HERDR_TEST_SELECT: select,
         HERDR_TEST_WORKTREES: worktrees,
+        HERDR_TEST_AGENTS: agents ? JSON.stringify(agents) : "",
         HERDR_TEST_ENTER_EARLY: early ? "1" : "",
         HERDR_PICKER_REFRESH_DELAY: "0",
         FZF_DEFAULT_OPTS: "--color=bg:#123456",
@@ -229,6 +231,33 @@ test("the agent picker labels agents by tab and focuses the exact pane", async (
     item("w1:p1", "0:dotfiles", "current · pi · working", "dotfiles · π — fix pickers"),
     item("w1:p2", "1:🌵 review", "claude · idle", "dotfiles · ~/src/review"),
   ]);
+});
+
+test("the agent picker lists blocked, then done, then working agents, newest first", async (t) => {
+  const { run } = await fixture(t);
+  const agent = (pane, agent_status, state_change_seq) => ({
+    pane_id: `w1:${pane}`, workspace_id: "w1", tab_id: "w1:t1", agent: "pi", agent_status, state_change_seq,
+    focused: false, terminal_title_stripped: "", cwd: "/src",
+  });
+  const { calls, fzf } = await run("agent", {
+    agents: [
+      agent("p1", "idle", 20),
+      agent("p2", "working", 19),
+      agent("p3", "done", 5),
+      agent("p4", "blocked", 2),
+      agent("p5", "done", 11),
+      agent("p6", "unknown", 30),
+      agent("p7", "blocked", 7),
+      agent("p8", "working", 3),
+      { ...agent("p9", "working"), agent_status: undefined, state_change_seq: undefined },
+    ],
+  });
+  // The picker opens on the first row, so Enter goes to the most urgent agent.
+  assertCalls(calls, [["workspace", "list"], ["tab", "list"], ["agent", "list"]], [["pane", "focus", "w1:p7"]]);
+  assert.deepEqual(
+    fzf.items.map((row) => row.split("\t")[0]),
+    ["w1:p7", "w1:p4", "w1:p5", "w1:p3", "w1:p2", "w1:p8", "w1:p1", "w1:p6", "w1:p9"],
+  );
 });
 
 test("the join-pane picker lists other tabs in the workspace and joins the choice", async (t) => {

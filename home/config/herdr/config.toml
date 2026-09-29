@@ -35,7 +35,11 @@ prompt_new_tab_name = false
 # plugin also renames such workspaces after that zone; a workspace named by hand
 # with prefix+$ keeps its name.
 
-agent_panel_sort = "spaces"
+# Sort the agent sidebar (and prefix+alt+j/k) by urgency: blocked agents that
+# wait for input, then finished agents not yet seen, then working, then idle.
+# The newest state change comes first in each group. The prefix+a picker uses
+# the same order.
+agent_panel_sort = "priority"
 [theme]
 name = "terminal"
 auto_switch = false

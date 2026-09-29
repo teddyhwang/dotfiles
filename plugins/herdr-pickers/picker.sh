@@ -129,7 +129,14 @@ pick_agent() {
     --slurpfile agents <("$herdr" agent list) "$jq_defs"'
     ($workspaces[0].result.workspaces // [] | map({key: .workspace_id, value: .label}) | from_entries) as $workspace
     | ($tabs[0].result.tabs // [] | map({key: .tab_id, value: .label}) | from_entries) as $tab
-    | $agents[0].result.agents // [] | .[]
+    # Match the sidebar (agent_panel_sort = "priority"): agents waiting for
+    # input first, then unseen completions, then running and idle ones, with
+    # the newest state change first in each group.
+    | $agents[0].result.agents // []
+    | sort_by(
+        ({blocked: 0, done: 1, working: 2, idle: 3}[.agent_status | tostring] // 4),
+        -(.state_change_seq // 0))
+    | .[]
     | {
         key: .pane_id,
         label: ($tab[.tab_id] // .tab_id),

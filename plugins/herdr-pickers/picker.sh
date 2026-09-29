@@ -189,9 +189,9 @@ pick_agent() {
     --slurpfile agents <("$herdr" agent list) "$jq_defs"'
     ($workspaces[0].result.workspaces // [] | map({key: .workspace_id, value: .label}) | from_entries) as $workspace
     | ($tabs[0].result.tabs // [] | map({key: .tab_id, value: .label}) | from_entries) as $tab
-    # Match the sidebar order set by agent-view.py: blocked agents first, then
-    # finished ones (done, then idle), then working ones, with the newest
-    # state change first in each group.
+    # Blocked agents first, then finished ones (done, then idle), then working
+    # ones, with the newest state change first in each group. The built-in
+    # Herdr priority sort lists idle agents last, below working ones.
     | $agents[0].result.agents // []
     | sort_by(
         ({blocked: 0, done: 1, idle: 2, unknown: 3, working: 4}[.agent_status | tostring] // 5),

@@ -35,12 +35,12 @@ prompt_new_tab_name = false
 # plugin also renames such workspaces after that zone; a workspace named by hand
 # with prefix+$ keeps its name.
 
-# The teddyhwang.pickers plugin sets an agent view on startup that orders the
-# sidebar and prefix+alt+j/k by what needs attention: blocked agents, then
-# finished ones (done, then idle), then working ones, newest state change first.
-# The prefix+a picker uses the same order. While the view is active, the
-# sidebar's sort toggle is disabled. This built-in sort (blocked, done, working,
-# idle) only applies when the plugin is off.
+# Herdr's priority sort orders the sidebar and prefix+alt+j/k: blocked, done
+# (finished, not yet seen), working, then idle, newest state change first. Its
+# order is fixed, and a plugin agent view that reorders it would disable the
+# sidebar's grouped/priority toggle. The toggle saves a client preference that
+# overrides this setting. The prefix+a picker puts every finished agent (done,
+# then idle) above working ones instead.
 agent_panel_sort = "priority"
 [theme]
 name = "terminal"

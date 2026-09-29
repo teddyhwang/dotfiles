@@ -154,7 +154,6 @@ pickers_plugin_matches() {
         .manifest_path == $manifest and
         .enabled == true and
         (($panes - [.panes[]?.id]) | length == 0) and
-        any(.startup[]?; .command == ["./agent-view.py"]) and
         ((.warnings // []) | length == 0)
       )
     ' >/dev/null

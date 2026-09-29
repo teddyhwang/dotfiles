@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
-import { createServer } from "node:net";
+import { spawnSync } from "node:child_process";
 import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -316,53 +315,6 @@ test("the workspace picker nests linked worktrees under their open parent checko
     item("w3", "notes", "", "1 tab · 1 pane"),
     item("w7", "linked", "", detail(orphan)),
   ]);
-});
-
-test("the pickers plugin sets the attention-first agent view on startup", async (t) => {
-  assert.deepEqual(manifest.startup, [{ command: ["./agent-view.py"] }]);
-  const directory = await mkdtemp(path.join(tmpdir(), "herdr-agent-view-"));
-  t.after(() => rm(directory, { recursive: true, force: true }));
-  const socketPath = path.join(directory, "herdr.sock");
-  let request;
-  const server = createServer((connection) => {
-    let buffer = "";
-    connection.setEncoding("utf8");
-    connection.on("data", (chunk) => {
-      buffer += chunk;
-      const newline = buffer.indexOf("\n");
-      if (newline === -1) return;
-      request = JSON.parse(buffer.slice(0, newline));
-      connection.end(`${JSON.stringify({ id: request.id, result: { type: "agent_view", active: true } })}\n`);
-    });
-  });
-  await new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(socketPath, resolve);
-  });
-  t.after(() => new Promise((resolve) => server.close(resolve)));
-
-  const result = await new Promise((resolve) => {
-    const child = spawn(path.join(pluginRoot, "agent-view.py"), [], {
-      cwd: pluginRoot,
-      env: { ...process.env, HERDR_SOCKET_PATH: socketPath },
-    });
-    let stderr = "";
-    child.stderr.setEncoding("utf8");
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("close", (status) => resolve({ status, stderr }));
-  });
-  assert.deepEqual(result, { status: 0, stderr: "" });
-  assert.equal(request.method, "agent.view.set");
-  assert.deepEqual(request.params, {
-    source: "plugin:teddyhwang.pickers",
-    label: "priority",
-    sort: [
-      { field: "status", order: "asc" },
-      { field: "state_change_seq", order: "desc" },
-    ],
-  });
 });
 
 test("the join-pane picker lists other tabs in the workspace and joins the choice", async (t) => {

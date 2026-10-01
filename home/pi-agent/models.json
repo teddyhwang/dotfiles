@@ -1,7 +1,19 @@
 {
   "providers": {
+    "openai": {
+      "modelOverrides": {
+        "gpt-6.1-sol": {
+          "contextWindow": 922000,
+          "maxTokens": 128000
+        }
+      }
+    },
     "openai-codex": {
       "modelOverrides": {
+        "gpt-6.1-sol": {
+          "contextWindow": 922000,
+          "maxTokens": 128000
+        },
         "gpt-6-astra": {
           "contextWindow": 872000
         },

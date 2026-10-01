@@ -20,8 +20,6 @@ import {
   zoneNameFor,
 } from "../home/local/bin/herdr-tab-autoname.ts";
 
-import { toHerdrLabel } from "../home/pi-agent/extensions/session-tab-name.ts";
-
 const SESSION_PATH = "/tmp/herdr-test.sock";
 
 class MemoryOwnership {
@@ -337,9 +335,11 @@ test("recovers and refreshes an indexed Pi title after Pi has exited", async () 
   assert.equal(namer.assignmentFor("w1:t1"), "0:dotfiles");
 });
 
-for (const topic of [
-  "Investigate Stuck Development Agent",
-  "Investigate Unexpected Shutdown Crash",
+// Labels emitted by the canonical pi-extensions package. Keep these as protocol
+// fixtures: dotfiles tests must not import or reimplement Pi extension code.
+for (const [topic, shortenedLabel] of [
+  ["Investigate Stuck Development Agent", "Investigate Stuck Development…"],
+  ["Investigate Unexpected Shutdown Crash", "Investigate Unexpected…"],
 ]) {
   test(`retains ownership of Pi's shortened label: ${topic}`, async (t) => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "herdr-pi-exit-"));
@@ -348,7 +348,7 @@ for (const topic of [
     const store = await OwnershipStore.load(statePath);
     await store.set(SESSION_PATH, "w1:t1", "0:dotfiles");
 
-    let label = toHerdrLabel(topic);
+    let label = shortenedLabel;
     const requests = [];
     async function pass(pane) {
       // Each event launches a fresh worker; nothing survives except disk state.
@@ -383,7 +383,7 @@ test("recovers an already-indexed shortened Pi label after exit", async () => {
   const topic = "Investigate Unexpected Shutdown Crash";
   const namer = createNamer();
   await namer.consider(
-    tabInfo(indexedTabLabel(0, toHerdrLabel(topic))),
+    tabInfo(indexedTabLabel(0, "Investigate Unexpected…")),
     [{ ...piPane(`π - ${topic} - dotfiles`), agent: null }],
     0,
   );

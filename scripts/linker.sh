@@ -59,20 +59,29 @@ done
 print_progress "\nSymlinking pi agent config..."
 
 mkdir -p "$HOME/.pi/agent"
+# Personal Pi extensions now live in the installed teddyhwang/pi-extensions
+# package. Retire only our exact legacy symlink; never remove another installer's
+# files or a user-maintained copy.
+legacy_pi_extension="$HOME/.pi/agent/extensions/session-tab-name.ts"
+canonical_pi_extension="$HOME/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/session-tab-name/index.ts"
+if [ -L "$legacy_pi_extension" ] && \
+  [ "$(readlink "$legacy_pi_extension")" = "$DOTFILES_DIR/home/pi-agent/extensions/session-tab-name.ts" ]; then
+  if [ -f "$canonical_pi_extension" ]; then
+    rm -- "$legacy_pi_extension"
+  else
+    print_warning "Install teddyhwang/pi-extensions before retiring the legacy session-tab-name symlink"
+  fi
+fi
+
 for filepath in "$DOTFILES_DIR"/home/pi-agent/*; do
   [ -e "$filepath" ] || [ -L "$filepath" ] || continue
   entry_name=$(basename -- "$filepath")
   dst_path="$HOME/.pi/agent/$entry_name"
 
-  # Herdr and pi packages install their own extensions into this directory.
-  # Link our entries individually so setup never replaces those managed files.
+  # Extension implementation belongs in the canonical Pi package, not dotfiles.
   if [ "$entry_name" = "extensions" ]; then
-    mkdir -p "$dst_path"
-    for extension in "$filepath"/*; do
-      [ -e "$extension" ] || [ -L "$extension" ] || continue
-      validate_and_symlink "$extension" "$dst_path/$(basename -- "$extension")"
-    done
-    continue
+    print_error "Pi extensions must live in https://github.com/teddyhwang/pi-extensions"
+    exit 1
   fi
 
   validate_and_symlink "$filepath" "$dst_path"

@@ -105,6 +105,19 @@ uses its `herdr-splits.nvim` revision when present, or a pinned fallback from
 `scripts/herdr.sh` before Neovim has installed the plugin. Neovim's Herdr plugin
 also synchronizes the Herdr side when it builds or loads inside Herdr.
 
+### Pi extensions
+
+Personal Pi extension code and tests live in
+[`teddyhwang/pi-extensions`](https://github.com/teddyhwang/pi-extensions),
+installed with `pi install git:git@github.com:teddyhwang/pi-extensions`.
+This repository manages Pi configuration and integration wiring only; do not
+add extension implementations here or maintain separate personal copies in
+`~/.pi/agent/extensions`. After package changes, use `/reload` in active sessions.
+
+The former dotfiles `session-tab-name` extension now belongs to that package.
+Setup removes only its exact old dotfiles symlink, preserving third-party
+extensions and user-maintained files. See `AGENTS.md` for the ownership guardrail.
+
 Generated theme files, caches, machine-local configuration, and secret-bearing
 environment files are ignored. Never add credentials to the repository; use the
 system keychain, 1Password, or untracked local environment files instead.

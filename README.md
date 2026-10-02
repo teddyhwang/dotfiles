@@ -160,33 +160,32 @@ The former dotfiles `session-tab-name` extension now belongs to that package.
 Setup removes only its exact old dotfiles symlink, preserving third-party
 extensions and user-maintained files. See `AGENTS.md` for the ownership guardrail.
 
-Herdsman role overlays live in `home/pi-agent/agents/` and are linked individually
-so other user/installer definitions remain intact. The researcher overlay loads
-only `pi-perplexity` and exposes its actual `perplexity_search` tool, alongside
-read-only filesystem tools; it does not load every personal extension's handlers.
-
-For Pi 1.0, the currently validated Herdsman revision is pinned rather than
-following moving `main` (the numbered npm release still targets an older Pi):
+[Pi Herdsman](https://github.com/boadij/pi-herdsman) is installed from a local
+clone of `main`. The npm release targets an older Pi. A git install has no
+built `dist/index.js`, and its dependency install fails when the package proxy
+does not serve the Pi 1.0.0 packages.
 
 ```sh
-pi install git:github.com/boadij/pi-herdsman@382a18800198b082730d89cd4132d38d25b5d669
-cd ~/.pi/agent/git/github.com/boadij/pi-herdsman
-npm ci --ignore-scripts
-npm run build
-npm run check
-npm run package:audit
-# Only after the candidate builds and validates:
-pi remove npm:pi-herdsman
+git clone https://github.com/boadij/pi-herdsman ~/src/github.com/boadij/pi-herdsman
+cd ~/src/github.com/boadij/pi-herdsman
+# Install only esbuild, outside the clone, so no copy of Pi's own packages
+# lands in node_modules.
+npm install --prefix ~/.cache/pi-herdsman-build esbuild@0.28.2
+mkdir -p node_modules
+ln -sfn ~/.cache/pi-herdsman-build/node_modules/esbuild node_modules/esbuild
+node scripts/build.mjs
+pi install ~/src/github.com/boadij/pi-herdsman
+herdr integration install pi
 ```
 
-Git installs need the upstream build because the package's runtime entrypoint is
-`dist/index.js`. Do not reload while both sources are enabled or managed work is
-unresolved. Reload after the old source is removed. This revision targets Pi
-1.0.0, supports Herdr >=0.9.1, and was tested upstream with Herdr 0.9.3; it does
-not require restarting or downgrading the current Herdr server. Do not run the
-release bootstrap as a substitute: it installs the runtime tuple declared by
-the older published release. Keep agent-teams enabled until its separate task,
-budget, and write-scope requirements have been explicitly migrated.
+To update, run `git pull && node scripts/build.mjs` in the clone, then `/reload`.
+`pi update` does not update local packages. Do not use the upstream `install.sh`:
+it installs the runtime of the older npm release.
+
+Herdsman's strict tool schemas exceed Anthropic's compiled-grammar limit, so
+`home/pi-agent/models.json` turns off strict tools for the `anthropic` provider.
+Keep agent-teams enabled until its task, budget, and write-scope requirements
+have been migrated.
 
 Generated theme files, caches, machine-local configuration, and secret-bearing
 environment files are ignored. Never add credentials to the repository; use the

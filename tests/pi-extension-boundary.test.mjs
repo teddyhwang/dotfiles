@@ -31,16 +31,7 @@ test("agent instructions state the canonical Pi extension ownership guardrail", 
   assert.match(instructions, /Implement Pi extension features, fixes, and their regression tests in that repository/);
 });
 
-test("Herdsman researcher uses the installed search tool without unrelated extensions", async () => {
-  const overlay = await readFile(path.join(repo, "home/pi-agent/agents/researcher.md"), "utf8");
-  assert.match(overlay, /^---\nname: researcher\n/);
-  assert.match(overlay, /noExtensions: true/);
-  assert.match(overlay, /extensions: \["npm:pi-perplexity"\]/);
-  assert.match(overlay, /  - perplexity_search\n/);
-  assert.doesNotMatch(overlay, /  - (?:bash|write|edit|codemode)\n/);
-});
-
-test("linker preserves other agent definitions when installing the researcher overlay", async (t) => {
+test("linker preserves user-owned agent definitions", async (t) => {
   const home = await mkdtemp(path.join(os.tmpdir(), "pi-agent-definitions-"));
   t.after(() => rm(home, { recursive: true, force: true }));
   const agents = path.join(home, ".pi/agent/agents");
@@ -51,7 +42,6 @@ test("linker preserves other agent definitions when installing the researcher ov
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.equal(await readFile(path.join(agents, "custom.md"), "utf8"), "user-owned definition\n");
-  assert.equal(await readlink(path.join(agents, "researcher.md")), path.join(repo, "home/pi-agent/agents/researcher.md"));
 });
 
 for (const scenario of ["owned symlink", "other symlink", "ordinary file", "package missing"]) {

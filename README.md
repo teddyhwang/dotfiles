@@ -105,6 +105,24 @@ uses its `herdr-splits.nvim` revision when present, or a pinned fallback from
 `scripts/herdr.sh` before Neovim has installed the plugin. Neovim's Herdr plugin
 also synchronizes the Herdr side when it builds or loads inside Herdr.
 
+### Superfile hotkeys
+
+Superfile uses the complete upstream Vim-like preset in
+`home/config/superfile/hotkeys.toml`, copied unchanged from
+[`vimHotkeys.toml` at v1.6.0](https://github.com/yorukot/superfile/blob/v1.6.0/src/superfile_config/vimHotkeys.toml).
+Setup links `home/config/superfile` to `~/.config/superfile`, so no shell alias or
+extra launch flag is needed. Restart Superfile after changing the file.
+
+Superfile v1.6.0 has no built-in Vim preset selector: its
+[documented configuration](https://superfile.dev/configure/custom-hotkeys/) uses a
+hotkeys file. Removing ours would restore the standard defaults, not Vim keys;
+`--hotkey-file` only selects an alternate file. When updating the preset, copy
+`src/superfile_config/vimHotkeys.toml` from the matching upstream release over
+our `hotkeys.toml` and update the source version above.
+
+Key bindings include `q` to close a file panel, `Ctrl+C` to quit, `f` to toggle
+the preview, `-` to go to the parent directory, and `m` to toggle selection mode.
+
 ### Pi extensions
 
 Personal Pi extension code and tests live in

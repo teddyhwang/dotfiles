@@ -191,11 +191,19 @@ Herdsman replaces agent-teams. Disable agent-teams with the package filter
 
 Herdsman agents inherit the lead's model unless a definition pins one. On work
 machines (devx detected), setup copies `home/pi-agent/agents/work/` into
-`~/.pi/agent/agents/`: `scout` and `reviewer` use Claude Sonnet 5.5 with high
-thinking. Sonnet 5.5 is the weakest model allowed for delegated work; do not
-pin Claude 4.x or Haiku models. A test enforces this floor. The copies are not
-symlinks because Herdsman ignores symlinked definitions. A pinned model keeps the bundled `noExtensions` policy, so each
-override loads the Shopify AI proxy extension explicitly. Setup replaces or
+`~/.pi/agent/agents/`:
+
+- `researcher` uses Claude Fable 5.1, the strongest model, with xhigh thinking.
+  Its tool list uses the installed shop-pi-fy search and fetch tools, so it can
+  read primary sources instead of only search snippets.
+- `scout` and `reviewer` use Claude Sonnet 5.5 with high thinking.
+
+Sonnet 5.5 is the weakest model allowed for delegated work; do not pin Claude
+4.x or Haiku models. A test enforces this floor. The copies are not symlinks
+because Herdsman ignores symlinked definitions. A pinned model keeps the
+bundled `noExtensions` policy, so the `scout` and `reviewer` overrides load
+the Shopify AI proxy extension explicitly. The bundled `researcher` keeps
+extension discovery and needs no extension entry. Setup replaces or
 removes only files that carry the `# Managed by dotfiles:` marker.
 
 Generated theme files, caches, machine-local configuration, and secret-bearing

@@ -50,7 +50,10 @@ const allowedAgentModels = new Set([
   "anthropic/claude-fable-5-1",
 ]);
 const systemPath = "/usr/bin:/bin:/usr/sbin:/sbin";
-const workAgents = ["reviewer.md", "scout.md"];
+const workAgents = ["researcher.md", "reviewer.md", "scout.md"];
+// The bundled scout and reviewer set noExtensions, so a pinned model needs the
+// proxy loaded explicitly. The bundled researcher keeps extension discovery.
+const proxyLoadingAgents = new Set(["reviewer.md", "scout.md"]);
 
 async function runLinker(t, home, { work }) {
   let PATH = systemPath;
@@ -84,7 +87,19 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
     // Quality floor: Claude Sonnet 5.5. No 4.x or Haiku models for delegated work.
     const model = source.match(/^model: (.+)$/m)?.[1];
     assert.ok(allowedAgentModels.has(model), `${name} pins ${model}; use Sonnet 5.5 or stronger`);
-    assert.match(source, /^extensions: \["~\/\.pi\/agent\/extensions\/shopify-proxy", "builtin:mcp"\]$/m);
+    if (name === "researcher.md") {
+      assert.equal(model, "anthropic/claude-fable-5-1", "research uses the strongest model");
+      assert.match(source, /^thinking: (xhigh|max)$/m, "Fable accepts only xhigh or max");
+      for (const tool of ["web_search", "web_fetch", "perplexity_fetch"]) {
+        assert.match(source, new RegExp(`^  - ${tool}$`, "m"), `researcher needs ${tool} to read primary sources`);
+      }
+      assert.doesNotMatch(source, /^  - (bash|edit|write)$/m, "researcher stays read-only");
+    }
+    if (proxyLoadingAgents.has(name)) {
+      assert.match(source, /^extensions: \["~\/\.pi\/agent\/extensions\/shopify-proxy", "builtin:mcp"\]$/m);
+    } else {
+      assert.doesNotMatch(source, /^(extensions|noExtensions):/m, `${name} must keep extension discovery`);
+    }
   }
 });
 

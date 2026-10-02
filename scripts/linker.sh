@@ -73,6 +73,62 @@ if [ -L "$legacy_pi_extension" ] && \
   fi
 fi
 
+# A copied definition is ours only when it carries this marker. Other user and
+# installer definitions are never replaced or removed.
+pi_agent_marker="# Managed by dotfiles: "
+
+managed_pi_agent_source() {
+  sed -n "s|^$pi_agent_marker\\(home/pi-agent/agents/[A-Za-z0-9/_.-]*\\.md\\)\$|\\1|p" "$1" | head -n 1
+}
+
+install_pi_agent_definitions() {
+  for definition in "$1"/*.md; do
+    [ -f "$definition" ] || continue
+    target="$2/$(basename -- "$definition")"
+    validate_home_target "$target" || return 1
+    # Retire the symlink an earlier linker created for this definition.
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$definition" ]; then
+      rm -- "$target"
+    fi
+    if [ -e "$target" ] || [ -L "$target" ]; then
+      if [ -L "$target" ] || [ -z "$(managed_pi_agent_source "$target")" ]; then
+        print_warning "Keeping existing agent definition $target"
+        continue
+      fi
+      if cmp -s "$definition" "$target"; then
+        print_info "$target is up to date."
+        continue
+      fi
+    fi
+    # Never write through a leftover temp path, and never leave one behind.
+    rm -f -- "$target.dotfiles-tmp"
+    if ! cp -- "$definition" "$target.dotfiles-tmp"; then
+      rm -f -- "$target.dotfiles-tmp"
+      return 1
+    fi
+    mv -f -- "$target.dotfiles-tmp" "$target" || return 1
+    print_success "Installed $target"
+    track_change
+  done
+}
+
+# Remove our copies whose source is gone, or work copies on a personal machine.
+prune_pi_agent_definitions() {
+  for target in "$1"/*.md; do
+    [ -f "$target" ] && [ ! -L "$target" ] || continue
+    source_path=$(managed_pi_agent_source "$target")
+    [ -n "$source_path" ] || continue
+    case "$source_path" in
+      home/pi-agent/agents/work/*) [ "$2" -eq 1 ] || source_path="" ;;
+    esac
+    if [ -z "$source_path" ] || [ ! -f "$DOTFILES_DIR/$source_path" ]; then
+      rm -- "$target"
+      print_success "Removed $target"
+      track_change
+    fi
+  done
+}
+
 for filepath in "$DOTFILES_DIR"/home/pi-agent/*; do
   [ -e "$filepath" ] || [ -L "$filepath" ] || continue
   entry_name=$(basename -- "$filepath")
@@ -84,13 +140,19 @@ for filepath in "$DOTFILES_DIR"/home/pi-agent/*; do
     exit 1
   fi
 
-  # Link only our definitions, preserving other user/installer-owned roles.
+  # Copy agent definitions: Herdsman ignores symlinked ones. Work definitions
+  # depend on the Shopify AI proxy, so they install only where devx exists.
   if [ "$entry_name" = "agents" ]; then
+    # Prune deletes files, so the directory itself must resolve inside HOME.
+    validate_home_target "$dst_path/definition.md" || exit 1
     mkdir -p "$dst_path"
-    for definition in "$filepath"/*.md; do
-      [ -f "$definition" ] || continue
-      validate_and_symlink "$definition" "$dst_path/$(basename -- "$definition")"
-    done
+    work_machine=0
+    command -v devx >/dev/null 2>&1 && work_machine=1
+    prune_pi_agent_definitions "$dst_path" "$work_machine"
+    install_pi_agent_definitions "$filepath" "$dst_path"
+    if [ "$work_machine" -eq 1 ]; then
+      install_pi_agent_definitions "$filepath/work" "$dst_path"
+    fi
     continue
   fi
 

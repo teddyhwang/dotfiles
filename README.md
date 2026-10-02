@@ -127,8 +127,8 @@ theme selects `base16-snazzy` as a non-Seti alternative.
 
 ### Superfile hotkeys
 
-Superfile uses the complete upstream Vim-like preset in
-`home/config/superfile/hotkeys.toml`, copied unchanged from
+Superfile uses a customized Vim-like preset in
+`home/config/superfile/hotkeys.toml`, based on upstream
 [`vimHotkeys.toml` at v1.6.0](https://github.com/yorukot/superfile/blob/v1.6.0/src/superfile_config/vimHotkeys.toml).
 Setup links `home/config/superfile` to `~/.config/superfile`, so no shell alias or
 extra launch flag is needed. Restart Superfile after changing the file.
@@ -136,12 +136,15 @@ extra launch flag is needed. Restart Superfile after changing the file.
 Superfile v1.6.0 has no built-in Vim preset selector: its
 [documented configuration](https://superfile.dev/configure/custom-hotkeys/) uses a
 hotkeys file. Removing ours would restore the standard defaults, not Vim keys;
-`--hotkey-file` only selects an alternate file. When updating the preset, copy
-`src/superfile_config/vimHotkeys.toml` from the matching upstream release over
-our `hotkeys.toml` and update the source version above.
+`--hotkey-file` only selects an alternate file. When updating the preset, use
+`src/superfile_config/vimHotkeys.toml` from the matching upstream release,
+retain our navigation customizations below, and update the source version above.
 
-Key bindings include `q` to close a file panel, `Ctrl+C` to quit, `f` to toggle
-the preview, `-` to go to the parent directory, and `m` to toggle selection mode.
+`h` and Backspace go to the parent directory; `l` or Enter opens the selected
+folder/file. While typing in a prompt, `h`/`l` remain text, Backspace deletes text,
+and only Enter confirms. Other bindings include `j`/`k` to move down/up,
+`q` to close a file panel, `Ctrl+C` to quit, `f` to toggle the preview, and `m`
+to toggle selection mode.
 
 ### Pi extensions
 

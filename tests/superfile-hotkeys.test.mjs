@@ -33,9 +33,9 @@ function assertUniqueBindings(actions) {
   }
 }
 
-test("Superfile uses Vim panel, navigation, and file-operation bindings", () => {
+test("Superfile uses customized Vim panel, navigation, and file-operation bindings", () => {
   const expected = {
-    confirm: ["enter", ""],
+    confirm: ["enter", "l"],
     quit: ["ctrl+c", ""],
     cd_quit: ["Q", ""],
     close_file_panel: ["q", ""],
@@ -44,7 +44,7 @@ test("Superfile uses Vim panel, navigation, and file-operation bindings", () => 
     list_down: ["j", ""],
     next_file_panel: ["tab", ""],
     previous_file_panel: ["shift+tab", ""],
-    parent_directory: ["-", ""],
+    parent_directory: ["h", "backspace"],
     change_panel_mode: ["m", ""],
     focus_on_process_bar: ["ctrl+p", ""],
     focus_on_sidebar: ["ctrl+s", ""],
@@ -59,6 +59,11 @@ test("Superfile uses Vim panel, navigation, and file-operation bindings", () => 
   for (const [action, keys] of Object.entries(expected)) {
     assert.deepEqual(hotkeys[action], keys, action);
   }
+});
+
+test("Superfile keeps typing confirmation separate from folder navigation", () => {
+  assert.deepEqual(hotkeys.confirm_typing, ["enter", ""]);
+  assert.deepEqual(hotkeys.cancel_typing, ["esc", ""]);
 });
 
 test("Superfile global hotkeys do not conflict", () => {

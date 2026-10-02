@@ -105,6 +105,26 @@ uses its `herdr-splits.nvim` revision when present, or a pinned fallback from
 `scripts/herdr.sh` before Neovim has installed the plugin. Neovim's Herdr plugin
 also synchronizes the Herdr side when it builds or loads inside Herdr.
 
+### Superfile theme
+
+Superfile (`spf`) uses our custom `seti` theme in
+`home/config/superfile/theme/seti.toml`, matching tinty's `base16-seti` palette.
+It uses charcoal backgrounds, blue active borders, green selections/success,
+and red errors. The theme is selected with `theme = 'seti'` in
+`home/config/superfile/config.toml`.
+
+[Custom themes](https://superfile.dev/configure/custom-theme/) are ordinary TOML
+files under `~/.config/superfile/theme/`; the config selects the filename without
+`.toml`. They control panels, borders, selections, dialogs, and status colors.
+Restart `spf` after editing a theme. Seti is a fixed palette, not a tinty hook:
+changing tinty's scheme does not change Superfile's UI theme.
+
+Code previews use `code_previewer = 'bat'` and our existing
+`home/config/bat/config` (`base16-256`) to follow the terminal's palette. This
+requires `bat`, already included in our setup. Superfile's built-in Chroma
+highlighter has no Seti style; if you switch back to `code_previewer = ''`, the
+theme selects `base16-snazzy` as a non-Seti alternative.
+
 ### Superfile hotkeys
 
 Superfile uses the complete upstream Vim-like preset in

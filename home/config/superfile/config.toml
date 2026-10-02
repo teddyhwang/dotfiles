@@ -1,7 +1,7 @@
 # More details are at https://superfile.netlify.app/configure/superfile-config/
 #
 # change your theme
-theme = 'poimandres'
+theme = 'seti'
 #
 # The editor files/directories will be opened with. (leave blank to use the EDITOR environment variable).
 editor = ""
@@ -40,6 +40,9 @@ transparent_background = false
 #
 # File preview width allow '0' (this mean same as file panel),'x' x must be from 2 to 10 (This means that the width of the file preview will be one xth of the total width.)
 file_preview_width = 0
+#
+# Use our existing Base16 bat configuration for terminal-palette-aware previews.
+code_previewer = 'bat'
 #
 # The length of the sidebar. If you don't want to display the sidebar, you can input 0 directly. If you want to display the value, please place it in the range of 3-20.
 sidebar_width = 20

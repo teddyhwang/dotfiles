@@ -20,6 +20,13 @@ for (const provider of ["openai", "openai-codex"]) {
   });
 }
 
+// pi-herdsman adds strict tools whose combined grammar exceeds Anthropic's
+// compiled-grammar limit (HTTP 400). Pi still validates tool arguments locally.
+// https://platform.claude.com/docs/en/build-with-claude/structured-outputs#schema-complexity-limits
+test("anthropic sends tools without strict constrained sampling", () => {
+  assert.deepEqual(providers.anthropic, { compat: { supportsStrictTools: false } });
+});
+
 test("existing Codex long-context overrides remain unchanged", () => {
   for (const model of ["gpt-6-astra", "gpt-5.6-sol"]) {
     assert.deepEqual(providers["openai-codex"].modelOverrides[model], {

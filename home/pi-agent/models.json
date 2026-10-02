@@ -1,5 +1,10 @@
 {
   "providers": {
+    "anthropic": {
+      "compat": {
+        "supportsStrictTools": false
+      }
+    },
     "openai": {
       "modelOverrides": {
         "gpt-6.1-sol": {

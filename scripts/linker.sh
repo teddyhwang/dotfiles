@@ -84,5 +84,15 @@ for filepath in "$DOTFILES_DIR"/home/pi-agent/*; do
     exit 1
   fi
 
+  # Link only our definitions, preserving other user/installer-owned roles.
+  if [ "$entry_name" = "agents" ]; then
+    mkdir -p "$dst_path"
+    for definition in "$filepath"/*.md; do
+      [ -f "$definition" ] || continue
+      validate_and_symlink "$definition" "$dst_path/$(basename -- "$definition")"
+    done
+    continue
+  fi
+
   validate_and_symlink "$filepath" "$dst_path"
 done

@@ -118,6 +118,34 @@ The former dotfiles `session-tab-name` extension now belongs to that package.
 Setup removes only its exact old dotfiles symlink, preserving third-party
 extensions and user-maintained files. See `AGENTS.md` for the ownership guardrail.
 
+Herdsman role overlays live in `home/pi-agent/agents/` and are linked individually
+so other user/installer definitions remain intact. The researcher overlay loads
+only `pi-perplexity` and exposes its actual `perplexity_search` tool, alongside
+read-only filesystem tools; it does not load every personal extension's handlers.
+
+For Pi 1.0, the currently validated Herdsman revision is pinned rather than
+following moving `main` (the numbered npm release still targets an older Pi):
+
+```sh
+pi install git:github.com/boadij/pi-herdsman@382a18800198b082730d89cd4132d38d25b5d669
+cd ~/.pi/agent/git/github.com/boadij/pi-herdsman
+npm ci --ignore-scripts
+npm run build
+npm run check
+npm run package:audit
+# Only after the candidate builds and validates:
+pi remove npm:pi-herdsman
+```
+
+Git installs need the upstream build because the package's runtime entrypoint is
+`dist/index.js`. Do not reload while both sources are enabled or managed work is
+unresolved. Reload after the old source is removed. This revision targets Pi
+1.0.0, supports Herdr >=0.9.1, and was tested upstream with Herdr 0.9.3; it does
+not require restarting or downgrading the current Herdr server. Do not run the
+release bootstrap as a substitute: it installs the runtime tuple declared by
+the older published release. Keep agent-teams enabled until its separate task,
+budget, and write-scope requirements have been explicitly migrated.
+
 Generated theme files, caches, machine-local configuration, and secret-bearing
 environment files are ignored. Never add credentials to the repository; use the
 system keychain, 1Password, or untracked local environment files instead.

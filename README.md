@@ -141,10 +141,11 @@ hotkeys file. Removing ours would restore the standard defaults, not Vim keys;
 retain our navigation customizations below, and update the source version above.
 
 `h` and Backspace go to the parent directory; `l` or Enter opens the selected
-folder/file. While typing in a prompt, `h`/`l` remain text, Backspace deletes text,
-and only Enter confirms. Other bindings include `j`/`k` to move down/up,
-`q` to close a file panel, `Ctrl+C` to quit, `f` to toggle the preview, and `m`
-to toggle selection mode.
+folder/file. Uppercase `H`/`L` move to the previous/next file pane (left/right);
+Shift+Tab/Tab still work too. While typing in a prompt, `h`/`l`/`H`/`L` remain
+text, Backspace deletes text, and only Enter confirms. Other bindings include
+`j`/`k` to move down/up, `q` to close a file panel, `Ctrl+C` to quit, `f` to toggle
+the preview, and `m` to toggle selection mode.
 
 ### Pi extensions
 

@@ -42,8 +42,8 @@ test("Superfile uses customized Vim panel, navigation, and file-operation bindin
     toggle_file_preview_panel: ["f", ""],
     list_up: ["k", ""],
     list_down: ["j", ""],
-    next_file_panel: ["tab", ""],
-    previous_file_panel: ["shift+tab", ""],
+    next_file_panel: ["tab", "L"],
+    previous_file_panel: ["shift+tab", "H"],
     parent_directory: ["h", "backspace"],
     change_panel_mode: ["m", ""],
     focus_on_process_bar: ["ctrl+p", ""],
@@ -61,7 +61,7 @@ test("Superfile uses customized Vim panel, navigation, and file-operation bindin
   }
 });
 
-test("Superfile keeps typing confirmation separate from folder navigation", () => {
+test("Superfile keeps typing confirmation separate from folder and pane navigation", () => {
   assert.deepEqual(hotkeys.confirm_typing, ["enter", ""]);
   assert.deepEqual(hotkeys.cancel_typing, ["esc", ""]);
 });

@@ -6,6 +6,7 @@
 
 #-- Maintainer: nonepork <https://github.com/nonepork>
 # Local customization: l enters folders; h and Backspace go to the parent.
+# Uppercase H/L move to the previous/next file panel.
 
 # This contains a hotkey config file for superfile, that's themed around vim
 # controls! More details can be found at
@@ -31,8 +32,8 @@ page_down = ['pgdown','']
 #-- File Panel Controls
 create_new_file_panel = ['n', '']
 close_file_panel = ['q', '']
-next_file_panel = ['tab', '']
-previous_file_panel = ['shift+tab', '']
+next_file_panel = ['tab', 'L']
+previous_file_panel = ['shift+tab', 'H']
 split_file_panel = ['N', '']
 toggle_file_preview_panel = ['f', '']
 open_sort_options_menu = ['o', '']

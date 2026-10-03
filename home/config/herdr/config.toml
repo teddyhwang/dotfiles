@@ -49,6 +49,11 @@ auto_switch = false
 [ui.toast]
 delivery = "herdr"
 
+# No sound when background agents finish or need attention; toasts and the
+# sidebar already show the state change.
+[ui.sound]
+enabled = false
+
 # Keybindings mirroring my tmux config (prefix C-a).
 [keys]
 prefix = "ctrl+a"

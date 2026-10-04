@@ -6,7 +6,9 @@ return {
     build = ":lua require('herdr-splits').sync_herdr()",
     config = function()
       require("herdr-splits").setup({
-        auto_sync_herdr = true,
+        -- Git exports GIT_DIR to its editor, and `herdr plugin install` runs `git init`
+        -- with it, re-initializing the calling repo (it broke every World tree once).
+        auto_sync_herdr = vim.env.GIT_DIR == nil,
         default_amount = 0.01,
         at_edge = "stop",
         nav_at_edge = "stop",

@@ -35,6 +35,10 @@ return function(colors)
       return luminance > 0.5
     end
 
+    -- Dimmer than normal text but still readable (~4.5:1 on base16-seti).
+    -- NonText (base03) is only ~2.2:1, which is too faint for file names.
+    local subdued_fg = blend_colors(colors.base05, colors.base00, 0.55)
+
     local highlights = {
       ["@symbol"] = { fg = colors.base09 },
       ["@variable"] = { fg = colors.base08 },
@@ -46,6 +50,10 @@ return function(colors)
       Title = { fg = colors.base09 },
       SnacksPickerInputBorder = { link = "Title" },
       SnacksPickerDir = { link = "Comment" },
+      -- Ignored/hidden entries in the explorer sidebar (snacks links these to NonText)
+      SnacksPickerPathIgnored = { fg = subdued_fg },
+      SnacksPickerPathHidden = { fg = subdued_fg },
+      SnacksPickerGitStatusIgnored = { fg = subdued_fg },
       TSFuncMacro = { link = "TSString" },
       TSType = { fg = colors.base0A },
       TSNamespace = { fg = colors.base0A },

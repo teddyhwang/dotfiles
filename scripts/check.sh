@@ -35,6 +35,7 @@ for file in \
   home/local/bin/tinty-herdr-hook \
   home/local/bin/tinty-opencode-hook \
   home/local/bin/wayvnc-output-recover \
+  home/local/bin/zed-test-file \
   home/config/tmux/resurrect-guard.sh \
   home/omarchy/hooks/theme-set \
   plugins/herdr-pickers/picker.sh; do
@@ -57,6 +58,7 @@ shellcheck -x -S warning \
   home/local/bin/tinty-opencode-hook \
   home/local/bin/trackpad-auto-toggle \
   home/local/bin/wayvnc-output-recover \
+  home/local/bin/zed-test-file \
   home/config/tmux/resurrect-guard.sh \
   home/omarchy/hooks/theme-set
 
@@ -159,13 +161,16 @@ for filename in files:
             raise ValueError(f"{filename}:{line_number}: trailing whitespace")
 
     if path.suffix in {".json", ".jsonc"}:
-        is_jsonc = path.suffix == ".jsonc" or path.as_posix() == "home/config/zed/settings.json"
+        # Zed reads its settings, keymap and tasks files as JSON with comments.
+        is_jsonc = path.suffix == ".jsonc" or path.parent.as_posix() == "home/config/zed"
         json.loads(strip_jsonc(source) if is_jsonc else source)
     elif path.suffix == ".toml":
         tomllib.loads(source)
 
 compile(pathlib.Path("home/local/bin/herdr-even-layout").read_text(), "herdr-even-layout", "exec")
 compile(pathlib.Path("home/local/bin/herdr-focus-pane").read_text(), "herdr-focus-pane", "exec")
+compile(pathlib.Path("home/local/bin/tinty-zed-hook").read_text(), "tinty-zed-hook", "exec")
+compile(pathlib.Path("home/local/bin/zed-other-file").read_text(), "zed-other-file", "exec")
 for path in pathlib.Path("scripts").glob("*.py"):
     compile(path.read_text(), str(path), "exec")
 PY

@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+"""Find the alternate file for FILE, mirroring other.nvim as configured in Neovim.
+
+Ports home/config/nvim/lua/plugins/other.lua (builtin "rails" and "react"
+mappings plus the custom mappings) with showMissingFiles enabled. Lua patterns
+are hand-translated to Python regular expressions.
+"""
+
+import glob
+import os
+import re
+import sys
+
+USAGE = "usage: zed-other-file [--all] FILE"
+
+
+# --- transformers (other-nvim/builtin/transformers.lua) ---------------------
+
+
+def pluralize(value):
+    if value[-1:] == "y":
+        return value[:-1] + "ies"
+    if value[-1:] == "s":
+        return value
+    return value + "s"
+
+
+def singularize(value):
+    if len(value) >= 3 and value[-3:] == "ies":
+        return value[:-3] + "y"
+    if value[-1:] == "s":
+        return value[:-1]
+    return value
+
+
+TRANSFORMERS = {"pluralize": pluralize, "singularize": singularize}
+
+
+# --- mappings ----------------------------------------------------------------
+# Each mapping is (regex, target) where target is a string or a list of
+# sub-mappings, as in the Lua tables. Lua "$" becomes "\Z"; "." stays any char
+# (compiled with DOTALL); ".-" becomes ".*?"; "%N" backreferences become "\N".
+
+
+def t(target, context=None, transformer=None):
+    return {"target": target, "context": context, "transformer": transformer}
+
+
+def m(pattern, target, context=None, transformer=None):
+    return {
+        "pattern": pattern,
+        "target": target,
+        "context": context,
+        "transformer": transformer,
+    }
+
+
+RAILS_ALTERNATIVE_TARGETS = [
+    t("/app/models/%1.rb", "model", "singularize"),
+    t("/app/controllers/**/%1_controller.rb", "controller"),
+    t("/app/views/%1/*.html*", "view"),
+    t("/app/views/%1/*.html*", "view", "singularize"),
+    t("/app/channels/**/%1_channel.rb", "channel"),
+    t("/app/mailers/%1_mailer.rb", "mailer"),
+    t("/app/serializers/%1_serializer.rb", "serializer"),
+    t("/app/mailers/%1_mailer.rb", "mailer"),
+    t("/app/services/%1_service.rb", "service"),
+    t("/app/workers/**/%1_worker.rb", "worker"),
+    t("/spec/factories/%1.rb", "factories", "pluralize"),
+    t("/spec/factories/%1.rb", "factories"),
+]
+
+RAILS = [
+    m(
+        r"/app/(.*)/(.*).rb",
+        [
+            t("/test/unit/%1/%2_test.rb", "test"),
+            t("/test/functional/%1/%2_test.rb", "test"),
+            t("/test/functional/%2_test.rb", "test"),
+            t("/test/functional/**/%2_test.rb", "test"),
+            t("/test/integration/%1/%2_test.rb", "test"),
+            t("/test/integration/%2_test.rb", "test"),
+            t("/test/integration/**/%2_test.rb", "test"),
+            t("/test/%1/%2_test.rb", "test"),
+            t("/test/%2_test.rb", "test"),
+            t("/test/%1/%2_test.rb", "test"),
+            t("/test/%2_test.rb", "test"),
+            t("/spec/unit/%1/%2_spec.rb", "test"),
+            t("/spec/functional/%1/%2_spec.rb", "test"),
+            t("/spec/functional/%2_spec.rb", "test"),
+            t("/spec/functional/**/%2_spec.rb", "test"),
+            t("/spec/integration/%1/%2_spec.rb", "test"),
+            t("/spec/integration/%2_spec.rb", "test"),
+            t("/spec/integration/**/%2_spec.rb", "test"),
+            t("/spec/%1/%2_spec.rb", "test"),
+            t("/spec/%2_spec.rb", "test"),
+            t("/spec/%1/%2_spec.rb", "test"),
+            t("/spec/%2_spec.rb", "test"),
+        ],
+    ),
+    m(
+        r"/lib/(.*).rb",
+        [
+            t("/test/unit/lib/%1_test.rb", "test"),
+            t("/spec/unit/lib/%1_spec.rb", "test"),
+        ],
+    ),
+    m(
+        r"/db/(.*)/(.*).rb",
+        [
+            t("/test/%1/%2_test.rb", "test"),
+            t("/spec/%1/%2_spec.rb", "test"),
+        ],
+    ),
+    m(
+        r"(.+)/test/(.*)/(.*)/(.*)_test.rb",
+        [t("%1/db/%3/%4.rb"), t("%1/app/%3/%4.rb"), t("%1/%3/%4.rb")],
+    ),
+    m(
+        r"(.+)/test/(.*)/(.*)_test.rb",
+        [t("%1/db/%2/%3.rb"), t("%1/app/%2/%3.rb"), t("%1/lib/%2/%3.rb")],
+    ),
+    m(r"(.+)/test/(.*)/(.*)_(.*)_test.rb", [t("%1/app/%4s/%3_%4.rb")]),
+    m(
+        r"(.+)/spec/(.*)/(.*)/(.*)_spec.rb",
+        [t("%1/db/%3/%4.rb"), t("%1/app/%3/%4.rb"), t("%1/%3/%4.rb")],
+    ),
+    m(
+        r"(.+)/spec/(.*)/(.*)_spec.rb",
+        [t("%1/db/%2/%3.rb"), t("%1/app/%2/%3.rb"), t("%1/lib/%2/%3.rb")],
+    ),
+    m(r"(.+)/spec/(.*)/(.*)_(.*)_spec.rb", [t("%1/app/%4s/%3_%4.rb")]),
+    m(
+        r"(.+)/spec/factories/(.*).rb",
+        [t("%1/app/models/%2.rb", None, "singularize")],
+    ),
+    m(r"/app/controllers/(.*)_controller.rb", RAILS_ALTERNATIVE_TARGETS),
+    m(r"/app/views/(.*)/.+.html*", RAILS_ALTERNATIVE_TARGETS),
+    m(r"/app/models/(.*).rb", RAILS_ALTERNATIVE_TARGETS),
+    m(r"/app/channels/(.*)_channel.rb", RAILS_ALTERNATIVE_TARGETS),
+    m(r"/app/mailers/(.*)_mailer.rb", RAILS_ALTERNATIVE_TARGETS),
+    m(r"/app/serializers/(.*)_serializer.rb", RAILS_ALTERNATIVE_TARGETS),
+    m(r"/app/services/(.*)_service.rb", RAILS_ALTERNATIVE_TARGETS),
+    m(r"/app/workers/(.*)/(.*)_worker.rb", RAILS_ALTERNATIVE_TARGETS),
+]
+
+REACT = [
+    m(r"(.*).([tj]sx?)\Z", "%1.test.%2", "test"),
+    m(r"(.*).test.([tj]sx?)\Z", "%1.%2", "implementation"),
+]
+
+CUSTOM = [
+    # FolderName/FolderName.tsx <-> FolderName/tests/FolderName.test.tsx
+    m(r"(.*)/(.*)/(\2)\.tsx\Z", "%1/%2/tests/%3.test.tsx", "test"),
+    m(r"(.*)/(.*)/tests/(\2)\.test\.tsx\Z", "%1/%2/%3.tsx", "component"),
+    # FolderName/FolderName.ts <-> FolderName/tests/FolderName.test.tsx (or .ts)
+    m(
+        r"(.*)/(.*)/(\2)\.ts\Z",
+        [
+            t("%1/%2/tests/%3.test.tsx", "test (tsx)"),
+            t("%1/%2/tests/%3.test.ts", "test (ts)"),
+        ],
+    ),
+    m(r"(.*)/(.*)/tests/(\2)\.test\.tsx?\Z", "%1/%2/%3.ts", "source"),
+    # file.ts <-> tests/file.test.ts
+    m(r"(.*)/(.*?)\.ts\Z", "%1/tests/%2.test.ts", "test"),
+    m(r"(.*)/tests/(.*?)\.test\.ts\Z", "%1/%2.ts", "source"),
+    # components/.../lib/foo.rb <-> components/.../test/lib/foo_test.rb
+    m(r"(.*)/lib/(.*)\.rb\Z", "%1/test/lib/%2_test.rb", "test"),
+    m(r"(.*)/test/lib/(.*)_test\.rb\Z", "%1/lib/%2.rb", "source"),
+]
+
+
+def expand_mapping(mapping):
+    """Port of expand_mapping: sub-targets override target/context/transformer."""
+    if not isinstance(mapping["target"], list):
+        return [mapping]
+    expanded = []
+    for sub in mapping["target"]:
+        new = dict(mapping)
+        new["target"] = sub["target"]
+        for key in ("context", "transformer"):
+            if sub[key] is not None:
+                new[key] = sub[key]
+        expanded.append(new)
+    return expanded
+
+
+def resolve_mappings():
+    resolved = []
+    for mapping in RAILS + REACT + CUSTOM:
+        for expanded in expand_mapping(mapping):
+            expanded = dict(expanded)
+            expanded["regex"] = re.compile(expanded["pattern"], re.DOTALL)
+            resolved.append(expanded)
+    return resolved
+
+
+MAPPINGS = resolve_mappings()
+
+
+# --- matching ----------------------------------------------------------------
+
+
+def substitute_placeholders(template, values):
+    return re.sub(
+        r"%(\d)",
+        lambda found: values[int(found.group(1)) - 1]
+        if 0 < int(found.group(1)) <= len(values)
+        else "",
+        template,
+    )
+
+
+def vim_glob(pattern):
+    """Approximate vim.fn.glob(escape_glob(pattern), true, true)."""
+    pattern = pattern.replace("%+", "+")
+    escaped = "".join({"[": "[[]", "]": "[]]"}.get(char, char) for char in pattern)
+    return sorted(glob.glob(escaped, recursive=True))
+
+
+def is_readable_file(path):
+    return os.path.isfile(path) and os.access(path, os.R_OK)
+
+
+def process_single_mapping(mapping, current_file, matches):
+    regex = mapping["regex"]
+    if not regex.search(current_file):
+        return matches
+
+    transform = TRANSFORMERS.get(mapping["transformer"])
+
+    def replace(found):
+        captures = [group if group is not None else "" for group in found.groups()]
+        if transform:
+            captures = [transform(capture) for capture in captures]
+        return substitute_placeholders(mapping["target"], captures)
+
+    target = regex.sub(replace, current_file)
+
+    if os.path.isdir(target):
+        candidates = vim_glob(target + "*")
+    elif "*" not in target:
+        candidates = [target]
+    else:
+        candidates = vim_glob(target)
+
+    seen = {match["filename"] for match in matches}
+    for candidate in candidates:
+        if candidate not in seen and candidate != current_file:
+            seen.add(candidate)
+            matches.append(
+                {
+                    "context": mapping["context"] or "",
+                    "filename": candidate,
+                    "exists": is_readable_file(candidate),
+                }
+            )
+    return matches
+
+
+def find_other_files(current_file):
+    matches = []
+    for mapping in MAPPINGS:
+        matches = process_single_mapping(mapping, current_file, matches)
+    # Stable: existing files first, otherwise preserve mapping order.
+    return sorted(matches, key=lambda match: not match["exists"])
+
+
+def main(argv):
+    show_all = False
+    files = []
+    for arg in argv:
+        if arg == "--all":
+            show_all = True
+        elif arg in ("-h", "--help"):
+            print(USAGE)
+            return 0
+        else:
+            files.append(arg)
+    if len(files) != 1:
+        print(USAGE, file=sys.stderr)
+        return 2
+
+    matches = find_other_files(os.path.abspath(files[0]))
+    if not matches:
+        print("No alternate files found", file=sys.stderr)
+        return 1
+
+    if show_all:
+        for match in matches:
+            status = "exists" if match["exists"] else "new"
+            print(f"{match['context']}\t{match['filename']}\t{status}")
+        return 0
+
+    chosen = next((match for match in matches if match["exists"]), matches[0])
+    print(chosen["filename"])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

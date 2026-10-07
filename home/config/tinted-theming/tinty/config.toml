@@ -49,4 +49,6 @@ name = "tinted-zed"
 path = "https://github.com/tinted-theming/tinted-zed"
 themes-dir = "themes"
 supported-systems = ["base16", "base24"]
-hook = 'cp -f "$TINTY_THEME_FILE_PATH" "$HOME/.config/zed/themes/"'
+# Installs the theme as "Tinted Theming" (selected in zed/settings.json) with the
+# same highlight overrides as Neovim's colorscheme.lua.
+hook = 'tinty-zed-hook "$TINTY_THEME_FILE_PATH"'

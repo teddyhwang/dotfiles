@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Install the tinty-generated Zed theme so Zed matches Neovim.
+
+tinty names the generated theme after the scheme ("Base16 Seti UI"), so a
+fixed `theme` in Zed's settings would stop following `tinty apply`. This hook
+installs it under one stable name, "Tinted Theming", which settings.json
+selects. Zed watches its themes directory and reloads the theme on change.
+
+It also applies the highlight overrides from Neovim's
+home/config/nvim/lua/config/colorscheme.lua (and the indent opacity from
+lua/util/indent-opacity.lua), computed from the applied scheme's palette, so
+both editors render the same colors.
+
+Usage: tinty-zed-hook THEME_FILE
+The palette comes from tinty's TINTY_SCHEME_PALETTE_BASExx_HEX_{R,G,B}
+variables. tinty runs this for every new shell (`tinty init`), so the theme
+file is only rewritten when its content changes.
+"""
+
+import json
+import os
+import pathlib
+import sys
+import tempfile
+
+THEME_NAME = "Tinted Theming"
+THEME_FILE_NAME = "tinted-theming.json"
+# Written by the previous hook (`cp -f "$TINTY_THEME_FILE_PATH" ...`).
+LEGACY_THEME_FILE_NAME = "tinted-zed-themes-file.json"
+BASES = [f"base0{digit}" for digit in "0123456789ABCDEF"]
+
+
+def palette_from_env(env):
+    palette = {}
+    for base in BASES:
+        channels = [env.get(f"TINTY_SCHEME_PALETTE_{base.upper()}_HEX_{c}", "") for c in "RGB"]
+        if not all(len(channel) == 2 for channel in channels):
+            return None
+        try:
+            [int(channel, 16) for channel in channels]
+        except ValueError:
+            return None
+        palette[base] = "#" + "".join(channels).lower()
+    return palette
+
+
+def rgb(color):
+    color = color.lstrip("#")
+    return [int(color[index:index + 2], 16) for index in (0, 2, 4)]
+
+
+def blend(foreground, background, alpha):
+    """Same blend as blend_colors() in Neovim's colorscheme.lua."""
+    mixed = [
+        int(fg * alpha + bg * (1 - alpha))
+        for fg, bg in zip(rgb(foreground), rgb(background))
+    ]
+    return "#" + "".join(f"{channel:02x}" for channel in mixed)
+
+
+def opaque(color):
+    return color + "ff"
+
+
+def is_light(palette):
+    red, green, blue = rgb(palette["base00"])
+    return (0.299 * red + 0.587 * green + 0.114 * blue) / 255 > 0.5
+
+
+def neovim_overrides(palette):
+    """Zed equivalents of the Neovim highlight groups, as measured in nvim."""
+    p = palette
+    bg = p["base00"]
+    # Ignored/hidden explorer entries: dimmer than text, still readable.
+    subdued = blend(p["base05"], bg, 0.55)
+    # Visual
+    selection = p["base02"] if is_light(p) else blend(p["base0D"], bg, 0.20)
+
+    style = {
+        # LineNr and CursorLineNr
+        "editor.line_number": opaque(p["base03"]),
+        "editor.active_line_number": opaque(p["base03"]),
+        # colorcolumn=80,120 (ColorColumn)
+        "editor.wrap_guide": opaque(p["base01"]),
+        "editor.active_wrap_guide": opaque(p["base01"]),
+        # listchars (Whitespace)
+        "editor.invisible": opaque(p["base01"]),
+        # SnacksIndent / SnacksIndentScope at 40% opacity
+        "editor.indent_guide": opaque(blend(p["base01"], bg, 0.4)),
+        "editor.indent_guide_active": opaque(blend(p["base0C"], bg, 0.4)),
+        # LspReferenceText/Read/Write
+        "editor.document_highlight.read_background": opaque(p["base01"]),
+        "editor.document_highlight.write_background": opaque(p["base01"]),
+        # MatchParen
+        "editor.document_highlight.bracket_background": opaque(blend(p["base02"], bg, 0.30)),
+        # DiffAdd / DiffDelete
+        "editor.diff_hunk.added.background": opaque(blend(p["base0B"], bg, 0.15)),
+        "editor.diff_hunk.deleted.background": opaque(blend(p["base08"], bg, 0.15)),
+        # WinSeparator
+        "pane_group.border": opaque(p["base03"]),
+        # StatusLine
+        "status_bar.background": opaque(p["base01"]),
+        # SnacksPickerPathIgnored / SnacksPickerPathHidden
+        "ignored": opaque(subdued),
+        "hidden": opaque(subdued),
+        # Highlight on yank (IncSearch)
+        "vim.yank.background": p["base09"] + "80",
+    }
+    # Lualine mode section (a): dark text on the mode color.
+    for mode, base in (
+        ("normal", "base0D"),
+        ("insert", "base0B"),
+        ("visual", "base0E"),
+        ("visual_line", "base0E"),
+        ("visual_block", "base0E"),
+        ("replace", "base08"),
+    ):
+        style[f"vim.{mode}.background"] = opaque(p[base])
+        style[f"vim.{mode}.foreground"] = opaque(bg)
+
+    syntax = {
+        "function": {"color": opaque(p["base08"])},
+        "namespace": {"color": opaque(p["base08"])},
+        "string.special.symbol": {"color": opaque(p["base09"])},
+        "punctuation.delimiter": {"color": opaque(p["base0F"])},
+        "comment": {"color": opaque(p["base03"]), "font_style": "italic"},
+        "hint": {"color": opaque(p["base03"]), "font_style": "italic"},
+        "tag": {"color": opaque(p["base0A"])},
+        "attribute": {"color": opaque(p["base0A"])},
+        "variable.special": {"color": opaque(p["base05"]), "font_style": "italic"},
+        "link_text": {"color": opaque(p["base09"])},
+        "text.literal": {"color": opaque(p["base09"])},
+    }
+    return style, syntax, selection
+
+
+def build_theme(source, palette):
+    theme = json.loads(json.dumps(source))
+    theme["name"] = THEME_NAME
+    variants = theme.get("themes") or []
+    if not variants:
+        raise ValueError("theme file has no themes")
+    # tinty generates one theme per file; keep only that one.
+    variant = variants[0]
+    variant["name"] = THEME_NAME
+    theme["themes"] = [variant]
+    if palette is None:
+        return theme
+
+    style_overrides, syntax_overrides, selection = neovim_overrides(palette)
+    style = variant.setdefault("style", {})
+    style.update(style_overrides)
+    syntax = style.setdefault("syntax", {})
+    for capture, highlight in syntax_overrides.items():
+        merged = dict(syntax.get(capture) or {})
+        merged.update(highlight)
+        syntax[capture] = merged
+    players = style.get("players") or []
+    if players:
+        players[0]["selection"] = opaque(selection)
+    return theme
+
+
+def write_if_changed(path, content):
+    try:
+        if path.read_text() == content:
+            return False
+    except FileNotFoundError:
+        pass
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temp_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(handle, "w") as temp_file:
+            temp_file.write(content)
+        os.chmod(temp_name, 0o644)
+        os.replace(temp_name, path)
+    except BaseException:
+        pathlib.Path(temp_name).unlink(missing_ok=True)
+        raise
+    return True
+
+
+def main(argv, env):
+    if len(argv) < 2 or not argv[1] or not os.path.isfile(argv[1]):
+        return 0
+    config_home = pathlib.Path(env.get("XDG_CONFIG_HOME") or pathlib.Path(env["HOME"], ".config"))
+    themes_dir = config_home / "zed" / "themes"
+
+    source = json.loads(pathlib.Path(argv[1]).read_text())
+    theme = build_theme(source, palette_from_env(env))
+    write_if_changed(themes_dir / THEME_FILE_NAME, json.dumps(theme, indent=2) + "\n")
+
+    legacy = themes_dir / LEGACY_THEME_FILE_NAME
+    if legacy.is_file() and not legacy.is_symlink():
+        legacy.unlink()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv, os.environ))

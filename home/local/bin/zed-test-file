@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Runs the tests in one file for Zed's "test file" task (\T in keymap.json),
+# like \T in Neovim: `dev test FILE` when dev is installed, otherwise the
+# runner vim-test would pick for the file type. Run from the project root.
+set -euo pipefail
+
+file="${1:-}"
+if [[ -z "$file" ]]; then
+  echo "usage: zed-test-file FILE" >&2
+  exit 2
+fi
+
+dev_bin="${ZED_TEST_FILE_DEV:-/opt/dev/bin/dev}"
+if [[ -x "$dev_bin" ]]; then
+  exec "$dev_bin" test "$file"
+fi
+
+case "$file" in
+  *_spec.rb)
+    exec bundle exec rspec "$file"
+    ;;
+  *_test.rb)
+    if [[ -x bin/rails ]]; then
+      exec bin/rails test "$file"
+    fi
+    exec bundle exec ruby -Itest "$file"
+    ;;
+  *_test.go)
+    exec go test "./$(dirname -- "$file")"
+    ;;
+  *.rs)
+    exec cargo test
+    ;;
+  *.py)
+    exec python3 -m pytest "$file"
+    ;;
+  *.test.* | *.spec.*)
+    if [[ -f package.json ]] && grep -q '"vitest"' package.json; then
+      exec npx vitest run "$file"
+    fi
+    exec npx jest "$file"
+    ;;
+esac
+
+echo "zed-test-file: no test runner for $file" >&2
+exit 1

@@ -1,0 +1,75 @@
+// Zed tasks for the Neovim workflows that run terminal programs. keymap.json
+// binds them to the same keys as Neovim (see the comment on each task).
+[
+  {
+    // \lg, \gg: snacks lazygit. keymap.json opens it in the center pane.
+    "label": "lazygit",
+    "command": "lazygit",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": true,
+    "hide": "always",
+    "show_summary": false,
+    "show_command": false
+  },
+  {
+    // \fr: yazi in the current file's directory; the chosen file opens in Zed.
+    "label": "yazi",
+    "command": "chooser=$(mktemp -t zed-yazi.XXXXXX) && yazi --chooser-file=\"$chooser\" \"${ZED_DIRNAME:.}\"; selected=$(head -n 1 \"$chooser\"); rm -f \"$chooser\"; if [ -n \"$selected\" ]; then zed \"$selected\"; fi",
+    "use_new_terminal": true,
+    "hide": "always",
+    "show_summary": false,
+    "show_command": false
+  },
+  {
+    // \oo, \os, \ov: other.nvim alternate file (zed-other-file).
+    "label": "alternate file",
+    "command": "target=$(zed-other-file \"$ZED_FILE\") && zed \"$target\"",
+    "reveal": "never",
+    "hide": "on_success",
+    "show_summary": false,
+    "show_command": false
+  },
+  {
+    // \T: test the current file (`dev test` when dev is installed).
+    "label": "test file",
+    "command": "zed-test-file",
+    "args": ["$ZED_RELATIVE_FILE"],
+    "save": "current"
+  },
+  {
+    // \fs: open the current file in Stewardlens.
+    "label": "stewardlens",
+    "command": "open \"https://stewardlens.shopify.io/search?q=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=\"\"))' \"$ZED_RELATIVE_FILE\")\"",
+    "reveal": "never",
+    "hide": "on_success",
+    "show_summary": false,
+    "show_command": false
+  },
+  {
+    // \ac: sidekick Claude CLI.
+    "label": "claude",
+    "command": "claude",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "hide": "always",
+    "show_summary": false,
+    "show_command": false
+  },
+  {
+    // \ao: sidekick opencode CLI, with the Shopify LLM gateway token when devx exists.
+    "label": "opencode",
+    "command": "if command -v devx >/dev/null 2>&1; then OPENAI_API_KEY=$(devx llm-gateway print-token --key) || exit; export OPENAI_API_KEY; fi; exec opencode",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "hide": "always",
+    "show_summary": false,
+    "show_command": false
+  },
+  {
+    // \ap: sidekick Pi CLI.
+    "label": "pi",
+    "command": "pi",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "hide": "always",
+    "show_summary": false,
+    "show_command": false
+  }
+]

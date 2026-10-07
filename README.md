@@ -147,6 +147,25 @@ text, Backspace deletes text, and only Enter confirms. Other bindings include
 `j`/`k` to move down/up, `q` to close a file panel, `Ctrl+C` to quit, `f` to toggle
 the preview, and `m` to toggle selection mode.
 
+### Zed
+
+Zed follows the Neovim config; change Neovim first, then mirror the change in
+`home/config/zed`. Setup links `settings.json`, `keymap.json` and `tasks.json`
+into `~/.config/zed` one file at a time, because Zed writes other state there.
+
+- `settings.json` turns on vim mode and copies Neovim's options. Comments name
+  the Neovim option or plugin behind each setting.
+- `keymap.json` uses `\` as the leader, as Neovim does. It has the custom
+  mappings from `lua/config/keymaps.lua`, the plugin mappings, and the LazyVim
+  defaults that have a Zed action.
+- `tasks.json` runs the terminal programs: lazygit, yazi (the chosen file
+  opens in Zed), the AI CLIs, `zed-test-file` for `\T`, and `zed-other-file`
+  for the other.nvim alternate file (`\oo`).
+
+The tinty hook `tinty-zed-hook` installs each scheme as the theme "Tinted
+Theming", with the highlight overrides from Neovim's `config/colorscheme.lua`.
+`tinty apply` therefore switches Zed and Neovim together.
+
 ### Pi extensions
 
 Personal Pi extension code and tests live in

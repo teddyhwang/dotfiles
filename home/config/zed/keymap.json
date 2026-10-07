@@ -1,0 +1,297 @@
+// Zed key bindings that follow the Neovim config in home/config/nvim.
+//
+// Leader is `\` (mapleader in nvim's config/options.lua). Bindings come from,
+// in order of precedence: nvim's config/keymaps.lua, its plugin specs
+// (lua/plugins), and the LazyVim defaults it builds on. Comments name the
+// Neovim mapping or plugin when the Zed action differs. Terminal programs
+// (lazygit, yazi, tests, AI CLIs) are tasks in tasks.json.
+//
+// Zed waits one second (Neovim: timeoutlen=300) for a longer sequence, and
+// shows the which-key popup while it waits.
+[
+  {
+    // Normal mode: config/keymaps.lua, then plugin and LazyVim mappings.
+    "context": "vim_mode == normal && !menu",
+    "bindings": {
+      "\\ +": "vim::Increment",
+      "\\ -": "vim::Decrement",
+      "backspace": "buffer_search::Dismiss", // :noh
+
+      // Buffers (bufferline) and tabs
+      "shift-h": "pane::ActivatePreviousItem",
+      "shift-l": "pane::ActivateNextItem",
+      "shift-x": "pane::CloseActiveItem",
+      "<": "pane::SwapItemLeft",
+      ">": "pane::SwapItemRight",
+      "[ shift-b": "pane::SwapItemLeft",
+      "] shift-b": "pane::SwapItemRight",
+      "\\ b b": "pane::AlternateFile",
+      "\\ `": "pane::AlternateFile",
+      "\\ b d": "pane::CloseActiveItem",
+      "\\ b o": "pane::CloseOtherItems",
+      "\\ b p": "pane::TogglePinTab",
+      "\\ b shift-p": "pane::CloseAllItems", // pinned tabs stay open
+      "\\ b r": "pane::CloseItemsToTheRight",
+      "\\ b l": "pane::CloseItemsToTheLeft",
+
+      // Files and explorer (snacks explorer, oil, other.nvim, yazi)
+      "\\ e": "project_panel::ToggleFocus",
+      "-": "pane::RevealInProjectPanel",
+      "\\ o o": ["task::Spawn", { "task_name": "alternate file" }],
+      "\\ o s": ["workspace::SendKeystrokes", "ctrl-w s \\ o o"],
+      "\\ o v": ["workspace::SendKeystrokes", "ctrl-w v \\ o o"],
+      "\\ f r": ["task::Spawn", { "task_name": "yazi", "reveal_target": "center" }],
+      "\\ f y": "workspace::CopyRelativePath",
+      "\\ f shift-y": "workspace::CopyPath",
+      "\\ f t": "terminal_panel::ToggleFocus",
+      "\\ f shift-t": "terminal_panel::ToggleFocus",
+      "\\ f n": "workspace::NewFile",
+      "\\ f c": "zed::OpenSettingsFile",
+      "\\ f p": "projects::OpenRecent",
+      "\\ v": "zed::OpenSettingsFile", // nvim: edit init.lua
+      "\\ f s": ["task::Spawn", { "task_name": "stewardlens" }],
+
+      // Pickers (snacks.picker and fff.nvim)
+      "ctrl-p": "file_finder::Toggle",
+      "ctrl-t": "file_finder::Toggle", // smart picker: recent files first
+      "ctrl-b": "tab_switcher::ToggleAll",
+      "ctrl-f": "pane::DeploySearch",
+      "\\ f f": "file_finder::Toggle",
+      "\\ f g": "pane::DeploySearch",
+      ", f f": "pane::DeploySearch", // grep word under cursor
+      "\\ f b": "tab_switcher::ToggleAll",
+      "\\ f h": "zed::OpenDocs",
+      "\\ space": "file_finder::Toggle",
+      "\\ /": "pane::DeploySearch",
+      "\\ ,": "tab_switcher::ToggleAll",
+      "\\ :": "command_palette::Toggle",
+      "q :": "command_palette::Toggle", // command history (palette ranks recent commands)
+      "\"": "vim::ToggleRegistersView", // snacks registers picker
+      "\\ p": "vim::ToggleRegistersView", // yanky history
+      "\\ s g": "pane::DeploySearch",
+      "\\ s w": "pane::DeploySearch",
+      "\\ s r": ["pane::DeploySearch", { "replace_enabled": true }],
+      "\\ s b": "buffer_search::Deploy",
+      "\\ s s": "outline::Toggle",
+      "\\ s shift-s": "project_symbols::Toggle",
+      "\\ s d": "diagnostics::Deploy",
+      "\\ s shift-d": "diagnostics::DeployCurrentFile",
+      "\\ s k": "zed::OpenKeymap",
+      "\\ s c": "command_palette::Toggle",
+      "\\ s shift-c": "command_palette::Toggle",
+      "\\ s h": "zed::OpenDocs",
+      "\\ s m": "vim::ToggleMarksView",
+
+      // Git (snacks, gitlinker, gitsigns, worktrees.nvim)
+      "\\ g b": "git::Branch",
+      "\\ g l": "git_graph::Open",
+      "\\ g shift-l": "git_graph::Open",
+      "\\ g f": "git::FileHistory",
+      "\\ g d": "git::Diff",
+      "\\ g s": "git_panel::ToggleFocus",
+      "\\ l g": ["task::Spawn", { "task_name": "lazygit", "reveal_target": "center" }],
+      "\\ g g": ["task::Spawn", { "task_name": "lazygit", "reveal_target": "center" }],
+      "\\ g shift-g": ["task::Spawn", { "task_name": "lazygit", "reveal_target": "center" }],
+      "\\ g y": "editor::CopyPermalinkToLine",
+      "\\ g shift-y": "editor::OpenPermalinkToLine",
+      "\\ g shift-b": "editor::OpenPermalinkToLine",
+      "\\ g w s": "git::Worktree",
+      "\\ g w n": "git::Worktree", // type a name to create one
+      "\\ g w d": "git::Worktree",
+      "] h": "editor::GoToHunk",
+      "[ h": "editor::GoToPreviousHunk",
+      "\\ g h s": "git::ToggleStaged",
+      "\\ g h r": "git::Restore",
+      "\\ g h shift-s": "git::StageFile",
+      "\\ g h shift-r": "git::RestoreFile",
+      "\\ g h p": "editor::ToggleSelectedDiffHunks",
+      "\\ g h b": "editor::BlameHover",
+      "\\ g h shift-b": "git::Blame",
+
+      // LSP
+      "g r": "editor::FindAllReferences",
+      "g shift-k": "editor::ShowSignatureHelp",
+      "\\ c a": "editor::ToggleCodeActions",
+      "\\ r n": "editor::Rename",
+      "\\ c r": "editor::Rename",
+      "\\ c f": "editor::Format",
+      "\\ c d": "editor::Hover", // line diagnostics
+      "\\ c s": "outline_panel::ToggleFocus",
+      "\\ c p": "markdown::OpenPreviewToTheSide",
+      "] e": ["editor::GoToDiagnostic", { "severity": "error" }],
+      "[ e": ["editor::GoToPreviousDiagnostic", { "severity": "error" }],
+      "] w": ["editor::GoToDiagnostic", { "severity": "warning" }],
+      "[ w": ["editor::GoToPreviousDiagnostic", { "severity": "warning" }],
+      "\\ x x": "diagnostics::Deploy",
+      "\\ x shift-x": "diagnostics::DeployCurrentFile",
+
+      // Utility
+      "\\ shift-v": ["workspace::SendKeystrokes", "g g shift-v shift-g"],
+      "\\ shift-y": ["workspace::SendKeystrokes", "m ` y a e ` `"], // :%y+
+      "\\ q": "pane::CloseActiveItem",
+      "\\ q q": "zed::Quit",
+      "g c o": ["workspace::SendKeystrokes", "o x escape g c c shift-a backspace"],
+      "g c shift-o": ["workspace::SendKeystrokes", "shift-o x escape g c c shift-a backspace"],
+
+      // UI toggles (\u)
+      "\\ u shift-m": "editor::ToggleMinimap",
+      "\\ u w": "editor::ToggleSoftWrap",
+      "\\ u l": "editor::ToggleLineNumbers",
+      "\\ u shift-l": "editor::ToggleRelativeLineNumbers",
+      "\\ u d": "editor::ToggleDiagnostics",
+      "\\ u h": "editor::ToggleInlayHints",
+      "\\ u g": "editor::ToggleIndentGuides",
+      "\\ u shift-g": "editor::ToggleGitBlameInline",
+      "\\ u shift-a": "editor::ToggleTabBar",
+      "\\ u shift-c": "theme_selector::Toggle",
+      "\\ u n": "workspace::ClearAllNotifications",
+      "\\ u z": "workspace::ToggleCenteredLayout",
+      "\\ u shift-z": "workspace::ToggleZoom",
+
+      // Windows (LazyVim, vim-zoom, undoquit)
+      "\\ |": "pane::SplitVertical",
+      "\\ w d": "pane::CloseAllItems",
+      "\\ w m": "workspace::ToggleZoom",
+      "ctrl-w m": "workspace::ToggleZoom",
+      "ctrl-w u": "pane::ReopenClosedItem",
+
+      // Tests and commands (vimux, vim-test)
+      "\\ !": "task::Spawn", // type a command, then alt-enter
+      "\\ t": "editor::SpawnNearestTask",
+      "\\ shift-t": ["task::Spawn", { "task_name": "test file" }],
+
+      // AI (sidekick)
+      "\\ a a": "agent::ToggleFocus",
+      "\\ a c": ["task::Spawn", { "task_name": "claude" }],
+      "\\ a o": ["task::Spawn", { "task_name": "opencode" }],
+      "\\ a p": ["task::Spawn", { "task_name": "pi" }],
+
+      // mini.surround (gsa/gsd/gsr) replaces `g s` (outline: \ss)
+      "g s": null,
+      "g s a": ["vim::PushAddSurrounds", {}],
+      "g s d": "vim::PushDeleteSurrounds",
+      "g s r": ["vim::PushChangeSurrounds", {}],
+
+      // vim-tmux-navigator / herdr-splits
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-l": "workspace::ActivatePaneRight",
+
+      // flash.nvim
+      "s": "vim::HelixJumpToWord",
+      // vim-visual-multi
+      "ctrl-n": "vim::SelectNext"
+    }
+  },
+  {
+    // Visual mode
+    "context": "vim_mode == visual && !menu",
+    "bindings": {
+      "\\ c a": "editor::ToggleCodeActions",
+      "\\ c f": "editor::FormatSelections",
+      "\\ s w": "pane::DeploySearch",
+      "\\ g y": "editor::CopyPermalinkToLine",
+      "\\ g shift-y": "editor::OpenPermalinkToLine",
+      "\\ g shift-b": "editor::OpenPermalinkToLine",
+      "\\ g h s": "git::ToggleStaged",
+      "\\ g h r": "git::Restore",
+      "g s a": "vim::PushAddSurrounds",
+      "s": "vim::HelixJumpToWord",
+      "ctrl-n": "vim::SelectNext"
+    }
+  },
+  {
+    // Normal, visual and insert mode (LazyVim)
+    "context": "Editor && (vim_mode == normal || vim_mode == visual || vim_mode == insert)",
+    "bindings": {
+      "ctrl-s": "workspace::Save",
+      "alt-j": "editor::MoveLineDown",
+      "alt-k": "editor::MoveLineUp",
+      // herdr-splits resize
+      "ctrl-alt-h": "vim::ResizePaneLeft",
+      "ctrl-alt-j": "vim::ResizePaneDown",
+      "ctrl-alt-k": "vim::ResizePaneUp",
+      "ctrl-alt-l": "vim::ResizePaneRight",
+      // LazyVim resize
+      "ctrl-up": "vim::ResizePaneUp",
+      "ctrl-down": "vim::ResizePaneDown",
+      "ctrl-left": "vim::ResizePaneLeft",
+      "ctrl-right": "vim::ResizePaneRight"
+    }
+  },
+  {
+    // blink.cmp: ctrl-j/ctrl-k select; tab accepts (Zed default).
+    "context": "Editor && (showing_completions || showing_code_actions)",
+    "bindings": {
+      "ctrl-j": "editor::ContextMenuNext",
+      "ctrl-k": "editor::ContextMenuPrevious"
+    }
+  },
+  {
+    // LazyVim: ctrl-k in insert mode shows signature help.
+    "context": "vim_mode == insert && !showing_completions && !showing_code_actions",
+    "bindings": {
+      "ctrl-k": "editor::ShowSignatureHelp"
+    }
+  },
+  {
+    // fff.nvim / snacks.picker list navigation
+    "context": "Picker > Editor",
+    "bindings": {
+      "ctrl-j": "menu::SelectNext",
+      "ctrl-k": "menu::SelectPrevious",
+      "ctrl-c": "menu::Cancel"
+    }
+  },
+  {
+    // Snacks explorer and oil
+    "context": "ProjectPanel && not_editing",
+    "bindings": {
+      "backspace": "project_panel::SelectParent",
+      "\\ e": "project_panel::ToggleFocus"
+    }
+  },
+  {
+    // Panels, empty panes and other views without an editor.
+    "context": "!Editor && !Terminal",
+    "bindings": {
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-p": "file_finder::Toggle",
+      "ctrl-t": "file_finder::Toggle",
+      "ctrl-b": "tab_switcher::ToggleAll",
+      "\\ e": "project_panel::ToggleFocus",
+      "\\ f f": "file_finder::Toggle",
+      "\\ f g": "pane::DeploySearch",
+      "\\ f t": "terminal_panel::ToggleFocus",
+      "\\ f r": ["task::Spawn", { "task_name": "yazi", "reveal_target": "center" }],
+      "\\ g s": "git_panel::ToggleFocus",
+      "\\ l g": ["task::Spawn", { "task_name": "lazygit", "reveal_target": "center" }],
+      "\\ g g": ["task::Spawn", { "task_name": "lazygit", "reveal_target": "center" }],
+      "\\ a a": "agent::ToggleFocus",
+      "\\ q q": "zed::Quit"
+    }
+  },
+  {
+    // Terminal: pane navigation like tmux, `C-x` clears (tmux sends C-l).
+    "context": "Terminal",
+    "bindings": {
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-l": "workspace::ActivatePaneRight",
+      "ctrl-x": "terminal::Clear",
+      "ctrl-\\ ctrl-n": "terminal::ToggleViMode" // leave terminal mode
+    }
+  },
+  {
+    // LazyVim: ctrl-/ toggles the terminal from anywhere.
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-/": "terminal_panel::ToggleFocus"
+    }
+  }
+]

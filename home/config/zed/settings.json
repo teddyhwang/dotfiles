@@ -1,12 +1,14 @@
 // Zed settings
 //
-// For information on how to configure Zed, see the Zed
-// documentation: https://zed.dev/docs/configuring-zed
+// Zed follows the Neovim config in home/config/nvim (LazyVim). Each setting
+// notes the Neovim option or plugin it mirrors. Key bindings are in
+// keymap.json and terminal programs (lazygit, yazi, tests, AI CLIs) in
+// tasks.json.
 //
-// To see all of Zed's default settings without changing your
-// custom settings, run `zed: open default settings` from the
-// command palette (cmd-shift-p / ctrl-shift-p)
+// To see all of Zed's default settings, run `zed: open default settings`
+// from the command palette.
 {
+  "cli_default_open_behavior": "existing_window",
   "telemetry": {
     "diagnostics": false,
     "metrics": false
@@ -19,26 +21,202 @@
       "type": "registry"
     }
   },
-  "buffer_font_family": "JetBrainsMonoNL Nerd Font Propo",
-  "vim_mode": true,
-  "project_panel": {
-    "dock": "left"
-  },
-  "terminal": {
-    "font_weight": 300.0,
-    "font_size": 12.0,
-    "font_family": "JetBrainsMonoNL Nerd Font"
-  },
+
+  // Appearance
+  //
+  // tinty-zed-hook installs the current tinty scheme as "Tinted Theming", with
+  // the highlight overrides from nvim's config/colorscheme.lua. `tinty apply`
+  // switches Zed and Neovim together.
+  "theme": "Tinted Theming",
   "icon_theme": {
     "mode": "light",
     "light": "Zed (Default)",
     "dark": "Zed (Default)"
   },
   "ui_font_size": 16.0,
+  "buffer_font_family": "JetBrainsMonoNL Nerd Font Propo",
   "buffer_font_size": 13.0,
-  "theme": {
-    "mode": "dark",
-    "light": "One Light",
-    "dark": "Base16 Seti UI"
+  // guicursor: steady block in normal/visual, bar in insert, underline in replace.
+  "cursor_blink": false,
+  // vimade fades inactive windows (fadelevel 0.6).
+  "active_pane_modifiers": {
+    "inactive_opacity": 0.6
   },
+  // neominimap (auto_enable).
+  "minimap": {
+    "show": "always",
+    "display_in": "all_editors",
+    "thumb": "always"
+  },
+  // bufferline: file icons, git status and LSP diagnostics on each buffer.
+  "tabs": {
+    "file_icons": true,
+    "git_status": true,
+    "show_diagnostics": "all"
+  },
+  // Every opened file gets a real buffer, as in Neovim.
+  "preview_tabs": {
+    "enabled": false
+  },
+
+  // Vim
+  "vim_mode": true,
+  "vim": {
+    // nvim-numbertoggle: relative numbers in normal mode, absolute in insert.
+    "toggle_relative_line_numbers": true,
+    // LazyVim: clipboard=unnamedplus.
+    "use_system_clipboard": "always",
+    // LazyVim highlights yanks for 150ms.
+    "highlight_on_yank_duration": 150,
+    "cursor_shape": {
+      "normal": "block",
+      "visual": "block",
+      "insert": "bar",
+      "replace": "underline"
+    }
+  },
+  // which-key.nvim with timeoutlen=300.
+  "which_key": {
+    "enabled": true,
+    "delay_ms": 300
+  },
+  // Command aliases from nvim's config/autocmds.lua. Zed commands take no
+  // arguments, so the netrw/Oil variants reveal the file in the project panel.
+  "command_aliases": {
+    "WQ": "wq",
+    "Wq": "wq",
+    "Wa": "wa",
+    "W": "w",
+    "Q": "q",
+    "Qa": "qa",
+    "Vs": "vs",
+    "Tabe": "tabedit",
+    "Ex": "pane::RevealInProjectPanel",
+    "Vex": "pane::RevealInProjectPanel",
+    "VEx": "pane::RevealInProjectPanel",
+    "Se": "pane::RevealInProjectPanel",
+    "Sex": "pane::RevealInProjectPanel",
+    "SEx": "pane::RevealInProjectPanel"
+  },
+
+  // Editor options (nvim config/options.lua and LazyVim defaults)
+  "relative_line_numbers": "enabled", // relativenumber
+  "vertical_scroll_margin": 3, // scrolloff=3
+  "horizontal_scroll_margin": 8, // sidescrolloff=8
+  "soft_wrap": "none", // nowrap
+  "tab_size": 2, // tabstop=2 shiftwidth=2
+  "hard_tabs": false, // expandtab
+  "show_wrap_guides": true, // colorcolumn=80,120
+  "wrap_guides": [80, 120],
+  "current_line_highlight": "line", // cursorline
+  "show_whitespaces": "trailing", // list, listchars trail:⋅ tab:›-
+  "whitespace_map": {
+    "space": "⋅",
+    "tab": "›"
+  },
+  "use_smartcase_search": true, // ignorecase smartcase
+  // splitright=false splitbelow=false: new splits open left and above.
+  "pane_split_direction_vertical": "left",
+  "pane_split_direction_horizontal": "up",
+  // Snacks explorer/terminal toggles: toggling a focused panel closes it.
+  "close_panel_on_toggle": true,
+  "gutter": {
+    "folds": false // nofoldenable
+  },
+  "indent_guides": {
+    "enabled": true, // snacks indent
+    "coloring": "fixed"
+  },
+  "project_panel": {
+    "dock": "left",
+    "auto_reveal_entries": true // snacks explorer follows the current file
+  },
+
+  // LSP, formatting and diagnostics
+  "format_on_save": "on", // LazyVim autoformat (conform)
+  "inlay_hints": {
+    "enabled": true // LazyVim enables inlay hints
+  },
+  "diagnostics": {
+    "inline": {
+      "enabled": true // virtual_text = true
+    }
+  },
+  // git-blame.nvim
+  "git": {
+    "inline_blame": {
+      "enabled": true,
+      "show_commit_summary": true
+    }
+  },
+  // LazyVim copilot extra.
+  "edit_predictions": {
+    "provider": "copilot"
+  },
+  // Filetypes from nvim's config/autocmds.lua.
+  "file_types": {
+    "Ruby": ["rbi"],
+    "JSON": ["ejson"],
+    "XML": ["plist"],
+    "Git Config": ["*.shared.gitconfig"]
+  },
+  // LazyVim language extras and treesitter parsers that Zed doesn't bundle.
+  "auto_install_extensions": {
+    "docker-compose": true,
+    "dockerfile": true,
+    "git-firefly": true,
+    "graphql": true,
+    "html": true,
+    "hyprlang": true,
+    "lua": true,
+    "ruby": true,
+    "sql": true,
+    "tmux": true,
+    "toml": true,
+    "xml": true
+  },
+  "languages": {
+    // LazyVim ruby extra: ruby-lsp, formatting with rubocop.
+    "Ruby": {
+      "language_servers": [
+        "ruby-lsp",
+        "!solargraph",
+        "!rubocop",
+        "!sorbet",
+        "!steep",
+        "!kanayago",
+        "!fuzzy-ruby-server",
+        "..."
+      ]
+    },
+    // LazyVim eslint extra fixes on save.
+    "JavaScript": {
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    },
+    "TypeScript": {
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    },
+    "TSX": {
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    }
+  },
+  "lsp": {
+    "ruby-lsp": {
+      "initialization_options": {
+        "formatter": "rubocop"
+      }
+    }
+  },
+
+  "terminal": {
+    "font_weight": 300.0,
+    "font_size": 12.0,
+    "font_family": "JetBrainsMonoNL Nerd Font"
+  }
 }

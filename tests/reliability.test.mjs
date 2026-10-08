@@ -282,6 +282,24 @@ test("fresh Homebrew caches are portable and not empty in nested shells", { skip
   ok(spawnSync("sh", ["-n", path.join(home, ".cache/brew_shellenv.posix.sh")], { encoding: "utf8" }));
 });
 
+test("Herdr panes inside Kitty-capable terminals re-enable Pi inline images", async (t) => {
+  const { env } = await fixture(t);
+  for (const key of ["TERM_PROGRAM", "PI_IMAGE_PROTOCOL", "GHOSTTY_RESOURCES_DIR", "KITTY_WINDOW_ID", "WEZTERM_PANE"]) delete env[key];
+  const protocol = (shell, extra) => {
+    const result = run(shell, `. "${repo}/home/shared/env"; printf '%s' "\${PI_IMAGE_PROTOCOL-unset}"`, { ...env, ...extra });
+    ok(result);
+    return result.stdout;
+  };
+  for (const shell of ["bash", "zsh"]) {
+    assert.equal(protocol(shell, { TERM_PROGRAM: "herdr", GHOSTTY_RESOURCES_DIR: "/ghostty" }), "kitty");
+    assert.equal(protocol(shell, { TERM_PROGRAM: "herdr", KITTY_WINDOW_ID: "1" }), "kitty");
+    assert.equal(protocol(shell, { TERM_PROGRAM: "herdr", WEZTERM_PANE: "0" }), "kitty");
+    assert.equal(protocol(shell, { TERM_PROGRAM: "herdr" }), "unset", "unknown outer terminal");
+    assert.equal(protocol(shell, { TERM_PROGRAM: "ghostty", GHOSTTY_RESOURCES_DIR: "/ghostty" }), "unset", "Pi detects directly");
+    assert.equal(protocol(shell, { TERM_PROGRAM: "herdr", GHOSTTY_RESOURCES_DIR: "/ghostty", PI_IMAGE_PROTOCOL: "none" }), "none");
+  }
+});
+
 test("Neovim's frequent autoread events check one file and skip special buffers", (t) => {
   if (spawnSync("nvim", ["--version"]).status !== 0) return t.skip("Neovim is not installed");
   const lua = `

@@ -83,6 +83,14 @@ if [[ -z "${XDG_CONFIG_HOME:-}" ]]; then
   export XDG_CONFIG_HOME="$HOME/.config"
 fi
 
+# Pi 1.1 disables inline images whenever TERM_PROGRAM=herdr, but Herdr forwards
+# the Kitty graphics protocol to a capable outer terminal. Re-enable previews
+# only when Herdr was launched from one; an explicit PI_IMAGE_PROTOCOL wins.
+if [[ "${TERM_PROGRAM:-}" == herdr && -z "${PI_IMAGE_PROTOCOL:-}" ]] &&
+  [[ -n "${GHOSTTY_RESOURCES_DIR:-}${KITTY_WINDOW_ID:-}${WEZTERM_PANE:-}" ]]; then
+  export PI_IMAGE_PROTOCOL=kitty
+fi
+
 if command -v vivid &>/dev/null; then
   _vivid_bin=$(command -v vivid)
   _vivid_cache="$_cache_dir/vivid_ls_colors"

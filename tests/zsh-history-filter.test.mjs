@@ -16,6 +16,7 @@ const generated = [
   "pi --extension '/home/example/path with spaces/pi-herdsman/dist/index.js'",
   "claude --session-id example --append-system-prompt-file /Users/teddyhwang/.claude/herdsman/prompts/example.md --model sonnet",
   "claude --resume example --append-system-prompt-file /home/example/.claude/herdsman/prompts/example.md",
+  "cd /Users/example/.herdr/worktrees/repo/pi-worktree-fix/sub && { pi --model sonnet fix\\ it; _pi_herdr_worktree_close pi-worktree/fix main; }",
 ];
 const ordinary = [
   "pi",
@@ -26,6 +27,7 @@ const ordinary = [
   "claude --resume example",
   "claude --append-system-prompt-file /tmp/normal-prompt.md",
   "git status",
+  "cd ~/src/repo && pi",
 ];
 
 function run(script, args = [], interactive = false) {

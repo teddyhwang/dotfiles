@@ -25,9 +25,10 @@ zinit light romkatv/powerlevel10k
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSH_AUTOSUGGEST_USE_ASYNC='true'
-# Hide generated Herdsman launches even when already in native Zsh history,
+# Hide generated Herdsman launches and the pi launches that `pi --worktree`
+# types into new Herdr worktree panes, even when already in native Zsh history,
 # and exclude them when saving history. Keep ordinary pi/claude commands.
-ZSH_AUTOSUGGEST_HISTORY_IGNORE='(pi *--extension *pi-herdsman/*|claude *--append-system-prompt-file */.claude/herdsman/prompts/*)'
+ZSH_AUTOSUGGEST_HISTORY_IGNORE='(pi *--extension *pi-herdsman/*|claude *--append-system-prompt-file */.claude/herdsman/prompts/*|cd *_pi_herdr_worktree_close *)'
 HISTORY_IGNORE=$ZSH_AUTOSUGGEST_HISTORY_IGNORE
 ZVM_INIT_MODE=sourcing
 

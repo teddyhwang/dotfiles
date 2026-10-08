@@ -247,6 +247,166 @@ gwd() {
   fi
 }
 
+# Inside Herdr, `pi --worktree [name]` never starts pi in this pane. Herdr
+# creates the checkout on branch pi-worktree/<name> from this checkout's HEAD,
+# opens it as a focused workspace grouped with the repository, and pi starts in
+# its pane, in the same subdirectory, with the remaining arguments. An existing
+# branch is checked out instead. When that pi exits, the pane asks whether to
+# remove the worktree. Resumed sessions and print/JSON/RPC runs keep the
+# pi-extensions in-session worktree.
+pi() {
+  local rc=125
+  if [[ "${HERDR_ENV:-}" == 1 ]]; then
+    _pi_herdr_worktree "$@"
+    rc=$?
+  fi
+  ((rc == 125)) || return "$rc"
+  command pi "$@"
+}
+
+# Returns 125 when the call is not a Herdr worktree launch.
+_pi_herdr_worktree() {
+  local arg name="" requested=0 name_re='^[A-Za-z0-9][A-Za-z0-9._-]*$'
+  local prefix head start branch created message pane checkout target command
+  local herdr_bin="${HERDR_BIN_PATH:-herdr}"
+  local -a args=() base=()
+  # Parse --worktree exactly like the extension: an optional name follows
+  # unless it looks like a flag or an @file.
+  while (($#)); do
+    arg=$1
+    shift
+    case "$arg" in
+    --worktree=*)
+      requested=1
+      name=${arg#--worktree=}
+      ;;
+    --worktree)
+      requested=1
+      name=""
+      if (($#)) && [[ "$1" != -* && "$1" != @* ]]; then
+        name=$1
+        shift
+      fi
+      ;;
+    -c | --continue | -r | --resume | --session | --session=* | --session-id | --session-id=* | \
+      --fork | --fork=* | -p | --print | --mode | --mode=*)
+      return 125
+      ;;
+    *) args+=("$arg") ;;
+    esac
+  done
+  ((requested)) || return 125
+  prefix=$(git rev-parse --show-prefix 2>/dev/null) || return 125
+
+  name=${name:-$(date +%Y%m%d-%H%M%S)-$$}
+  branch="pi-worktree/$name"
+  if ((${#name} > 100)) || ! [[ "$name" =~ $name_re ]] ||
+    ! git check-ref-format --branch "$branch" >/dev/null 2>&1; then
+    printf 'pi: invalid worktree name: %s\n' "$name" >&2
+    return 2
+  fi
+  if ! git show-ref --verify --quiet "refs/heads/$branch"; then
+    head=$(git rev-parse --verify --quiet HEAD) && base=(--base "$head")
+  fi
+  start=$(git symbolic-ref --short --quiet HEAD || git rev-parse --verify --quiet HEAD)
+
+  if ! created=$("$herdr_bin" worktree create --cwd "$PWD" --branch "$branch" \
+    "${base[@]}" --label "$name" --focus 2>&1); then
+    message=$(jq -r '.error.message // empty' <<<"$created" 2>/dev/null)
+    printf 'pi: Herdr could not create the worktree: %s\n' "${message:-$created}" >&2
+    return 1
+  fi
+  IFS=$'\t' read -r pane checkout < <(jq -r \
+    '.result | [.root_pane.pane_id // "", .worktree.path // .root_pane.cwd // ""] | @tsv' <<<"$created")
+  if [[ -z "$pane" || -z "$checkout" ]]; then
+    printf 'pi: Herdr created the worktree but reported no pane\n' >&2
+    return 1
+  fi
+
+  target="$checkout${prefix:+/${prefix%/}}"
+  [[ -d "$target" ]] || target=$checkout
+  command="cd $(printf '%q' "$target") && { pi"
+  for arg in "${args[@]}"; do
+    command+=" $(printf '%q' "$arg")"
+  done
+  command+="; _pi_herdr_worktree_close $(printf '%q' "$branch") $(printf '%q' "${start:-HEAD}"); }"
+  # A fresh shell reads the command as typeahead, so there is no need to wait.
+  if ! "$herdr_bin" pane run "$pane" "$command" >/dev/null; then
+    printf 'pi: worktree %s is open in Herdr, but pi could not be started there\n' "$checkout" >&2
+    return 1
+  fi
+  printf 'pi: started in Herdr worktree %s (%s)\n' "$checkout" "$branch"
+}
+
+# Runs in the worktree's pane after pi exits and asks before removing the
+# worktree. Committed work is never lost: the branch is kept unless it has no
+# commits beyond the starting branch, and an unreachable detached HEAD gets a
+# safety branch. Removal also closes the worktree's Herdr workspace.
+_pi_herdr_worktree_close() {
+  local branch=$1 start=$2 root primary changes head ahead answer workspace
+  local herdr_bin="${HERDR_BIN_PATH:-herdr}" safety="" delete_branch=0 default="Y/n"
+  local details=""
+  local -a remove=(worktree remove)
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || return 0
+  primary=$(git worktree list --porcelain | awk '/^worktree / { sub(/^worktree /, ""); print; exit }')
+  [[ -n "$primary" && "$root" != "$primary" ]] || return 0
+
+  changes=$(git -C "$root" status --porcelain --untracked-files=normal --ignored=matching) || return 1
+  if [[ -n "$changes" ]]; then
+    remove+=(--force)
+    default="y/N"
+    details+=$'\nThese files are deleted:\n'"$(printf '%s\n' "$changes" | head -n 8)"
+    (($(printf '%s\n' "$changes" | wc -l) > 8)) && details+=$'\n...'
+  fi
+  if ! git -C "$root" symbolic-ref --quiet HEAD >/dev/null; then
+    head=$(git -C "$root" rev-parse HEAD)
+    if [[ -z "$(git for-each-ref --count=1 --contains "$head" refs/heads)" ]]; then
+      safety="$branch-detached-${head:0:8}"
+      details+=$'\n'"Detached HEAD commits are kept on branch $safety."
+    fi
+  fi
+  if git show-ref --verify --quiet "refs/heads/$branch"; then
+    ahead=$(git rev-list --count --right-only --cherry-pick "$start...$branch" 2>/dev/null)
+    if [[ "$ahead" == 0 ]]; then
+      delete_branch=1
+      details+=$'\n'"Branch $branch has no commits beyond $start and is deleted."
+    elif [[ -n "$ahead" ]]; then
+      details+=$'\n'"Branch $branch is kept with $ahead commit(s) not in $start."
+    else
+      details+=$'\n'"Branch $branch is kept."
+    fi
+  fi
+
+  printf '\nRemove worktree %s and close its Herdr workspace?%s\n(%s) ' "$root" "$details" "$default"
+  IFS= read -r answer || answer=n
+  case "$answer" in
+  [Yy] | [Yy][Ee][Ss]) ;;
+  "") [[ "$default" == "Y/n" ]] || answer=n ;;
+  *) answer=n ;;
+  esac
+  if [[ "$answer" == n ]]; then
+    printf 'Kept %s. Run pi to continue, or remove it with Herdr'\''s remove-worktree action.\n' "$root"
+    return 0
+  fi
+
+  # Look up the workspace before the checkout disappears.
+  workspace=$("$herdr_bin" workspace list 2>/dev/null | jq -r --arg path "$root" \
+    'first(.result.workspaces[] | select(.worktree.checkout_path == $path and .worktree.is_linked_worktree) | .workspace_id) // empty')
+  cd "$primary" || return 1
+  [[ -z "$safety" ]] || git branch "$safety" "$head" || {
+    cd "$root" || true
+    return 1
+  }
+  if ! git "${remove[@]}" -- "$root"; then
+    cd "$root" || true
+    return 1
+  fi
+  ((delete_branch)) && git branch -D -- "$branch" >/dev/null
+  printf 'Removed %s.\n' "$root"
+  # Closing the workspace also ends this shell, so it comes last.
+  [[ -z "$workspace" ]] || "$herdr_bin" workspace close "$workspace" >/dev/null
+}
+
 # Herdr emits no event when a shell changes directory or Git HEAD, so a tab
 # named after its repository and branch stays stale until something unrelated
 # happens. Ask the tab-autoname plugin to refresh when either changes. The

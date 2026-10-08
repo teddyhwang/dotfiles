@@ -175,6 +175,18 @@ This repository manages Pi configuration and integration wiring only; do not
 add extension implementations here or maintain separate personal copies in
 `~/.pi/agent/extensions`. After package changes, use `/reload` in active sessions.
 
+Inside Herdr, the `pi` shell function in `home/shared/functions` handles
+`pi --worktree [name]` before pi starts. Herdr creates the checkout on branch
+`pi-worktree/<name>` from the current `HEAD` and focuses its new workspace.
+The function then types `pi` and the remaining arguments into that
+workspace's pane, in the same subdirectory, so no pi starts in the launching
+pane. When that pi exits, the pane asks whether to remove the worktree and
+close its workspace. Enter confirms only when nothing would be lost. Commits
+always survive: the branch is kept unless it has no new commits, and a
+detached `HEAD` gets a safety branch. Resumed sessions (`-c`, `-r`,
+`--session`, `--fork`) and print/JSON/RPC runs fall through to the package's
+in-session worktree.
+
 The former dotfiles `session-tab-name` extension now belongs to that package.
 Setup removes only its exact old dotfiles symlink, preserving third-party
 extensions and user-maintained files. See `AGENTS.md` for the ownership guardrail.

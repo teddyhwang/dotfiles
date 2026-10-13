@@ -113,6 +113,25 @@ uses its `herdr-splits.nvim` revision when present, or a pinned fallback from
 `scripts/herdr.sh` before Neovim has installed the plugin. Neovim's Herdr plugin
 also synchronizes the Herdr side when it builds or loads inside Herdr.
 
+### Mosh access on macOS
+
+Mosh is included in `Brewfile`. Enable **Remote Login** in System Settings →
+General → Sharing for the intended users, then connect from another machine:
+
+```sh
+mosh teddyhwang@teddys-mac-mini.local
+```
+
+Mosh authenticates through SSH and starts `mosh-server` per session; there is no
+persistent service to enable. `home/.zshenv` exposes Homebrew binaries to
+noninteractive SSH commands without loading interactive shell configuration.
+Existing SSH passwords/authorized keys remain unchanged. The client needs SSH
+(TCP 22) and direct access to Mosh's UDP ports (60000–61000); allow `mosh-server`
+in the macOS firewall if prompted. No router port forwarding is set up here.
+
+If a Homebrew dependency upgrade leaves Mosh with a missing protobuf library,
+run `brew reinstall --yes mosh` to rebuild the existing HEAD installation.
+
 ### Superfile theme
 
 Superfile (`spf`) uses our custom `seti` theme in

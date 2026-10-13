@@ -41,7 +41,7 @@ for file in \
   plugins/herdr-pickers/picker.sh; do
   bash -n "$file"
 done
-for file in home/.zshrc home/.p10k.zsh home/shared/aliases home/shared/env home/shared/functions home/shared/init; do
+for file in home/.zshenv home/.zshrc home/.p10k.zsh home/shared/aliases home/shared/env home/shared/functions home/shared/init; do
   zsh -n "$file"
 done
 

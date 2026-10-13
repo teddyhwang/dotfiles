@@ -113,8 +113,11 @@
 ## For details on the supported regular expression syntax, see
 ## https://docs.rs/regex/latest/regex/#syntax
 ## Exclude generated Herdsman launches and the pi launches that `pi --worktree`
-## types into new Herdr worktree panes, not normal pi or claude commands.
+## types into new Herdr worktree panes, plus explicit Pi session resumes.
+## Complete option/value words keep quoted prompts mentioning --session.
+## Ordinary pi/claude commands (including --continue) are still recorded.
 history_filter = [
+  '''^pi\s+(?:(?:-[a-zA-Z0-9]|--[a-zA-Z0-9])[^\s"'\\;&|]*\s+(?:(?:[^\s"'\\;&|]+|"[^"]*"|'[^']*')\s+)?)*--session\s+(?:[^\s"'\\;&|]+|"[^"]*"|'[^']*')(?:\s|$)''',
   '^pi\s+.*--extension\s+\S*pi-herdsman/',
   '^claude\s+.*--append-system-prompt-file\s+\S*/\.claude/herdsman/prompts/',
   '^cd\s.*;\s*_pi_herdr_worktree_close\s',

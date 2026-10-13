@@ -25,10 +25,13 @@ zinit light romkatv/powerlevel10k
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSH_AUTOSUGGEST_USE_ASYNC='true'
-# Hide generated Herdsman launches and the pi launches that `pi --worktree`
-# types into new Herdr worktree panes, even when already in native Zsh history,
-# and exclude them when saving history. Keep ordinary pi/claude commands.
-ZSH_AUTOSUGGEST_HISTORY_IGNORE='(pi *--extension *pi-herdsman/*|claude *--append-system-prompt-file */.claude/herdsman/prompts/*|cd *_pi_herdr_worktree_close *)'
+# Hide generated Herdsman/worktree launches and explicit Pi session resumes
+# from autosuggestions (including old history) and newly saved history.
+# Match complete option/value words so quoted prompts mentioning --session stay.
+# Repetition in the session pattern requires extended_glob for HISTORY_IGNORE;
+# zsh-autosuggestions already enables it locally when searching history.
+setopt extended_glob
+ZSH_AUTOSUGGEST_HISTORY_IGNORE=$'(pi *--extension *pi-herdsman/*|claude *--append-system-prompt-file */.claude/herdsman/prompts/*|cd *_pi_herdr_worktree_close *|pi[[:space:]]##((-[[:alnum:]]|--[[:alnum:]])[^[:space:]"\'\\\\;&|]#[[:space:]]##(([^[:space:]"\'\\\\;&|]##|"[^"]#"|\'[^\']#\')[[:space:]]##|))#--session[[:space:]]##([^[:space:]"\'\\\\;&|]##|"[^"]#"|\'[^\']#\')([[:space:]]*|))'
 HISTORY_IGNORE=$ZSH_AUTOSUGGEST_HISTORY_IGNORE
 ZVM_INIT_MODE=sourcing
 

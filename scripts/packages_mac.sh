@@ -39,7 +39,6 @@ fi
 # the exact artifacts declared here, never each tap's present and future code.
 if "$BREW_BIN" command trust >/dev/null 2>&1; then
   "$BREW_BIN" trust --formula \
-    airbytehq/tap/abctl \
     felixkratz/formulae/borders \
     shopify/shopify/ejson \
     shopify/shopify/ejson2env \

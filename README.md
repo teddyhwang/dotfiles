@@ -79,8 +79,12 @@ brew bundle install --no-upgrade --file ./Brewfile
 # Deliberately upgrade managed personal Homebrew dependencies
 brew bundle upgrade --file ./Brewfile
 
-# Start heavyweight development services only when needed
-brew services start postgresql@14 # or mysql@8.4, redis, ollama
+# Start the local model service only when needed
+brew services start ollama
+
+# Optional databases are no longer in the personal Brewfile; install on demand
+brew install postgresql@14 # or mysql@8.4, redis, memcached
+brew services start postgresql@14
 
 # Update Neovim plugins (lazy-lock.json stays local to this machine)
 nvim '+Lazy update'
@@ -98,8 +102,12 @@ managed jobs. Clipboard agents remain opt-in. tmux plugin installation uses a
 private, sessionless server and checks every declared plugin without touching
 your active tmux sessions.
 
-Database servers and Ollama are installed but deliberately not enabled at
-login by this setup. Previously enabled services are not stopped automatically.
+Ollama remains in the personal Brewfile but is not enabled at login by this
+setup. Optional database servers remain in the work snapshot, not the personal
+list. Pruning the personal Brewfile does not uninstall existing packages, delete
+application/database data, or stop previously enabled services. Avoid treating
+`brew bundle cleanup --force` as part of this pruning: installed packages outside
+the curated list can still be in use.
 `home/config/nvim/lazy-lock.json` is machine-local and ignored by Git. Herdr setup
 uses its `herdr-splits.nvim` revision when present, or a pinned fallback from
 `scripts/herdr.sh` before Neovim has installed the plugin. Neovim's Herdr plugin

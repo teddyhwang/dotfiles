@@ -254,15 +254,28 @@ machines (devx detected), setup copies `home/pi-agent/agents/work/` into
 - `researcher` uses Claude Fable 5.1, the strongest model, with xhigh thinking.
   Its tool list uses the installed shop-pi-fy search and fetch tools, so it can
   read primary sources instead of only search snippets.
-- `scout` and `reviewer` use Claude Sonnet 5.5 with high thinking.
+- `scout` and `reviewer` use Claude Sonnet 5.5 with high thinking. Their
+  appended bodies say they have no shell, because project instructions full of
+  shell commands led them to call `bash`, which they do not have.
+- `implementer` uses Claude Sonnet 5.5 with high thinking. It also loads the
+  shop-pi-fy `background-jobs` extension and allows `bg_*` tools, so it waits
+  on long jobs with `bg_wait` instead of polling with `sleep`. If you remove
+  `background-jobs` with `/pkg rm`, remove it from this definition too.
+
+`home/pi-agent/agents/generalist.md` installs on every machine. It keeps the
+lead's model and appends edit-tool and no-polling rules. The bundled
+implementer and generalist bodies replace Pi's system prompt, which drops its
+rule to change files with `edit`.
 
 Sonnet 5.5 is the weakest model allowed for delegated work; do not pin Claude
 4.x or Haiku models. A test enforces this floor. The copies are not symlinks
 because Herdsman ignores symlinked definitions. A pinned model keeps the
 bundled `noExtensions` policy, so the `scout` and `reviewer` overrides load
 the Shopify AI proxy extension explicitly. The bundled `researcher` keeps
-extension discovery and needs no extension entry. Setup replaces or
-removes only files that carry the `# Managed by dotfiles:` marker.
+extension discovery and needs no extension entry. An override with a body
+must set `bodyMode: append`, or its body replaces the bundled prompt; a test
+enforces this. Setup replaces or removes only files that carry the
+`# Managed by dotfiles:` marker.
 
 Generated theme files, caches, machine-local configuration, and secret-bearing
 environment files are ignored. Never add credentials to the repository; use the

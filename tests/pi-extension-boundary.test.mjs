@@ -50,10 +50,19 @@ const allowedAgentModels = new Set([
   "anthropic/claude-fable-5-1",
 ]);
 const systemPath = "/usr/bin:/bin:/usr/sbin:/sbin";
-const workAgents = ["researcher.md", "reviewer.md", "scout.md"];
-// The bundled scout and reviewer set noExtensions, so a pinned model needs the
-// proxy loaded explicitly. The bundled researcher keeps extension discovery.
-const proxyLoadingAgents = new Set(["reviewer.md", "scout.md"]);
+const workAgents = ["implementer.md", "researcher.md", "reviewer.md", "scout.md"];
+// The bundled implementer, scout and reviewer set noExtensions, so a pinned
+// model needs the proxy loaded explicitly. The bundled researcher keeps
+// extension discovery.
+const proxyLoadingAgents = new Set(["implementer.md", "reviewer.md", "scout.md"]);
+const readOnlyAgents = new Set(["reviewer.md", "scout.md"]);
+
+// An override body replaces the bundled prompt unless it sets bodyMode: append.
+function assertKeepsBundledPrompt(name, source) {
+  const body = source.slice(source.indexOf("\n---\n", 4) + 5);
+  if (body.trim() === "") return;
+  assert.match(source, /^bodyMode: append$/m, `${name} must append to the bundled prompt, not replace it`);
+}
 
 async function runLinker(t, home, { work }) {
   let PATH = systemPath;
@@ -82,7 +91,7 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
   for (const name of workAgents) {
     const source = await readFile(path.join(repo, "home/pi-agent/agents/work", name), "utf8");
     assert.ok(source.startsWith(`---\n# Managed by dotfiles: home/pi-agent/agents/work/${name}\n`));
-    assert.ok(source.endsWith("\n---\n"), "an empty body inherits the bundled prompt");
+    assertKeepsBundledPrompt(name, source);
     assert.match(source, new RegExp(`^name: ${name.replace(".md", "")}$`, "m"));
     // Quality floor: Claude Sonnet 5.5. No 4.x or Haiku models for delegated work.
     const model = source.match(/^model: (.+)$/m)?.[1];
@@ -95,12 +104,36 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
       }
       assert.doesNotMatch(source, /^  - (bash|edit|write)$/m, "researcher stays read-only");
     }
-    if (proxyLoadingAgents.has(name)) {
+    if (readOnlyAgents.has(name)) {
       assert.match(source, /^extensions: \["~\/\.pi\/agent\/extensions\/shopify-proxy", "builtin:mcp"\]$/m);
+      assert.doesNotMatch(source, /^tools:/m, `${name} keeps the bundled read-only tools`);
+      assert.match(source, /You have no shell\. Do not call\s+bash/, `${name} must say it has no bash`);
+    } else if (name === "implementer.md") {
+      assert.match(source,
+        /^extensions: \["~\/\.pi\/agent\/extensions\/shopify-proxy", "~\/\.pi\/agent\/extensions\/background-jobs"\]$/m);
+      for (const tool of ["read", "bash", "edit", "write", "bg_run", "bg_wait", "bg_log"]) {
+        assert.match(source, new RegExp(`^tools: \\[.*"${tool}".*\\]$`, "m"), `implementer needs ${tool}`);
+      }
     } else {
       assert.doesNotMatch(source, /^(extensions|noExtensions):/m, `${name} must keep extension discovery`);
     }
   }
+});
+
+test("the generalist override applies everywhere and keeps the bundled prompt and model", async () => {
+  const source = await readFile(path.join(repo, "home/pi-agent/agents/generalist.md"), "utf8");
+  assert.ok(source.startsWith("---\n# Managed by dotfiles: home/pi-agent/agents/generalist.md\n"));
+  assert.match(source, /^name: generalist$/m);
+  assertKeepsBundledPrompt("generalist.md", source);
+  assert.doesNotMatch(source, /^(model|tools|extensions|noExtensions):/m, "generalist inherits the lead's model and tools");
+});
+
+test("linker installs the generalist override on personal machines too", async (t) => {
+  const agents = await agentHome(t);
+  await runLinker(t, path.dirname(path.dirname(path.dirname(agents))), { work: false });
+  assert.deepEqual(await readdir(agents), ["generalist.md"]);
+  assert.equal(await readFile(path.join(agents, "generalist.md"), "utf8"),
+    await readFile(path.join(repo, "home/pi-agent/agents/generalist.md"), "utf8"));
 });
 
 test("linker copies work Herdsman overrides as regular files on work machines", async (t) => {
@@ -131,7 +164,7 @@ test("linker refreshes stale managed copies and removes work copies on personal 
     await readFile(path.join(repo, "home/pi-agent/agents/work/scout.md"), "utf8"));
 
   await runLinker(t, home, { work: false });
-  assert.deepEqual((await readdir(agents)).sort(), ["custom.md"]);
+  assert.deepEqual((await readdir(agents)).sort(), ["custom.md", "generalist.md"]);
 });
 
 test("linker removes a managed copy whose source no longer exists", async (t) => {

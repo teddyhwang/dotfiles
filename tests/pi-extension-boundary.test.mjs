@@ -50,7 +50,11 @@ const allowedAgentModels = new Set([
   "anthropic/claude-fable-5-1",
 ]);
 const systemPath = "/usr/bin:/bin:/usr/sbin:/sbin";
-const workAgents = ["implementer.md", "researcher.md", "reviewer.md", "scout.md"];
+const workAgents = ["data-auditor.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"];
+// Overrides of Herdsman's bundled roles. Other definitions are new roles.
+const bundledAgents = new Set(["generalist.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"]);
+const piExtension = (name) => `~/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/${name}/index.ts`;
+const listed = (source, field) => JSON.parse(source.match(new RegExp(`^${field}: (\\[.*\\])$`, "m"))?.[1] ?? "null");
 // The bundled implementer, scout and reviewer set noExtensions, so a pinned
 // model needs the proxy loaded explicitly. The bundled researcher keeps
 // extension discovery.
@@ -91,7 +95,8 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
   for (const name of workAgents) {
     const source = await readFile(path.join(repo, "home/pi-agent/agents/work", name), "utf8");
     assert.ok(source.startsWith(`---\n# Managed by dotfiles: home/pi-agent/agents/work/${name}\n`));
-    assertKeepsBundledPrompt(name, source);
+    if (bundledAgents.has(name)) assertKeepsBundledPrompt(name, source);
+    else assert.doesNotMatch(source, /^bodyMode:/m, `${name} is a new role; bodyMode is valid only on overrides`);
     assert.match(source, new RegExp(`^name: ${name.replace(".md", "")}$`, "m"));
     // Quality floor: Claude Sonnet 5.5. No 4.x or Haiku models for delegated work.
     const model = source.match(/^model: (.+)$/m)?.[1];
@@ -109,11 +114,22 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
       assert.doesNotMatch(source, /^tools:/m, `${name} keeps the bundled read-only tools`);
       assert.match(source, /You have no shell\. Do not call\s+bash/, `${name} must say it has no bash`);
     } else if (name === "implementer.md") {
-      assert.match(source,
-        /^extensions: \["~\/\.pi\/agent\/extensions\/shopify-proxy", "~\/\.pi\/agent\/extensions\/background-jobs"\]$/m);
+      assert.deepEqual(listed(source, "extensions"), [
+        "~/.pi/agent/extensions/shopify-proxy",
+        "~/.pi/agent/extensions/background-jobs",
+        piExtension("shell-guard"),
+      ]);
       for (const tool of ["read", "bash", "edit", "write", "bg_run", "bg_wait", "bg_log"]) {
-        assert.match(source, new RegExp(`^tools: \\[.*"${tool}".*\\]$`, "m"), `implementer needs ${tool}`);
+        assert.ok(listed(source, "tools").includes(tool), `implementer needs ${tool}`);
       }
+    } else if (name === "data-auditor.md") {
+      assert.match(source, /^description: \S/m, "a new role needs a description for the lead");
+      assert.match(source, /^systemPromptMode: replace$/m);
+      assert.match(source, /^noExtensions: true$/m);
+      assert.match(source, /^inheritGlobalContext: false$/m);
+      assert.deepEqual(listed(source, "extensions"), ["~/.pi/agent/extensions/shopify-proxy", piExtension("readonly-shell")]);
+      assert.deepEqual(listed(source, "tools"), ["read", "ls", "find", "grep", "readonly_bash"], "the auditor stays read-only");
+      assert.match(source.slice(source.indexOf("\n---\n", 4)), /You are data-auditor/, "a new role needs its own prompt");
     } else {
       assert.doesNotMatch(source, /^(extensions|noExtensions):/m, `${name} must keep extension discovery`);
     }

@@ -306,7 +306,14 @@ machines (devx detected), setup copies `home/pi-agent/agents/work/` into
 - `implementer` uses Claude Sonnet 5.5 with high thinking. It also loads the
   shop-pi-fy `background-jobs` extension and allows `bg_*` tools, so it waits
   on long jobs with `bg_wait` instead of polling with `sleep`. If you remove
-  `background-jobs` with `/pkg rm`, remove it from this definition too.
+  `background-jobs` with `/pkg rm`, remove it from this definition too. It
+  also loads `shell-guard` from pi-extensions, which blocks sleep polling,
+  bash edits of tracked files, and destructive git and `pkill -f` commands.
+- `data-auditor` is a new read-only role for checking claims against local
+  data, such as memory-sync audits. It uses Claude Sonnet 5.5. Its only shell
+  is `readonly_bash` from pi-extensions' `readonly-shell`, which runs `rg`,
+  `jq` and `python3` in an OS sandbox without network or writes. A new role
+  has its own prompt and must not set `bodyMode`.
 
 `home/pi-agent/agents/generalist.md` installs on every machine. It keeps the
 lead's model and appends edit-tool and no-polling rules. The bundled

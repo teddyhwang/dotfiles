@@ -320,7 +320,10 @@ machines (devx detected), setup copies `home/pi-agent/agents/work/` into
 - `data-auditor` is a new read-only role for checking claims against local
   data, such as memory-sync audits. It uses Claude Sonnet 5.5. Its only shell
   is `readonly_bash` from pi-extensions' `readonly-shell`, which runs `rg`,
-  `jq` and `python3` in an OS sandbox without network or writes. A new role
+  `jq` and `python3` in a macOS sandbox without network or filesystem writes
+  outside a per-call temp directory. It requires installed Bash 4+; Linux
+  execution fails closed until host control sockets can be isolated. This is
+  not a confidentiality or complete process-isolation boundary. A new role
   has its own prompt and must not set `bodyMode`.
 
 `home/pi-agent/agents/generalist.md` installs on every machine. It keeps the

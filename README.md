@@ -243,9 +243,55 @@ it installs the runtime of the older npm release.
 Herdsman's strict tool schemas exceed Anthropic's compiled-grammar limit, so
 `home/pi-agent/models.json` turns off strict tools for the `anthropic` provider.
 
-Herdsman replaces agent-teams. Disable agent-teams with the package filter
-`-extensions/agent-teams/index.ts` on the pi-extensions entry in
-`~/.pi/agent/settings.json`.
+Herdsman is the default bounded-delegation executor; do not expose both it and
+legacy agent-teams for routine delegation. In `~/.pi/agent/settings.json`, use
+Pi's package resource filters (merge into existing entries, preserving their
+sources and other filters):
+
+```json
+{
+  "packages": [
+    {
+      "source": "git:git@github.com:teddyhwang/pi-extensions",
+      "extensions": ["-extensions/agent-teams/index.ts"]
+    },
+    {
+      "source": "https://github.com/davebcn87/pi-autoresearch",
+      "skills": []
+    }
+  ],
+  "skills": [
+    "-skills/find-skills/SKILL.md",
+    "-../../.agents/skills/find-skills/SKILL.md"
+  ]
+}
+```
+
+This is a selection fragment, **not a replacement settings file**. Keep the
+Herdsman, Vim, search, authentication and other package entries. Remove an old
+explicit `+…find-skills/SKILL.md` inclusion before adding its exclusions; both
+skill roots are excluded because personal Pi skills may symlink to `.agents`.
+Setup does not overwrite these machine-local resource selections.
+
+The generic finder routes ordinary how-to questions through skill discovery;
+keep it opt-in. Autoresearch's recipes are also opt-in until their correctness
+checks and finalization safeguards are reviewed: the inspected create recipe
+masks typecheck failures with `| grep -i error || true`, and finalization can
+fail on deleted paths. This filters the **skills only**, preserving the gated
+`/autoresearch` runtime and experiment data; it does not patch third-party
+installer-managed files. Deliberately load a reviewed recipe for one session:
+
+```sh
+pi --skill ~/.pi/agent/git/github.com/davebcn87/pi-autoresearch/skills/autoresearch-create/SKILL.md
+pi --skill ~/.pi/agent/skills/find-skills/SKILL.md
+```
+
+An excluded skill is not advertised or available through its normal `/skill:`
+command unless loaded explicitly. After changing selections, use `/reload`;
+start a fresh session if previously activated tools remain declared. Legacy
+agent-teams code remains installed for workflows explicitly needing its task
+board/budget controls; select a single delegation owner rather than silently
+substituting APIs.
 
 Herdsman agents inherit the lead's model unless a definition pins one. On work
 machines (devx detected), setup copies `home/pi-agent/agents/work/` into

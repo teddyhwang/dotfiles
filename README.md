@@ -202,6 +202,14 @@ This repository manages Pi configuration and integration wiring only; do not
 add extension implementations here or maintain separate personal copies in
 `~/.pi/agent/extensions`. After package changes, use `/reload` in active sessions.
 
+`home/pi-agent/AGENTS.md` holds the global Pi rules: use `edit` for file
+changes, do not poll with `sleep`, batch independent calls, and how to read
+links. Setup links it to `~/.pi/agent/AGENTS.md`, and Pi loads it in every
+working directory when a session starts. Only pi-extensions is installed on
+every machine, so a rule that names any other tool, agent, or CLI must be
+conditional ("if `bg_wait` is available"). `tests/pi-agents-md.test.mjs`
+enforces this.
+
 Inside Herdr, the `pi` shell function in `home/shared/functions` handles
 `pi --worktree [name]` before pi starts. Herdr creates the checkout on branch
 `pi-worktree/<name>` from the current `HEAD` and focuses its new workspace.

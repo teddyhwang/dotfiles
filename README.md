@@ -308,9 +308,8 @@ machines (devx detected), setup copies `home/pi-agent/agents/work/` into
 - `researcher` uses Claude Fable 5.1, the strongest model, with xhigh thinking.
   Its tool list uses the installed shop-pi-fy search and fetch tools, so it can
   read primary sources instead of only search snippets.
-- `scout` and `reviewer` use Claude Sonnet 5.5 with high thinking. Their
-  appended bodies say they have no shell, because project instructions full of
-  shell commands led them to call `bash`, which they do not have.
+- `scout` and `reviewer` use Claude Sonnet 5.5 with high thinking. The
+  `scout` override appends tips for grep and read limits.
 - `implementer` uses Claude Sonnet 5.5 with high thinking. It also loads the
   shop-pi-fy `background-jobs` extension and allows `bg_*` tools, so it waits
   on long jobs with `bg_wait` instead of polling with `sleep`. If you remove

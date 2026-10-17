@@ -210,6 +210,16 @@ every machine, so a rule that names any other tool, agent, or CLI must be
 conditional ("if `bg_wait` is available"). `tests/pi-agents-md.test.mjs`
 enforces this.
 
+The package's `/skill:home-assistant` is the maintained Home Assistant workflow:
+access, safe updates, dashboards, HomeKit, backups and verification. This repo
+owns only the nonsecret site configuration and runbook at
+`home/config/home-assistant/{agent.json,site.md}`, linked to
+`~/.config/home-assistant/`. The generic skill/API helper and its behavioral
+tests live in the canonical Pi package. Read and update the site runbook during
+HA work instead of rediscovering connection details and decisions from memory.
+Never store tokens, PINs, passwords or full auth/integration-storage dumps in
+these files. `/reload` makes a newly installed or updated skill available.
+
 Inside Herdr, the `pi` shell function in `home/shared/functions` handles
 `pi --worktree [name]` before pi starts. Herdr creates the checkout on branch
 `pi-worktree/<name>` from the current `HEAD` and focuses its new workspace.

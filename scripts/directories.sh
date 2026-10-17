@@ -23,14 +23,6 @@ add_directory_in_home '.config'
 add_directory_in_home '.ssh'
 add_directory_in_home '.local/bin'
 
-if ! [ -d /usr/local/bin ]; then
-  print_progress "Adding directory /usr/local/bin..."
-  sudo mkdir -p /usr/local/bin
-  track_change
-else
-  print_info "/usr/local/bin/ exists"
-fi
-
 # macOS-only: ~/Library does not exist on Linux.
 if [ "$(uname -s)" = "Darwin" ]; then
   if ! [ -d ~/Library/Application\ Support/lazygit ]; then
@@ -42,13 +34,8 @@ if [ "$(uname -s)" = "Darwin" ]; then
   fi
 fi
 
-if ! [ -d "$HOME/.config/ghostty/themes" ]; then
-  print_progress "Adding directory $HOME/.config/ghostty/themes..."
-  mkdir -p "$HOME/.config/ghostty/themes"
-  track_change
-else
-  print_info "$HOME/.config/ghostty/themes exists"
-fi
+# Do not precreate Ghostty/btop directories: the linker installs their parent
+# directories as symlinks. Theme hooks create their generated subdirectories.
 
 # The tinty theme-set hook copies generated themes into these.
 if ! [ -d "$HOME/.config/zed/themes" ]; then
@@ -57,14 +44,6 @@ if ! [ -d "$HOME/.config/zed/themes" ]; then
   track_change
 else
   print_info "$HOME/.config/zed/themes exists"
-fi
-
-if ! [ -d "$HOME"/.config/btop/themes ]; then
-  print_progress "Adding directory $HOME/.config/btop/themes..."
-  mkdir -p "$HOME"/.config/btop/themes
-  track_change
-else
-  print_info "$HOME/.config/btop/themes exists"
 fi
 
 print_conditional_success "Directories"

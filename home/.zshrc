@@ -110,7 +110,7 @@ zle -N scroll-and-clear-screen
 
 bindkey '^L' scroll-and-clear-screen
 bindkey '^[[Z' autosuggest-accept
-bindkey '^f' fzf-cd-widget
+(( $+widgets[fzf-cd-widget] )) && bindkey '^f' fzf-cd-widget
 
 [[ -f ~/.shared/aliases ]] && source ~/.shared/aliases
 [[ -f ~/.shared/init ]] && source ~/.shared/init

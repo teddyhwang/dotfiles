@@ -41,8 +41,8 @@
 [format]
 	pretty = %C(blue)%h%Creset %C(238)-%Creset%C(yellow)%d%Creset %s %C(240)(%an, %cr)%Creset
 
-[commit]
-	gpgsign = true
+# Signing is machine-local: enable commit.gpgsign only after provisioning a key.
+# Requiring signing here prevents every commit on a freshly installed Mac.
 
 [gpg]
 	program = gpg

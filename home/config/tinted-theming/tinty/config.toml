@@ -9,8 +9,9 @@ themes-dir = "themes/ghostty"
 # the generated theme actually changed, rather than on every terminal startup.
 hook = '''
 destination="$HOME/.config/ghostty/themes/tinted-theming"
+command mkdir -p "${destination%/*}" || exit $?
 if ! cmp -s "$TINTY_THEME_FILE_PATH" "$destination"; then
-  command cp -f "$TINTY_THEME_FILE_PATH" "$destination"
+  command cp -f "$TINTY_THEME_FILE_PATH" "$destination" || exit $?
   killall -SIGUSR2 ghostty 2>/dev/null || true
 fi
 '''
@@ -28,7 +29,12 @@ name = "base16-btop"
 path = "https://git.sr.ht/~blueingreen/base16-btop"
 themes-dir = "colors"
 supported-systems = ["base16"]
-hook = 'command ln -snf "$TINTY_THEME_FILE_PATH" "$HOME/.config/btop/themes/current.theme" && pkill -SIGUSR2 btop'
+hook = '''
+destination="$HOME/.config/btop/themes/current.theme"
+command mkdir -p "${destination%/*}" || exit $?
+command ln -snf "$TINTY_THEME_FILE_PATH" "$destination" || exit $?
+pkill -SIGUSR2 btop || [ "$?" -eq 1 ]
+'''
 
 [[items]]
 name = "tinted-shell"

@@ -202,7 +202,8 @@ test("launch agent setup repairs unloaded jobs and is idempotent when loaded", a
     await copyFile(path.join(repo, "apps", `${name}.plist`), path.join(agents, `${name}.plist`));
   }
   const legacyAgent = path.join(agents, "herdr-tab-autoname.plist");
-  await writeFile(legacyAgent, "legacy launch agent\n");
+  // Removal requires a proven historical definition, not just its filename.
+  await copyFile(path.join(repo, "tests/fixtures/herdr-tab-autoname-acba407.plist"), legacyAgent);
   await writeFile(path.join(home, "loaded/localhost.herdr-tab-autoname"), "");
   await executable(path.join(home, "bin/launchctl"), `printf '%s\\n' "$*" >>"$HOME/launch-calls"
 case "$1" in

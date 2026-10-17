@@ -5,14 +5,56 @@ tmux, terminal emulators, and desktop tools.
 
 ## Install
 
+### New Mac: start in the built-in Terminal
+
+No configured Git identity, GitHub login, SSH key, Homebrew, or alternate shell
+is required. Use a macOS administrator account (not a root shell), an internet
+connection, and finish Apple's Command Line Tools installation first:
+
 ```sh
-git clone git@github.com:teddyhwang/dotfiles.git ~/src/github.com/teddyhwang/dotfiles
+xcode-select --install
+```
+
+**Wait for the installer to finish**, then verify Git actually runs. If macOS
+says the tools are already installed, proceed to this check:
+
+```sh
+git --version
+```
+
+Clone this public repository over **HTTPS**, not SSH. Cloning does not require
+`user.name`, `user.email`, a signing key, or GitHub authentication:
+
+```sh
+mkdir -p ~/src/github.com/teddyhwang
+git clone https://github.com/teddyhwang/dotfiles.git ~/src/github.com/teddyhwang/dotfiles
 cd ~/src/github.com/teddyhwang/dotfiles
 ./setup.sh
 ```
 
-The setup is idempotent and can be run from any working directory. Existing
-files are kept unless replacement is confirmed; confirmed replacements are
+Run setup normally, **not with `sudo`**. Homebrew will request administrator
+authorization when needed. Allow time for downloads, applications and source
+builds. If a step fails, fix the reported problem and rerun `./setup.sh` from the
+same checkout; do not clone over an existing directory. A failed Brewfile install
+stops setup before linking, rather than claiming an incomplete install succeeded.
+
+After success, open a **new Terminal window**, or replace the current shell:
+
+```sh
+exec /bin/zsh -l
+```
+
+The [new Mac checklist](docs/mac-setup.md) covers preparation, first-run checks,
+Git/GitHub access, keys, application permissions, and what setup does not restore.
+
+### Existing checkout / Linux
+
+Run `./setup.sh` from the checkout (or by its absolute path). Linux requires
+working Git, curl, readlink, and the Arch/Omarchy package-management prerequisites.
+
+The setup is rerunnable and can be run from any working directory. Existing
+configuration files are kept unless replacement is confirmed; declining a prompt
+keeps that configuration unmanaged, so review any skipped items. Confirmed replacements are
 moved to `~/.local/state/dotfiles/backups/replaced.*/` rather than deleted.
 Targets with traversal segments or parents resolving outside HOME are refused.
 On macOS, setup uses `Brewfile.work` when `devx` is available as a command;
@@ -197,7 +239,9 @@ Theming", with the highlight overrides from Neovim's `config/colorscheme.lua`.
 
 Personal Pi extension code and tests live in
 [`teddyhwang/pi-extensions`](https://github.com/teddyhwang/pi-extensions),
-installed with `pi install git:git@github.com:teddyhwang/pi-extensions`.
+installed with `pi install git:https://github.com/teddyhwang/pi-extensions`.
+The Pi CLI, packages, authentication, and machine-local settings are separate
+from `setup.sh`; see the [new Mac checklist](docs/mac-setup.md).
 This repository manages Pi configuration and integration wiring only; do not
 add extension implementations here or maintain separate personal copies in
 `~/.pi/agent/extensions`. After package changes, use `/reload` in active sessions.

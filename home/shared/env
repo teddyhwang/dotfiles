@@ -37,7 +37,12 @@ unset _brew_bin _brew_cache
 export EDITOR='nvim'
 export FZF_ALT_C_OPTS="--preview='tree -L 1 {}'"
 export FZF_CTRL_T_COMMAND="fd --type file --follow --hidden --exclude .git"
-export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {}' --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort' --multi"
+export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {}' --multi"
+# In an ordinary Terminal shell, keep fzf's default path insertion. Sending
+# editor commands to tmux only works from a pane in an existing tmux session.
+if [[ -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
+  FZF_CTRL_T_OPTS="$FZF_CTRL_T_OPTS --bind 'enter:execute(tmux send-keys \"C-c\" \"Enter\" \"$EDITOR {+}\" \"Enter\")+abort'"
+fi
 export FZF_DEFAULT_COMMAND="rg --files --hidden"
 export FZF_TMUX_OPTS='-p 80%,60%'
 export BUN_INSTALL="$HOME/.bun"

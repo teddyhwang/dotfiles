@@ -24,4 +24,12 @@ else
   track_change
 fi
 
+if ! git config --get commit.gpgsign >/dev/null 2>&1; then
+  print_info "Git signing is opt-in per machine; provision a key before enabling commit.gpgsign (see README.md)."
+fi
+
+if ! git var GIT_AUTHOR_IDENT >/dev/null 2>&1; then
+  print_warning "Git identity is not configured. Before committing, set user.name and user.email (see README.md)."
+fi
+
 print_conditional_success "git and bat"

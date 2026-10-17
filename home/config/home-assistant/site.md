@@ -143,6 +143,17 @@ unknown look like unlocked even though the car was physically locked.
   No automatic retries, especially for ambiguous unlocks.
 - This is **not live door-lock telemetry**. Fob/handle/Cadillac app changes aren't
   tracked; the display is not proof that the vehicle is secured.
+- The owner reports that automatic re-lock happens **only after a door opens
+  then closes**, not a fixed delay after remote unlock. The current bridge
+  cannot observe that door cycle, so its last-requested estimate can remain
+  unlocked after the car re-locks. **Do not add a timer to assume re-locking**:
+  it could falsely show locked when the door was never opened.
+- Source/fixture review of the pinned bridge/library found no observed door
+  position or event subscription; `doorsStatus.supported` / `VEH_SECURE_STATUS`
+  are capabilities/permissions, not door readings. Thirty-minute cached health
+  polling cannot reliably detect an open→close cycle either. Another verified
+  telemetry source would be needed; support through a different GM API is
+  unknown. No lock behavior was changed for this finding.
 - Native HomeKit lock/security behavior remains intact; do not replace unlock
   with a generic momentary switch or change accessory identity.
 - Remote start's existing 10-minute restored timer is also an estimate, not an

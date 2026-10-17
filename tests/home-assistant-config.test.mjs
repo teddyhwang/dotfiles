@@ -31,6 +31,8 @@ test("Home Assistant site runbook preserves the approved lock estimate and curre
   assert.match(notes, /Do not reset it on startup\/redeploy/);
   assert.match(notes, /Never repeat that seed/);
   assert.match(notes, /not live door-lock telemetry/i);
+  assert.match(notes, /Do not add a timer to assume re-locking/);
+  assert.match(notes, /cannot observe that door cycle/);
   assert.match(notes, /core\.config_entries|integration\/auth-storage/);
 });
 

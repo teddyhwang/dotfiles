@@ -209,9 +209,11 @@ last-requested state and the earlier recommendation not to use a timeout.
 | Living Room Apple TV (standalone) | 21065 | `01M53DY5CJ9K2EJE43XS0DABQT` |
 | LYRIQ Doors (standalone, paired in Garage) | 21066 | `01M54T9W2ZFFVW37S3RR3TH17P` |
 
-HASS Bridge includes switch/light domains plus the DSC alarm and seven zones.
-Its `exclude_accessory_mode` setting means a lock added to its entity filter
-alone is ignored. LYRIQ Doors is correctly separate; **no re-pairing is needed
+HASS Bridge uses an explicit 18-entity allowlist: the existing room controls,
+three ordinary lights, DSC alarm/seven zones, and two Govee power-only switches.
+New HA entities are **not automatically exposed**; select them deliberately in
+its HomeKit options. Its `exclude_accessory_mode` setting means a lock added to
+its entity filter alone is ignored. LYRIQ Doors is correctly separate; **no re-pairing is needed
 for ordinary dashboard/template/estimate changes**. New standalone accessories
 need manual Apple Home pairing from HA's QR notification.
 
@@ -227,6 +229,48 @@ Local Itsyhome is available at `http://localhost:8423` on the Mac:
 - Other paths can actuate devices via GET. Do not probe control endpoints.
 - Itsyhome can't assign rooms; use Apple Home. Do not reset pairing to move or
   rename an accessory. Discover IDs rather than taking the first alarm service.
+
+## Govee — Apple Home power only for TV and outdoor patterns
+
+On 2026-10-17, the owner approved replacing just these two Apple Home color
+accessories with existing Govee-to-MQTT power switches:
+
+| Original HA light (still enabled in HA) | Apple Home power-only entity |
+| --- | --- |
+| `light.tv_backlight` | `switch.tv_backlight_power_switch` |
+| `light.permanent_lights_pro` | `switch.permanent_lights_pro_power_switch` |
+
+- Apple Home sends only switch on/off, not brightness/color/effect commands.
+  Choose TV sync/DreamView and outdoor patterns in Govee. No automation should
+  add a color-setting step for these devices. Physical mode restoration has not
+  been tested by the agent; a device's own power-cycle behavior is still Govee's.
+- Other Govee lights retain their normal color controls. Original HA light
+  entities and the HA dashboard remain unchanged; no duplicate dashboard tiles.
+- Used the supported HASS Bridge **options flow**, not live storage edits or a
+  pairing reset. HA's UI cannot preserve the former mixed domain/exclusion plus
+  security-entity filter when changing it, so the equivalent current accessory
+  set is now an explicit 18-entity allowlist with only these two replacements.
+  Keep DSC/seven zones, Car, Night/Away, Christmas Tree, Garage Plug, and other
+  lights when editing this list.
+- The replacement accessories appeared as **TV Backlight Power Switch** and
+  **Permanent Lights Pro Power Switch**, initially in **Office** (the bridge's
+  room). In Apple Home, move them to Living Room/Outside, optionally shorten
+  their names, and reselect them in affected scenes/automations. No re-pairing
+  is required. This manual room/automation work was not performed by the agent.
+- Verified through the Apple Home consumer view that both are reachable switches
+  with only on/off state; unrelated accessories, bridge pairing/key identity,
+  existing accessory IDs, and standalone TV/LYRIQ entries were preserved.
+  **No physical commands were sent**, and no power-cycle/sync test was performed.
+- Live docs/test: `/homeassistant/README-GOVEE-HOMEKIT.md` and
+  `/homeassistant/tests/test-govee-homekit-power.mjs`. Private before/after
+  exports and original bridge identity backup:
+  `/homeassistant/backups/govee-homekit-power-20261017/`.
+- To reverse the presentation change, use the same supported options flow and
+  swap the two switch IDs back to the original light IDs, retaining all other
+  included entities. This reintroduces color controls and again requires Apple
+  Home scene/room cleanup. Do not restore `.storage` while Core is running;
+  restoring the historical mixed filter exactly would require a separately
+  approved offline operation. Do not reset the bridge or overwrite pairing.
 
 ## DSC alarm / Envisalink history and constraints
 

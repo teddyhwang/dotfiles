@@ -103,6 +103,7 @@ than globally hiding more entities; HomeKit can also filter hidden entities.
 | Car remote start | `switch.lyriq_start` (friendly name Car) |
 | Car doors | `lock.lyriq_doors` |
 | Remembered door estimate, hidden | `input_select.lyriq_door_estimate` |
+| Unlocked display window, hidden | `timer.lyriq_unlock_estimate` (5 minutes; display only) |
 | Shared door command script, hidden | `script.lyriq_door_command` |
 | Command-result history, hidden | `sensor.lyriq_door_command_result` |
 | EV percentage/range | `sensor.2024_cadillac_lyriq_charge_state`, `sensor.2024_cadillac_lyriq_ev_range` |
@@ -123,43 +124,58 @@ Live package: `/homeassistant/lyriq_homekit.yaml`, included through
 Docs/tests: `/homeassistant/README-LYRIQ.md`,
 `/homeassistant/tests/test-lyriq-config.mjs`.
 
-**Keep this decision:** the user explicitly approved displaying the last
-successfully requested door state instead of always unknown. Apple Home made
-unknown look like unlocked even though the car was physically locked.
+**Keep this decision:** the user explicitly approved an estimated display
+instead of always unknown, then explicitly requested a timed reset analogous
+to remote start. After successful unlock, show unlocked for **5 minutes**, then
+assume locked for display purposes only. This supersedes the earlier indefinite
+last-requested state and the earlier recommendation not to use a timeout.
 
 - `lock.lyriq_doors` mirrors hidden `input_select.lyriq_door_estimate`, whose
   options are unknown/locked/unlocked. No YAML `initial`: it restores across
-  restarts. Do not reset it on startup/redeploy.
+  restarts, together with restored `timer.lyriq_unlock_estimate` (5 minutes).
+  Startup reconciles only an expired/idle unlocked window, not an active one.
 - It was seeded to locked **once** from the user's then-current physical-state
   report. That is history, not a current observation. **Never repeat that seed
   from this runbook**; manual reconciliation requires fresh user confirmation.
 - Shared script serializes requests (`mode: single`), presses the existing MQTT
   button once, and waits up to 110 seconds for fresh, matching terminal feedback.
-- Update estimate ONLY for the current wrapper request after
-  `Completed Successfully`. Sent, stale retained success, wrong-action responses,
-  standalone MQTT responses, errors, and timeouts cannot change it.
+- On fresh matching `Completed Successfully`, unlock starts/restarts the
+  5-minute window before showing unlocked; lock cancels it and shows locked.
+  Sent, stale retained success, wrong-action responses, standalone MQTT
+  responses, errors, and timeouts cannot start/cancel the window.
+- Timer expiry (or startup recovery with an idle timer and unlocked estimate)
+  sets the helper to locked. This is a **display-only assumption**: the expiry
+  automation must NEVER call lock/button/MQTT vehicle command services.
+  A stale finish event cannot override a renewed active timer.
 - Failure retains the previous estimate and shows a persistent notification
   warning it may be wrong. Success dismisses the old failure notification.
   No automatic retries, especially for ambiguous unlocks.
 - This is **not live door-lock telemetry**. Fob/handle/Cadillac app changes aren't
   tracked; the display is not proof that the vehicle is secured.
-- The owner reports that automatic re-lock happens **only after a door opens
-  then closes**, not a fixed delay after remote unlock. The current bridge
-  cannot observe that door cycle, so its last-requested estimate can remain
-  unlocked after the car re-locks. **Do not add a timer to assume re-locking**:
-  it could falsely show locked when the door was never opened.
+- The owner reports actual automatic re-lock happens **only after a door opens
+  then closes**, not a fixed delay. The bridge cannot observe that door cycle.
+  The owner nevertheless explicitly requested a timed estimate reset rather
+  than an indefinitely unlocked display. The 5-minute reset is NOT detection
+  or a real auto-lock: it can display locked while the vehicle is unlocked.
+  Do not convert this display rule into an automatic physical lock command.
 - Source/fixture review of the pinned bridge/library found no observed door
   position or event subscription; `doorsStatus.supported` / `VEH_SECURE_STATUS`
   are capabilities/permissions, not door readings. Thirty-minute cached health
   polling cannot reliably detect an open→close cycle either. Another verified
   telemetry source would be needed; support through a different GM API is
-  unknown. No lock behavior was changed for this finding.
+  unknown. The later timed display reset is an owner-approved workaround,
+  not a new telemetry capability.
 - Native HomeKit lock/security behavior remains intact; do not replace unlock
   with a generic momentary switch or change accessory identity.
 - Remote start's existing 10-minute restored timer is also an estimate, not an
   engine-running callback. Preserve it unless explicitly changing that behavior.
 - Pre-change backups: `/homeassistant/backups/lyriq-20261017/` and
-  `lyriq-20261017-estimated/`. The estimate update passed 23 real HA Jinja tests.
+  `lyriq-20261017-estimated/`; timed-reset changes use a new
+  `lyriq-unlock-window-20261017-084916/` backup. The timed estimate passed
+  32 real HA Jinja cases including restored-window/renewal guards. A real
+  timer expiry was also observed updating the helper, native lock, and Apple
+  Home to locked without invoking the door command script; its configured
+  duration remained 5 minutes. Remote start stays 10 minutes.
 
 ### OnStar2MQTT facts and auth lessons
 

@@ -24,15 +24,16 @@ test("Home Assistant site configuration contains only nonsecret connection setti
 
 test("Home Assistant site runbook preserves the approved lock estimate and current dashboard workflow", async () => {
   const notes = await readFile(path.join(configRoot, "site.md"), "utf8");
-  for (const text of ["home-assistant", "scripts/ha-api.mjs", "lovelace/config/save", "input_select.lyriq_door_estimate", "README-LYRIQ.md", "README-DASHBOARD.md", "one TPI client", "23 real HA Jinja tests"]) {
+  for (const text of ["home-assistant", "scripts/ha-api.mjs", "lovelace/config/save", "input_select.lyriq_door_estimate", "README-LYRIQ.md", "README-DASHBOARD.md", "one TPI client", "32 real HA Jinja"]) {
     assert.ok(notes.includes(text), `Missing maintained workflow: ${text}`);
   }
   assert.match(notes, /Do not send vehicle start\/stop\/lock\/unlock\/charging/);
-  assert.match(notes, /Do not reset it on startup\/redeploy/);
+  assert.match(notes, /Startup reconciles only an expired\/idle unlocked window/);
   assert.match(notes, /Never repeat that seed/);
   assert.match(notes, /not live door-lock telemetry/i);
-  assert.match(notes, /Do not add a timer to assume re-locking/);
+  assert.match(notes, /5-minute reset is NOT detection/);
   assert.match(notes, /cannot observe that door cycle/);
+  assert.match(notes, /must NEVER call lock\/button\/MQTT vehicle command services/);
   assert.match(notes, /core\.config_entries|integration\/auth-storage/);
 });
 

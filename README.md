@@ -8,8 +8,30 @@ tmux, terminal emulators, and desktop tools.
 ### New Mac: start in the built-in Terminal
 
 No configured Git identity, GitHub login, SSH key, Homebrew, or alternate shell
-is required. Use a macOS administrator account (not a root shell), an internet
-connection, and finish Apple's Command Line Tools installation first:
+is required. In Terminal, use your normal macOS administrator account and run:
+
+```sh
+bootstrap="$(mktemp)" &&
+  curl --disable -fsSL --connect-timeout 10 --max-time 120 \
+    https://raw.githubusercontent.com/teddyhwang/dotfiles/main/bootstrap.sh -o "$bootstrap" &&
+  /bin/sh "$bootstrap"
+```
+
+This downloads the standalone script before executing it; a failed download
+never runs a partial script. You are trusting code from this repository—inspect
+the downloaded file first if you prefer. Do **not** use `sudo`.
+
+The bootstrap opens Apple's Command Line Tools installer if needed. **Finish the
+installation window, then press Return in Terminal.** It verifies Git, clones
+this public repository over HTTPS, and runs `setup.sh` with interactive prompts.
+Rerunning it reuses a verified existing checkout without pulling or changing local
+work. Failed clones are cleaned up; failed setup runs keep the checkout for retry.
+If Command Line Tools are not ready yet, finish their installation and rerun the
+same command. After success, open a new Terminal window or run `exec /bin/zsh -l`.
+
+#### Manual alternative
+
+If you prefer to run the individual steps, install Apple's Command Line Tools first:
 
 ```sh
 xcode-select --install

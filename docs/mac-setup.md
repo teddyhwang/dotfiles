@@ -25,41 +25,40 @@ The repository is public; HTTPS cloning is anonymous.
 
 1. Complete macOS onboarding and connect to the internet. Use your normal
    administrator account; do not start a root shell or run setup with `sudo`.
-2. Install Apple's Command Line Tools:
+2. Download and execute the standalone bootstrap script:
 
    ```sh
-   xcode-select --install
+   bootstrap="$(mktemp)" &&
+     curl --disable -fsSL --connect-timeout 10 --max-time 120 \
+       https://raw.githubusercontent.com/teddyhwang/dotfiles/main/bootstrap.sh -o "$bootstrap" &&
+     /bin/sh "$bootstrap"
    ```
 
-   Wait for the graphical installation to finish. An "already installed"
-   message is fine. If the installer fails or no update is available, resolve
-   this in Software Update before proceeding. Verify the tools, not just the
-   existence of Apple's Git launcher:
+   This runs code from this repository; you can inspect the downloaded file
+   before executing it. A failed download never executes a partial file.
+   No Git or Homebrew is needed to download it. The manual alternative remains
+   in the README.
 
-   ```sh
-   xcode-select -p
-   git --version
-   ```
+3. If prompted, finish Apple's Command Line Tools installation window, then
+   press Return in Terminal. The script verifies working Git, clones the public
+   HTTPS repository into `~/src/github.com/teddyhwang/dotfiles`, and runs setup.
+   If the tools are not ready, finish installing them (or resolve Software
+   Update errors) and rerun the same command. A failed clone is cleaned up.
 
-3. Fetch the public repository without SSH or GitHub authentication:
-
-   ```sh
-   mkdir -p ~/src/github.com/teddyhwang
-   git clone https://github.com/teddyhwang/dotfiles.git ~/src/github.com/teddyhwang/dotfiles
-   cd ~/src/github.com/teddyhwang/dotfiles
-   ./setup.sh
-   ```
-
-   Git does not need your name/email or a signing key to clone. Do not use the
-   `git@github.com:...` URL until SSH authentication is ready.
+   Git does not need your name/email, signing key, or GitHub authentication to
+   clone. An existing matching checkout is reused **without a pull** or changes
+   to local work; unrelated directories/repositories and escaping symlinks are
+   refused rather than replaced.
 
 4. Stay at the terminal for Homebrew's installer/password prompts and optional
    configuration/clipboard-agent confirmations. A fresh home should not need
    replacement confirmations for Ghostty or btop. If you decline replacing an
    existing configuration, it is preserved rather than installed: review those
    skipped items instead of assuming every configuration is managed.
-5. If setup exits with an error, address the named failure and rerun the same
-   `./setup.sh`. A package failure stops subsequent configuration. Do not use
+5. If setup exits with an error, address the named failure and rerun the
+   bootstrap command, or run the existing checkout directly:
+   `/bin/sh ~/src/github.com/teddyhwang/dotfiles/setup.sh`.
+   A package failure stops subsequent configuration. Do not use
    `brew bundle cleanup --force`, remove an existing checkout, or delete your
    home configuration to make a rerun work. Incomplete shell-plugin installs
    are staged/repaired and existing incomplete directories are backed up.

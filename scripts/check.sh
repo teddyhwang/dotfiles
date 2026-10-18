@@ -18,7 +18,7 @@ for command_name in bash git jq node python3 ruby shellcheck sh zsh; do
 done
 
 printf 'Checking shell syntax...\n'
-for file in setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh; do
+for file in bootstrap.sh setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh; do
   [[ "$file" == "scripts/check.sh" ]] && continue
   sh -n "$file"
 done
@@ -48,7 +48,7 @@ done
 printf 'Running ShellCheck...\n'
 shellcheck -x -S warning \
   -e SC1090,SC1091,SC2262,SC2263 \
-  setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh plugins/herdr-pickers/picker.sh \
+  bootstrap.sh setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh plugins/herdr-pickers/picker.sh \
   home/.bash_profile home/.bashrc \
   home/shared/aliases home/shared/env home/shared/functions home/shared/init \
   home/local/bin/external-display-stay-awake \

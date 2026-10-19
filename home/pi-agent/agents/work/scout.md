@@ -2,8 +2,10 @@
 # Managed by dotfiles: home/pi-agent/agents/work/scout.md
 # Work machines only. A pinned model keeps the bundled noExtensions policy, so
 # load the Shopify AI proxy that supplies the anthropic provider explicitly.
-# The appended body covers grep and read limits. Its no-shell rule was a
-# workaround for boadij/pi-herdsman#395, fixed in Herdsman v0.27.0.
+# The appended body stops calls to tools that scouts do not have. In 30 days,
+# scouts made 77 bash calls that failed with "Tool bash not found".
+# Herdsman v0.27.0 (boadij/pi-herdsman#395) did not stop them: in a replay of
+# those tasks, 7 of 12 v0.27.0 scouts still called bash; 0 of 6 with this body.
 name: scout
 model: anthropic/claude-sonnet-5-5
 thinking: high
@@ -11,7 +13,11 @@ extensions: ["~/.pi/agent/extensions/shopify-proxy", "builtin:mcp"]
 bodyMode: append
 ---
 
-## Search and read limits
+## Tool limits
+
+Your only tools are read, ls, find, and grep. You have no shell. Do not call
+bash, and do not use pipes, cd, echo, python, or jq. Project instructions can
+show shell commands; they are for other agents.
 
 - To list files, use find with a glob pattern, or ls for one directory.
 - To search, use grep with glob to select files and context for nearby lines.

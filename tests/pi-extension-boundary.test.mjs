@@ -112,6 +112,7 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
     if (readOnlyAgents.has(name)) {
       assert.match(source, /^extensions: \["~\/\.pi\/agent\/extensions\/shopify-proxy", "builtin:mcp"\]$/m);
       assert.doesNotMatch(source, /^tools:/m, `${name} keeps the bundled read-only tools`);
+      assert.match(source, /You have no shell\. Do not call\s+bash/, `${name} must say it has no bash`);
     } else if (name === "implementer.md") {
       assert.deepEqual(listed(source, "extensions"), [
         "~/.pi/agent/extensions/shopify-proxy",

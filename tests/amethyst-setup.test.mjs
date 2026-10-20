@@ -3,10 +3,28 @@ import { chmod, mkdir, mkdtemp, readFile, readlink, readdir, rm, stat, symlink, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import test from "node:test";
+import { decodeText, encodeText, formatPlist, readPlist } from "../scripts/plist.mjs";
 
 const repo = process.cwd();
-const python = spawnSync("sh", ["-c", "command -v python3"], { encoding: "utf8" }).stdout.trim();
+const plistModule = pathToFileURL(path.join(repo, "scripts/plist.mjs")).href;
+
+function plistValue(value) {
+  if (typeof value === "boolean") return value ? "<true/>" : "<false/>";
+  return `<string>${encodeText(value)}</string>`;
+}
+
+function plistScalar(raw) {
+  const string = /^<string>([^<]*)<\/string>$/.exec(raw);
+  if (string) return decodeText(string[1]);
+  if (raw === "<string/>") return "";
+  if (raw === "<true/>") return true;
+  if (raw === "<false/>") return false;
+  return raw;
+}
+
 async function sandbox(t) {
   const home = await mkdtemp(path.join(tmpdir(), "amethyst-setup-"));
   t.after(() => rm(home, { recursive: true, force: true }));
@@ -16,45 +34,42 @@ async function sandbox(t) {
     await writeFile(path.join(bin, name), `#!/bin/sh\n${body}\n`);
     await chmod(path.join(bin, name), 0o755);
   };
-  await symlink(python, path.join(bin, "python3"));
+  await symlink(process.execPath, path.join(bin, "node"));
   await executable("pgrep", 'exit "${RUNNING:-1}"');
   // Native defaults import merges keys; only delete clears the domain.
-  await writeFile(path.join(bin, "mock-defaults.py"), `import os, pathlib, plistlib, shutil, sys
-home = pathlib.Path(os.environ['HOME'])
-current = home / 'current.plist'
-args = sys.argv[1:]
-with (home / 'calls').open('a') as log:
-    print(' '.join(args), file=log)
-operation = args[0]
-if operation == 'read':
-    sys.exit(0 if current.exists() else 1)
-if operation == 'export':
-    if os.environ['EXPORT_FAIL'] == '1' or not current.exists():
-        sys.exit(1)
-    shutil.copyfile(current, args[2])
-elif operation == 'delete':
-    if os.environ['DELETE_FAIL'] == '1' or not current.exists():
-        sys.exit(1)
-    current.unlink()
-elif operation == 'import':
-    counter = home / 'import-count'
-    count = int(counter.read_text()) + 1 if counter.exists() else 1
-    counter.write_text(str(count))
-    if count > 1 and os.environ['ROLLBACK_FAIL'] == '1':
-        sys.exit(1)
-    if count == 1 and os.environ.get('IMPORT_FAIL_BEFORE_WRITE') == '1':
-        sys.exit(1)
-    merged = plistlib.loads(current.read_bytes()) if current.exists() else {}
-    merged.update(plistlib.loads(pathlib.Path(args[2]).read_bytes()))
-    current.write_bytes(plistlib.dumps(merged))
-    shutil.copyfile(current, home / 'imported.plist')
-    # Simulate an import failure after partial/complete writes, not just before.
-    if count == 1 and os.environ['IMPORT_FAIL'] == '1':
-        sys.exit(1)
-else:
-    sys.exit(99)
+  await writeFile(path.join(bin, "mock-defaults.mjs"), `import { appendFileSync, copyFileSync, existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { formatPlist, readPlist } from ${JSON.stringify(plistModule)};
+const home = process.env.HOME;
+const current = path.join(home, "current.plist");
+const args = process.argv.slice(2);
+appendFileSync(path.join(home, "calls"), args.join(" ") + "\\n");
+const operation = args[0];
+if (operation === "read") {
+  process.exit(existsSync(current) ? 0 : 1);
+} else if (operation === "export") {
+  if (process.env.EXPORT_FAIL === "1" || !existsSync(current)) process.exit(1);
+  copyFileSync(current, args[2]);
+} else if (operation === "delete") {
+  if (process.env.DELETE_FAIL === "1" || !existsSync(current)) process.exit(1);
+  unlinkSync(current);
+} else if (operation === "import") {
+  const counter = path.join(home, "import-count");
+  const count = existsSync(counter) ? Number(readFileSync(counter, "utf8")) + 1 : 1;
+  writeFileSync(counter, String(count));
+  if (count > 1 && process.env.ROLLBACK_FAIL === "1") process.exit(1);
+  if (count === 1 && process.env.IMPORT_FAIL_BEFORE_WRITE === "1") process.exit(1);
+  const merged = existsSync(current) ? readPlist(current) : new Map();
+  for (const [key, value] of readPlist(args[2])) merged.set(key, value);
+  writeFileSync(current, formatPlist(merged));
+  copyFileSync(current, path.join(home, "imported.plist"));
+  // Simulate an import failure after partial/complete writes, not just before.
+  if (count === 1 && process.env.IMPORT_FAIL === "1") process.exit(1);
+} else {
+  process.exit(99);
+}
 `);
-  await executable("defaults", 'exec python3 "$HOME/bin/mock-defaults.py" "$@"');
+  await executable("defaults", `exec '${process.execPath}' "$HOME/bin/mock-defaults.mjs" "$@"`);
   await executable("brew", `case "$1" in
   shellenv) exit 0 ;;
   --prefix) printf '%s/no-fzf\\n' "$HOME" ;;
@@ -66,19 +81,18 @@ esac`);
     env: { ...env, ...extra }, encoding: "utf8", input: "", timeout: 15000,
   });
   const plist = async (filename, value) => {
-    const result = spawnSync(python, ["-c", "import plistlib,json,sys; plistlib.dump(json.loads(sys.argv[2]),open(sys.argv[1],'wb'))", path.join(home, filename), JSON.stringify(value)]);
-    assert.equal(result.status, 0);
+    const entries = new Map(Object.entries(value).map(([key, item]) => [key, plistValue(item)]));
+    await writeFile(path.join(home, filename), formatPlist(entries));
   };
-  return { home, run, plist };
+  return { home, bin, env, run, plist };
 }
 
 // Load only scalar/profile keys selected below; the saved snapshot contains data values.
 function profile(home, filename) {
-  const result = spawnSync(python, ["-c", `import plistlib,json,sys
-p=plistlib.load(open(sys.argv[1],'rb'))
-print(json.dumps({k:v for k,v in p.items() if k.startswith(('KeyboardShortcuts_', 'NS', 'SU', 'migrated-')) or k in ('EncodedWindowManager','unrelated')}))`, path.join(home, filename)], { encoding: "utf8" });
-  assert.equal(result.status, 0, result.stderr);
-  return JSON.parse(result.stdout);
+  const selected = [...readPlist(path.join(home, filename))].filter(([key]) =>
+    ["KeyboardShortcuts_", "NS", "SU", "migrated-"].some((prefix) => key.startsWith(prefix)) ||
+    ["EncodedWindowManager", "unrelated"].includes(key));
+  return Object.fromEntries(selected.map(([key, raw]) => [key, plistScalar(raw)]));
 }
 
 for (const packaged of [false, true]) {
@@ -88,11 +102,9 @@ for (const packaged of [false, true]) {
     assert.equal(result.status, 0, result.stderr || result.stdout);
     assert.equal(await readlink(path.join(s.home, ".amethyst.yml")), path.join(repo, "apps/amethyst/amethyst.yml"));
     assert.equal(await readlink(path.join(s.home, "Library/Application Support/Amethyst/Layouts/uniform-columns.js")), path.join(repo, "apps/amethyst/uniform-columns.js"));
-    const exactProfile = spawnSync(python, ["-c", `import plistlib,sys
-saved=plistlib.load(open(sys.argv[1],'rb'))
-actual=plistlib.load(open(sys.argv[2],'rb'))
-assert actual == {k:v for k,v in saved.items() if k != 'EncodedWindowManager' and not k.startswith(('NS','SU'))}`, path.join(repo, "apps/amethyst/com.amethyst.Amethyst.plist"), path.join(s.home, "imported.plist")]);
-    assert.equal(exactProfile.status, 0, exactProfile.stderr.toString());
+    const saved = readPlist(path.join(repo, "apps/amethyst/com.amethyst.Amethyst.plist"));
+    assert.deepEqual(readPlist(path.join(s.home, "imported.plist")), new Map([...saved].filter(([key]) =>
+      key !== "EncodedWindowManager" && !key.startsWith("NS") && !key.startsWith("SU"))));
     const imported = profile(s.home, "imported.plist");
     assert.ok(imported["KeyboardShortcuts_cycle-layout"]);
     assert.equal(imported["migrated-toggle-float"], true);
@@ -238,4 +250,45 @@ test("unknown arguments fail before mutations and unsafe destinations are refuse
   assert.notEqual(result.status, 0);
   assert.match(result.stdout, /escapes HOME/);
   assert.deepEqual(await readdir(outside), []);
+});
+
+test("plist helper keeps nested, data and date values verbatim and sorts keys", async () => {
+  const { parsePlist } = await import("../scripts/plist.mjs");
+  const source = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- comment -->
+	<key>z &amp; &lt;key&gt;</key>
+	<dict>
+		<key>a</key>
+		<array><dict><key>b</key><true/></dict><dict/></array>
+	</dict>
+	<key>data</key>
+	<data>AAE=</data>
+	<key>date</key>
+	<date>2024-01-02T03:04:05Z</date>
+	<key>empty</key>
+	<string/>
+</dict>
+</plist>
+`;
+  const entries = parsePlist(source);
+  assert.deepEqual([...entries.keys()], ["z & <key>", "data", "date", "empty"]);
+  assert.equal(entries.get("z & <key>"), "<dict>\n\t\t<key>a</key>\n\t\t<array><dict><key>b</key><true/></dict><dict/></array>\n\t</dict>");
+  assert.deepEqual(parsePlist(formatPlist(entries)), entries);
+  assert.match(formatPlist(entries), /<key>data<\/key>[\s\S]*<key>date<\/key>[\s\S]*<key>empty<\/key>[\s\S]*<key>z &amp; &lt;key&gt;<\/key>/);
+  assert.equal(parsePlist(formatPlist(new Map())).size, 0);
+  for (const invalid of ["<plist><array/></plist>", "<plist><dict><key>a</key></dict></plist>", "<plist><dict><string>a</string><true/></dict></plist>", "<plist><dict>"]) {
+    assert.throws(() => parsePlist(invalid), /plist:/);
+  }
+});
+
+test("a missing node stops the import before any defaults change", { skip: ["/usr/bin/node", "/bin/node"].some(existsSync) && "node is installed in a system directory" }, async (t) => {
+  const s = await sandbox(t);
+  await rm(path.join(s.bin, "node"));
+  const result = s.run(["--restore-preferences"]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /node is required.*run setup\.sh/);
+  assert.doesNotMatch(await readFile(path.join(s.home, "calls"), "utf8"), /export |delete |import /);
 });

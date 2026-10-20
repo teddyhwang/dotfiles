@@ -18,7 +18,7 @@ async function project(t, existing = []) {
 }
 
 function other(root, file, ...flags) {
-  return spawnSync("python3", [script, ...flags, path.join(root, file)], {
+  return spawnSync(process.execPath, [script, ...flags, path.join(root, file)], {
     encoding: "utf8",
     cwd: root,
   });
@@ -102,7 +102,7 @@ test("--all lists existing matches first with context and status", async (t) => 
 
 test("relative paths resolve against the current directory", async (t) => {
   const root = await project(t, ["src/foo.tsx", "src/foo.test.tsx"]);
-  const result = spawnSync("python3", [script, "src/foo.tsx"], { encoding: "utf8", cwd: root });
+  const result = spawnSync(process.execPath, [script, "src/foo.tsx"], { encoding: "utf8", cwd: root });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, `${path.join(root, "src/foo.test.tsx")}\n`);
 });

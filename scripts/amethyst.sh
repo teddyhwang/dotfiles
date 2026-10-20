@@ -45,6 +45,11 @@ if [ "$existing_preferences" -eq 1 ] && [ "$restore_preferences" -eq 0 ]; then
   exit 0
 fi
 
+if ! command -v node >/dev/null 2>&1; then
+  print_error "node is required to prepare Amethyst preferences; install packages first (run setup.sh). No preferences were changed."
+  exit 1
+fi
+
 if pgrep -x Amethyst >/dev/null 2>&1; then
   print_error "Quit Amethyst before importing preferences; no preferences were changed."
   exit 1
@@ -75,7 +80,7 @@ if [ "$existing_preferences" -eq 1 ]; then
   chmod 600 "$current_plist"
   print_info "Amethyst preferences backed up at $current_plist"
 fi
-if ! python3 "$SCRIPT_DIR/amethyst_preferences.py" \
+if ! node "$SCRIPT_DIR/amethyst_preferences.mjs" \
   "$DOTFILES_DIR/apps/amethyst/com.amethyst.Amethyst.plist" \
   "$work_dir/preferences.plist" "$current_plist"; then
   print_error "Could not prepare Amethyst preferences; refusing import."

@@ -137,6 +137,8 @@ esac`,
       await chmod(executable, 0o755);
     }
     await chmod(brew, 0o755);
+    // Homebrew installs node before amethyst.sh prepares preferences with it.
+    await symlink(process.execPath, path.join(bin, "node"));
 
     const result = run("sh", [path.join(repo, "scripts/packages_mac.sh")], {
       cwd: tmpdir(),
@@ -306,7 +308,7 @@ test("Herdr layout helper times out instead of hanging", async () => {
     });
 
     const started = Date.now();
-    const result = run("python3", [path.join(repo, "home/local/bin/herdr-even-layout")], {
+    const result = run(process.execPath, [path.join(repo, "home/local/bin/herdr-even-layout")], {
       env: {
         ...process.env,
         HERDR_SOCKET_PATH: socketPath,

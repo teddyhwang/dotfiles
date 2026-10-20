@@ -1,302 +1,445 @@
-#!/usr/bin/env python3
-"""Find the alternate file for FILE, mirroring other.nvim as configured in Neovim.
+#!/usr/bin/env node
+// Find the alternate file for FILE, mirroring other.nvim as configured in Neovim.
+//
+// Ports home/config/nvim/lua/plugins/other.lua (builtin "rails" and "react"
+// mappings plus the custom mappings) with showMissingFiles enabled. Lua patterns
+// are hand-translated to JavaScript regular expressions.
 
-Ports home/config/nvim/lua/plugins/other.lua (builtin "rails" and "react"
-mappings plus the custom mappings) with showMissingFiles enabled. Lua patterns
-are hand-translated to Python regular expressions.
-"""
+import { accessSync, constants, lstatSync, readdirSync, statSync } from "node:fs";
+import path from "node:path";
 
-import glob
-import os
-import re
-import sys
+const USAGE = "usage: zed-other-file [--all] FILE";
 
-USAGE = "usage: zed-other-file [--all] FILE"
+// --- transformers (other-nvim/builtin/transformers.lua) ---------------------
 
+function pluralize(value) {
+  if (value.endsWith("y")) return `${value.slice(0, -1)}ies`;
+  if (value.endsWith("s")) return value;
+  return `${value}s`;
+}
 
-# --- transformers (other-nvim/builtin/transformers.lua) ---------------------
+function singularize(value) {
+  if (value.length >= 3 && value.endsWith("ies")) return `${value.slice(0, -3)}y`;
+  if (value.endsWith("s")) return value.slice(0, -1);
+  return value;
+}
 
+const TRANSFORMERS = { pluralize, singularize };
 
-def pluralize(value):
-    if value[-1:] == "y":
-        return value[:-1] + "ies"
-    if value[-1:] == "s":
-        return value
-    return value + "s"
+// --- mappings ----------------------------------------------------------------
+// Each mapping is { pattern, target, context, transformer } where target is a
+// string or a list of sub-mappings, as in the Lua tables. Lua "$" stays "$"
+// (no multiline flag, so it only matches at the very end, like Python's \Z);
+// "." stays any char (compiled with the dotAll flag); ".-" becomes ".*?"; "%N" backreferences in
+// the pattern become "\N".
 
+const t = (target, context = null, transformer = null) => ({ target, context, transformer });
 
-def singularize(value):
-    if len(value) >= 3 and value[-3:] == "ies":
-        return value[:-3] + "y"
-    if value[-1:] == "s":
-        return value[:-1]
-    return value
+const m = (pattern, target, context = null, transformer = null) => ({
+  pattern,
+  target,
+  context,
+  transformer,
+});
 
+const RAILS_ALTERNATIVE_TARGETS = [
+  t("/app/models/%1.rb", "model", "singularize"),
+  t("/app/controllers/**/%1_controller.rb", "controller"),
+  t("/app/views/%1/*.html*", "view"),
+  t("/app/views/%1/*.html*", "view", "singularize"),
+  t("/app/channels/**/%1_channel.rb", "channel"),
+  t("/app/mailers/%1_mailer.rb", "mailer"),
+  t("/app/serializers/%1_serializer.rb", "serializer"),
+  t("/app/mailers/%1_mailer.rb", "mailer"),
+  t("/app/services/%1_service.rb", "service"),
+  t("/app/workers/**/%1_worker.rb", "worker"),
+  t("/spec/factories/%1.rb", "factories", "pluralize"),
+  t("/spec/factories/%1.rb", "factories"),
+];
 
-TRANSFORMERS = {"pluralize": pluralize, "singularize": singularize}
+const RAILS = [
+  m(String.raw`/app/(.*)/(.*).rb`, [
+    t("/test/unit/%1/%2_test.rb", "test"),
+    t("/test/functional/%1/%2_test.rb", "test"),
+    t("/test/functional/%2_test.rb", "test"),
+    t("/test/functional/**/%2_test.rb", "test"),
+    t("/test/integration/%1/%2_test.rb", "test"),
+    t("/test/integration/%2_test.rb", "test"),
+    t("/test/integration/**/%2_test.rb", "test"),
+    t("/test/%1/%2_test.rb", "test"),
+    t("/test/%2_test.rb", "test"),
+    t("/test/%1/%2_test.rb", "test"),
+    t("/test/%2_test.rb", "test"),
+    t("/spec/unit/%1/%2_spec.rb", "test"),
+    t("/spec/functional/%1/%2_spec.rb", "test"),
+    t("/spec/functional/%2_spec.rb", "test"),
+    t("/spec/functional/**/%2_spec.rb", "test"),
+    t("/spec/integration/%1/%2_spec.rb", "test"),
+    t("/spec/integration/%2_spec.rb", "test"),
+    t("/spec/integration/**/%2_spec.rb", "test"),
+    t("/spec/%1/%2_spec.rb", "test"),
+    t("/spec/%2_spec.rb", "test"),
+    t("/spec/%1/%2_spec.rb", "test"),
+    t("/spec/%2_spec.rb", "test"),
+  ]),
+  m(String.raw`/lib/(.*).rb`, [
+    t("/test/unit/lib/%1_test.rb", "test"),
+    t("/spec/unit/lib/%1_spec.rb", "test"),
+  ]),
+  m(String.raw`/db/(.*)/(.*).rb`, [
+    t("/test/%1/%2_test.rb", "test"),
+    t("/spec/%1/%2_spec.rb", "test"),
+  ]),
+  m(String.raw`(.+)/test/(.*)/(.*)/(.*)_test.rb`, [t("%1/db/%3/%4.rb"), t("%1/app/%3/%4.rb"), t("%1/%3/%4.rb")]),
+  m(String.raw`(.+)/test/(.*)/(.*)_test.rb`, [t("%1/db/%2/%3.rb"), t("%1/app/%2/%3.rb"), t("%1/lib/%2/%3.rb")]),
+  m(String.raw`(.+)/test/(.*)/(.*)_(.*)_test.rb`, [t("%1/app/%4s/%3_%4.rb")]),
+  m(String.raw`(.+)/spec/(.*)/(.*)/(.*)_spec.rb`, [t("%1/db/%3/%4.rb"), t("%1/app/%3/%4.rb"), t("%1/%3/%4.rb")]),
+  m(String.raw`(.+)/spec/(.*)/(.*)_spec.rb`, [t("%1/db/%2/%3.rb"), t("%1/app/%2/%3.rb"), t("%1/lib/%2/%3.rb")]),
+  m(String.raw`(.+)/spec/(.*)/(.*)_(.*)_spec.rb`, [t("%1/app/%4s/%3_%4.rb")]),
+  m(String.raw`(.+)/spec/factories/(.*).rb`, [t("%1/app/models/%2.rb", null, "singularize")]),
+  m(String.raw`/app/controllers/(.*)_controller.rb`, RAILS_ALTERNATIVE_TARGETS),
+  m(String.raw`/app/views/(.*)/.+.html*`, RAILS_ALTERNATIVE_TARGETS),
+  m(String.raw`/app/models/(.*).rb`, RAILS_ALTERNATIVE_TARGETS),
+  m(String.raw`/app/channels/(.*)_channel.rb`, RAILS_ALTERNATIVE_TARGETS),
+  m(String.raw`/app/mailers/(.*)_mailer.rb`, RAILS_ALTERNATIVE_TARGETS),
+  m(String.raw`/app/serializers/(.*)_serializer.rb`, RAILS_ALTERNATIVE_TARGETS),
+  m(String.raw`/app/services/(.*)_service.rb`, RAILS_ALTERNATIVE_TARGETS),
+  m(String.raw`/app/workers/(.*)/(.*)_worker.rb`, RAILS_ALTERNATIVE_TARGETS),
+];
 
+const REACT = [
+  m(String.raw`(.*).([tj]sx?)$`, "%1.test.%2", "test"),
+  m(String.raw`(.*).test.([tj]sx?)$`, "%1.%2", "implementation"),
+];
 
-# --- mappings ----------------------------------------------------------------
-# Each mapping is (regex, target) where target is a string or a list of
-# sub-mappings, as in the Lua tables. Lua "$" becomes "\Z"; "." stays any char
-# (compiled with DOTALL); ".-" becomes ".*?"; "%N" backreferences become "\N".
+const CUSTOM = [
+  // FolderName/FolderName.tsx <-> FolderName/tests/FolderName.test.tsx
+  m(String.raw`(.*)/(.*)/(\2)\.tsx$`, "%1/%2/tests/%3.test.tsx", "test"),
+  m(String.raw`(.*)/(.*)/tests/(\2)\.test\.tsx$`, "%1/%2/%3.tsx", "component"),
+  // FolderName/FolderName.ts <-> FolderName/tests/FolderName.test.tsx (or .ts)
+  m(String.raw`(.*)/(.*)/(\2)\.ts$`, [
+    t("%1/%2/tests/%3.test.tsx", "test (tsx)"),
+    t("%1/%2/tests/%3.test.ts", "test (ts)"),
+  ]),
+  m(String.raw`(.*)/(.*)/tests/(\2)\.test\.tsx?$`, "%1/%2/%3.ts", "source"),
+  // file.ts <-> tests/file.test.ts
+  m(String.raw`(.*)/(.*?)\.ts$`, "%1/tests/%2.test.ts", "test"),
+  m(String.raw`(.*)/tests/(.*?)\.test\.ts$`, "%1/%2.ts", "source"),
+  // components/.../lib/foo.rb <-> components/.../test/lib/foo_test.rb
+  m(String.raw`(.*)/lib/(.*)\.rb$`, "%1/test/lib/%2_test.rb", "test"),
+  m(String.raw`(.*)/test/lib/(.*)_test\.rb$`, "%1/lib/%2.rb", "source"),
+];
 
-
-def t(target, context=None, transformer=None):
-    return {"target": target, "context": context, "transformer": transformer}
-
-
-def m(pattern, target, context=None, transformer=None):
-    return {
-        "pattern": pattern,
-        "target": target,
-        "context": context,
-        "transformer": transformer,
+// Port of expand_mapping: sub-targets override target/context/transformer.
+function expandMapping(mapping) {
+  if (!Array.isArray(mapping.target)) return [mapping];
+  return mapping.target.map((sub) => {
+    const expanded = { ...mapping, target: sub.target };
+    for (const key of ["context", "transformer"]) {
+      if (sub[key] !== null) expanded[key] = sub[key];
     }
+    return expanded;
+  });
+}
 
+function resolveMappings() {
+  const resolved = [];
+  for (const mapping of [...RAILS, ...REACT, ...CUSTOM]) {
+    for (const expanded of expandMapping(mapping)) {
+      resolved.push({
+        ...expanded,
+        regex: new RegExp(expanded.pattern, "s"),
+        globalRegex: new RegExp(expanded.pattern, "gs"),
+      });
+    }
+  }
+  return resolved;
+}
 
-RAILS_ALTERNATIVE_TARGETS = [
-    t("/app/models/%1.rb", "model", "singularize"),
-    t("/app/controllers/**/%1_controller.rb", "controller"),
-    t("/app/views/%1/*.html*", "view"),
-    t("/app/views/%1/*.html*", "view", "singularize"),
-    t("/app/channels/**/%1_channel.rb", "channel"),
-    t("/app/mailers/%1_mailer.rb", "mailer"),
-    t("/app/serializers/%1_serializer.rb", "serializer"),
-    t("/app/mailers/%1_mailer.rb", "mailer"),
-    t("/app/services/%1_service.rb", "service"),
-    t("/app/workers/**/%1_worker.rb", "worker"),
-    t("/spec/factories/%1.rb", "factories", "pluralize"),
-    t("/spec/factories/%1.rb", "factories"),
-]
+const MAPPINGS = resolveMappings();
 
-RAILS = [
-    m(
-        r"/app/(.*)/(.*).rb",
-        [
-            t("/test/unit/%1/%2_test.rb", "test"),
-            t("/test/functional/%1/%2_test.rb", "test"),
-            t("/test/functional/%2_test.rb", "test"),
-            t("/test/functional/**/%2_test.rb", "test"),
-            t("/test/integration/%1/%2_test.rb", "test"),
-            t("/test/integration/%2_test.rb", "test"),
-            t("/test/integration/**/%2_test.rb", "test"),
-            t("/test/%1/%2_test.rb", "test"),
-            t("/test/%2_test.rb", "test"),
-            t("/test/%1/%2_test.rb", "test"),
-            t("/test/%2_test.rb", "test"),
-            t("/spec/unit/%1/%2_spec.rb", "test"),
-            t("/spec/functional/%1/%2_spec.rb", "test"),
-            t("/spec/functional/%2_spec.rb", "test"),
-            t("/spec/functional/**/%2_spec.rb", "test"),
-            t("/spec/integration/%1/%2_spec.rb", "test"),
-            t("/spec/integration/%2_spec.rb", "test"),
-            t("/spec/integration/**/%2_spec.rb", "test"),
-            t("/spec/%1/%2_spec.rb", "test"),
-            t("/spec/%2_spec.rb", "test"),
-            t("/spec/%1/%2_spec.rb", "test"),
-            t("/spec/%2_spec.rb", "test"),
-        ],
-    ),
-    m(
-        r"/lib/(.*).rb",
-        [
-            t("/test/unit/lib/%1_test.rb", "test"),
-            t("/spec/unit/lib/%1_spec.rb", "test"),
-        ],
-    ),
-    m(
-        r"/db/(.*)/(.*).rb",
-        [
-            t("/test/%1/%2_test.rb", "test"),
-            t("/spec/%1/%2_spec.rb", "test"),
-        ],
-    ),
-    m(
-        r"(.+)/test/(.*)/(.*)/(.*)_test.rb",
-        [t("%1/db/%3/%4.rb"), t("%1/app/%3/%4.rb"), t("%1/%3/%4.rb")],
-    ),
-    m(
-        r"(.+)/test/(.*)/(.*)_test.rb",
-        [t("%1/db/%2/%3.rb"), t("%1/app/%2/%3.rb"), t("%1/lib/%2/%3.rb")],
-    ),
-    m(r"(.+)/test/(.*)/(.*)_(.*)_test.rb", [t("%1/app/%4s/%3_%4.rb")]),
-    m(
-        r"(.+)/spec/(.*)/(.*)/(.*)_spec.rb",
-        [t("%1/db/%3/%4.rb"), t("%1/app/%3/%4.rb"), t("%1/%3/%4.rb")],
-    ),
-    m(
-        r"(.+)/spec/(.*)/(.*)_spec.rb",
-        [t("%1/db/%2/%3.rb"), t("%1/app/%2/%3.rb"), t("%1/lib/%2/%3.rb")],
-    ),
-    m(r"(.+)/spec/(.*)/(.*)_(.*)_spec.rb", [t("%1/app/%4s/%3_%4.rb")]),
-    m(
-        r"(.+)/spec/factories/(.*).rb",
-        [t("%1/app/models/%2.rb", None, "singularize")],
-    ),
-    m(r"/app/controllers/(.*)_controller.rb", RAILS_ALTERNATIVE_TARGETS),
-    m(r"/app/views/(.*)/.+.html*", RAILS_ALTERNATIVE_TARGETS),
-    m(r"/app/models/(.*).rb", RAILS_ALTERNATIVE_TARGETS),
-    m(r"/app/channels/(.*)_channel.rb", RAILS_ALTERNATIVE_TARGETS),
-    m(r"/app/mailers/(.*)_mailer.rb", RAILS_ALTERNATIVE_TARGETS),
-    m(r"/app/serializers/(.*)_serializer.rb", RAILS_ALTERNATIVE_TARGETS),
-    m(r"/app/services/(.*)_service.rb", RAILS_ALTERNATIVE_TARGETS),
-    m(r"/app/workers/(.*)/(.*)_worker.rb", RAILS_ALTERNATIVE_TARGETS),
-]
+// --- globbing ----------------------------------------------------------------
+// A port of Python's glob.glob(pattern, recursive=True) and fnmatch, which the
+// Python version of this script relied on: "*", "?" and "[...]" never match a
+// leading ".", and a "**" path segment matches zero or more directories.
 
-REACT = [
-    m(r"(.*).([tj]sx?)\Z", "%1.test.%2", "test"),
-    m(r"(.*).test.([tj]sx?)\Z", "%1.%2", "implementation"),
-]
+const hasMagic = (value) => /[*?[]/.test(value);
 
-CUSTOM = [
-    # FolderName/FolderName.tsx <-> FolderName/tests/FolderName.test.tsx
-    m(r"(.*)/(.*)/(\2)\.tsx\Z", "%1/%2/tests/%3.test.tsx", "test"),
-    m(r"(.*)/(.*)/tests/(\2)\.test\.tsx\Z", "%1/%2/%3.tsx", "component"),
-    # FolderName/FolderName.ts <-> FolderName/tests/FolderName.test.tsx (or .ts)
-    m(
-        r"(.*)/(.*)/(\2)\.ts\Z",
-        [
-            t("%1/%2/tests/%3.test.tsx", "test (tsx)"),
-            t("%1/%2/tests/%3.test.ts", "test (ts)"),
-        ],
-    ),
-    m(r"(.*)/(.*)/tests/(\2)\.test\.tsx?\Z", "%1/%2/%3.ts", "source"),
-    # file.ts <-> tests/file.test.ts
-    m(r"(.*)/(.*?)\.ts\Z", "%1/tests/%2.test.ts", "test"),
-    m(r"(.*)/tests/(.*?)\.test\.ts\Z", "%1/%2.ts", "source"),
-    # components/.../lib/foo.rb <-> components/.../test/lib/foo_test.rb
-    m(r"(.*)/lib/(.*)\.rb\Z", "%1/test/lib/%2_test.rb", "test"),
-    m(r"(.*)/test/lib/(.*)_test\.rb\Z", "%1/lib/%2.rb", "source"),
-]
+function regexEscape(char) {
+  return /[\\^$.*+?()[\]{}|/-]/.test(char) ? `\\${char}` : char;
+}
 
+// fnmatch.translate: shell pattern -> anchored RegExp (dotAll).
+function fnmatchRegex(pat) {
+  const n = pat.length;
+  let i = 0;
+  let result = "";
+  while (i < n) {
+    const char = pat[i++];
+    if (char === "*") {
+      result += ".*";
+    } else if (char === "?") {
+      result += ".";
+    } else if (char === "[") {
+      let j = i;
+      if (j < n && pat[j] === "!") j += 1;
+      if (j < n && pat[j] === "]") j += 1;
+      while (j < n && pat[j] !== "]") j += 1;
+      if (j >= n) {
+        result += "\\[";
+        continue;
+      }
+      let stuff;
+      if (!pat.slice(i, j).includes("-")) {
+        stuff = pat.slice(i, j).replaceAll("\\", "\\\\");
+      } else {
+        const chunks = [];
+        let k = pat[i] === "!" ? i + 2 : i + 1;
+        for (;;) {
+          k = pat.indexOf("-", k);
+          if (k < 0 || k >= j) break;
+          chunks.push(pat.slice(i, k));
+          i = k + 1;
+          k += 3;
+        }
+        const chunk = pat.slice(i, j);
+        if (chunk) chunks.push(chunk);
+        else chunks[chunks.length - 1] += "-";
+        // Remove empty ranges -- invalid in RE.
+        for (let c = chunks.length - 1; c > 0; c -= 1) {
+          if (chunks[c - 1].slice(-1) > chunks[c][0]) {
+            chunks[c - 1] = chunks[c - 1].slice(0, -1) + chunks[c].slice(1);
+            chunks.splice(c, 1);
+          }
+        }
+        stuff = chunks.map((s) => s.replaceAll("\\", "\\\\").replaceAll("-", "\\-")).join("-");
+      }
+      // Escape set operators; "]" too, since JS (unlike Python) reads "[]" as empty.
+      stuff = stuff.replace(/[&~|\]]/g, "\\$&");
+      i = j + 1;
+      if (!stuff) {
+        result += "(?!)";
+      } else if (stuff === "!") {
+        result += ".";
+      } else {
+        if (stuff[0] === "!") stuff = `^${stuff.slice(1)}`;
+        else if (stuff[0] === "^" || stuff[0] === "[") stuff = `\\${stuff}`;
+        result += `[${stuff}]`;
+      }
+    } else {
+      result += regexEscape(char);
+    }
+  }
+  return new RegExp(`^(?:${result})$`, "s");
+}
 
-def expand_mapping(mapping):
-    """Port of expand_mapping: sub-targets override target/context/transformer."""
-    if not isinstance(mapping["target"], list):
-        return [mapping]
-    expanded = []
-    for sub in mapping["target"]:
-        new = dict(mapping)
-        new["target"] = sub["target"]
-        for key in ("context", "transformer"):
-            if sub[key] is not None:
-                new[key] = sub[key]
-        expanded.append(new)
-    return expanded
+const isHidden = (name) => name.startsWith(".");
+const isRecursive = (pattern) => pattern === "**";
 
+// os.path.join for two components.
+function pyJoin(a, b) {
+  if (b.startsWith("/")) return b;
+  if (!a || a.endsWith("/")) return a + b;
+  return `${a}/${b}`;
+}
 
-def resolve_mappings():
-    resolved = []
-    for mapping in RAILS + REACT + CUSTOM:
-        for expanded in expand_mapping(mapping):
-            expanded = dict(expanded)
-            expanded["regex"] = re.compile(expanded["pattern"], re.DOTALL)
-            resolved.append(expanded)
-    return resolved
+// os.path.split.
+function pySplit(value) {
+  const index = value.lastIndexOf("/") + 1;
+  let head = value.slice(0, index);
+  const tail = value.slice(index);
+  if (head && head !== "/".repeat(head.length)) head = head.replace(/\/+$/, "");
+  return [head, tail];
+}
 
+function lexists(value) {
+  try {
+    lstatSync(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-MAPPINGS = resolve_mappings()
+function isDir(value) {
+  try {
+    return statSync(value).isDirectory();
+  } catch {
+    return false;
+  }
+}
 
+function listdir(dirname, dironly) {
+  try {
+    const names = [];
+    for (const entry of readdirSync(dirname || ".", { withFileTypes: true })) {
+      try {
+        if (!dironly || isDirEntry(dirname || ".", entry)) names.push(entry.name);
+      } catch {
+        // Skip entries that cannot be inspected.
+      }
+    }
+    return names;
+  } catch {
+    return [];
+  }
+}
 
-# --- matching ----------------------------------------------------------------
+// DirEntry.is_dir() follows symlinks.
+function isDirEntry(dirname, entry) {
+  if (entry.isDirectory()) return true;
+  return entry.isSymbolicLink() && isDir(path.join(dirname, entry.name));
+}
 
+function glob0(dirname, basename) {
+  if (basename) return lexists(pyJoin(dirname, basename)) ? [basename] : [];
+  // An empty basename means a trailing slash, which matches only directories.
+  return isDir(dirname) ? [basename] : [];
+}
 
-def substitute_placeholders(template, values):
-    return re.sub(
-        r"%(\d)",
-        lambda found: values[int(found.group(1)) - 1]
-        if 0 < int(found.group(1)) <= len(values)
-        else "",
-        template,
-    )
+function glob1(dirname, pattern, dironly) {
+  let names = listdir(dirname, dironly);
+  if (!isHidden(pattern)) names = names.filter((name) => !isHidden(name));
+  const regex = fnmatchRegex(pattern);
+  return names.filter((name) => regex.test(name));
+}
 
+function rlistdir(dirname, dironly) {
+  const result = [];
+  for (const name of listdir(dirname, dironly)) {
+    if (isHidden(name)) continue;
+    result.push(name);
+    const child = dirname ? pyJoin(dirname, name) : name;
+    for (const sub of rlistdir(child, dironly)) result.push(pyJoin(name, sub));
+  }
+  return result;
+}
 
-def vim_glob(pattern):
-    """Approximate vim.fn.glob(escape_glob(pattern), true, true)."""
-    pattern = pattern.replace("%+", "+")
-    escaped = "".join({"[": "[[]", "]": "[]]"}.get(char, char) for char in pattern)
-    return sorted(glob.glob(escaped, recursive=True))
+function glob2(dirname, _pattern, dironly) {
+  return ["", ...rlistdir(dirname, dironly)];
+}
 
+function iglob(pathname, dironly) {
+  const [dirname, basename] = pySplit(pathname);
+  if (!hasMagic(pathname)) {
+    if (basename) return lexists(pathname) ? [pathname] : [];
+    // Patterns ending with a slash should match only directories.
+    return isDir(dirname) ? [pathname] : [];
+  }
+  if (!dirname) return isRecursive(basename) ? glob2("", basename, dironly) : glob1("", basename, dironly);
+  const dirs = dirname !== pathname && hasMagic(dirname) ? iglob(dirname, true) : [dirname];
+  let globInDir = glob0;
+  if (hasMagic(basename)) globInDir = isRecursive(basename) ? glob2 : glob1;
+  const results = [];
+  for (const dir of dirs) {
+    for (const name of globInDir(dir, basename, dironly)) results.push(pyJoin(dir, name));
+  }
+  return results;
+}
 
-def is_readable_file(path):
-    return os.path.isfile(path) and os.access(path, os.R_OK)
+// Code-point order, like Python's sorted() on str.
+const compareStrings = (a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b));
 
+// Approximate vim.fn.glob(escape_glob(pattern), true, true).
+function vimGlob(pattern) {
+  pattern = pattern.replaceAll("%+", "+");
+  const escaped = [...pattern].map((char) => ({ "[": "[[]", "]": "[]]" })[char] ?? char).join("");
+  return iglob(escaped, false).sort(compareStrings);
+}
 
-def process_single_mapping(mapping, current_file, matches):
-    regex = mapping["regex"]
-    if not regex.search(current_file):
-        return matches
+// --- matching ----------------------------------------------------------------
 
-    transform = TRANSFORMERS.get(mapping["transformer"])
+function substitutePlaceholders(template, values) {
+  return template.replace(/%(\d)/g, (_found, digit) => {
+    const index = Number(digit);
+    return index > 0 && index <= values.length ? values[index - 1] : "";
+  });
+}
 
-    def replace(found):
-        captures = [group if group is not None else "" for group in found.groups()]
-        if transform:
-            captures = [transform(capture) for capture in captures]
-        return substitute_placeholders(mapping["target"], captures)
+function isReadableFile(file) {
+  try {
+    if (!statSync(file).isFile()) return false;
+    accessSync(file, constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-    target = regex.sub(replace, current_file)
+function processSingleMapping(mapping, currentFile, matches) {
+  if (!mapping.regex.test(currentFile)) return matches;
 
-    if os.path.isdir(target):
-        candidates = vim_glob(target + "*")
-    elif "*" not in target:
-        candidates = [target]
-    else:
-        candidates = vim_glob(target)
+  const transform = TRANSFORMERS[mapping.transformer];
 
-    seen = {match["filename"] for match in matches}
-    for candidate in candidates:
-        if candidate not in seen and candidate != current_file:
-            seen.add(candidate)
-            matches.append(
-                {
-                    "context": mapping["context"] or "",
-                    "filename": candidate,
-                    "exists": is_readable_file(candidate),
-                }
-            )
-    return matches
+  const target = currentFile.replace(mapping.globalRegex, (...args) => {
+    // Arguments are: match, ...captures, offset, string[, groups].
+    const offset = args.findIndex((arg, index) => index > 0 && typeof arg === "number");
+    let captures = args.slice(1, offset).map((group) => group ?? "");
+    if (transform) captures = captures.map(transform);
+    return substitutePlaceholders(mapping.target, captures);
+  });
 
+  let candidates;
+  if (isDir(target)) candidates = vimGlob(`${target}*`);
+  else if (!target.includes("*")) candidates = [target];
+  else candidates = vimGlob(target);
 
-def find_other_files(current_file):
-    matches = []
-    for mapping in MAPPINGS:
-        matches = process_single_mapping(mapping, current_file, matches)
-    # Stable: existing files first, otherwise preserve mapping order.
-    return sorted(matches, key=lambda match: not match["exists"])
+  const seen = new Set(matches.map((match) => match.filename));
+  for (const candidate of candidates) {
+    if (!seen.has(candidate) && candidate !== currentFile) {
+      seen.add(candidate);
+      matches.push({
+        context: mapping.context || "",
+        filename: candidate,
+        exists: isReadableFile(candidate),
+      });
+    }
+  }
+  return matches;
+}
 
+function findOtherFiles(currentFile) {
+  let matches = [];
+  for (const mapping of MAPPINGS) matches = processSingleMapping(mapping, currentFile, matches);
+  // Stable: existing files first, otherwise preserve mapping order.
+  return matches.sort((a, b) => Number(!a.exists) - Number(!b.exists));
+}
 
-def main(argv):
-    show_all = False
-    files = []
-    for arg in argv:
-        if arg == "--all":
-            show_all = True
-        elif arg in ("-h", "--help"):
-            print(USAGE)
-            return 0
-        else:
-            files.append(arg)
-    if len(files) != 1:
-        print(USAGE, file=sys.stderr)
-        return 2
+function main(argv) {
+  let showAll = false;
+  const files = [];
+  for (const arg of argv) {
+    if (arg === "--all") {
+      showAll = true;
+    } else if (arg === "-h" || arg === "--help") {
+      console.log(USAGE);
+      return 0;
+    } else {
+      files.push(arg);
+    }
+  }
+  if (files.length !== 1) {
+    console.error(USAGE);
+    return 2;
+  }
 
-    matches = find_other_files(os.path.abspath(files[0]))
-    if not matches:
-        print("No alternate files found", file=sys.stderr)
-        return 1
+  const matches = findOtherFiles(path.resolve(files[0]));
+  if (matches.length === 0) {
+    console.error("No alternate files found");
+    return 1;
+  }
 
-    if show_all:
-        for match in matches:
-            status = "exists" if match["exists"] else "new"
-            print(f"{match['context']}\t{match['filename']}\t{status}")
-        return 0
+  if (showAll) {
+    for (const match of matches) {
+      const status = match.exists ? "exists" : "new";
+      console.log(`${match.context}\t${match.filename}\t${status}`);
+    }
+    return 0;
+  }
 
-    chosen = next((match for match in matches if match["exists"]), matches[0])
-    print(chosen["filename"])
-    return 0
+  const chosen = matches.find((match) => match.exists) ?? matches[0];
+  console.log(chosen.filename);
+  return 0;
+}
 
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+process.exitCode = main(process.argv.slice(2));

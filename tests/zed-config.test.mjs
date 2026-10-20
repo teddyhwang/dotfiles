@@ -82,7 +82,7 @@ function tintedZedTheme(name) {
 }
 
 function runHook(home, env, themeFile) {
-  return spawnSync("python3", [path.join(repo, "home/local/bin/tinty-zed-hook"), themeFile], {
+  return spawnSync(process.execPath, [path.join(repo, "home/local/bin/tinty-zed-hook"), themeFile], {
     encoding: "utf8",
     env: { PATH: process.env.PATH, HOME: home, ...env },
   });
@@ -166,6 +166,33 @@ test("every spawned task exists in tasks.json", () => {
   for (const name of ["\\ l g", "\\ f r", "\\ o o", "\\ shift-t", "\\ a c", "\\ a o", "\\ a p", "\\ f s"]) {
     assert.equal(normal[name][0], "task::Spawn", name);
   }
+});
+
+test("stewardlens task url-encodes the file path with node, not python", (t) => {
+  const task = tasks.find((entry) => entry.label === "stewardlens");
+  assert.ok(task);
+  assert.doesNotMatch(task.command, /python/);
+  const dir = mkdtempSync(path.join(os.tmpdir(), "zed-stewardlens-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  // Stand in for macOS `open`: print the URL it would open.
+  const open = path.join(dir, "open");
+  writeFileSync(open, '#!/bin/sh\nprintf "%s\\n" "$1"\n');
+  chmodSync(open, 0o755);
+  const url = (file) => {
+    const result = spawnSync("sh", ["-c", task.command], {
+      encoding: "utf8",
+      env: {
+        PATH: [dir, path.dirname(process.execPath), process.env.PATH].join(path.delimiter),
+        ZED_RELATIVE_FILE: file,
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout;
+  };
+  const base = "https://stewardlens.shopify.io/search?q=";
+  // Same as Python's urllib.parse.quote(path, safe="").
+  assert.equal(url("a b/(x)!*'.ts"), `${base}a%20b%2F%28x%29%21%2A%27.ts\n`);
+  assert.equal(url("-x/é_.-~.ts"), `${base}-x%2F%C3%A9_.-~.ts\n`);
 });
 
 test("bindings use namespaced actions", () => {

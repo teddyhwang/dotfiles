@@ -1,59 +1,76 @@
-#!/usr/bin/env python3
-"""Focus an exact Herdr pane through the raw socket API."""
+#!/usr/bin/env node
+// Focus an exact Herdr pane through the raw socket API.
+import { connect } from "node:net";
+import { homedir } from "node:os";
+import path from "node:path";
 
-from __future__ import annotations
+function socketPath() {
+  const configured = process.env.HERDR_SOCKET_PATH;
+  if (configured) return configured;
 
-import json
-import os
-from pathlib import Path
-import socket
-import sys
+  const configHome = process.env.XDG_CONFIG_HOME ?? path.join(homedir(), ".config");
+  const session = process.env.HERDR_SESSION;
+  if (session && session !== "default") {
+    return path.join(configHome, "herdr", "sessions", session, "herdr.sock");
+  }
+  return path.join(configHome, "herdr", "herdr.sock");
+}
 
+// Send one request and resolve with the first line the socket returns (or
+// whatever arrived before EOF).
+function exchange(request) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    const client = connect(socketPath());
+    client.setTimeout(5000);
+    client.on("timeout", () => client.destroy(new Error("timed out")));
+    client.on("error", reject);
+    client.on("connect", () => client.write(`${JSON.stringify(request)}\n`));
+    client.on("end", () => resolve(Buffer.concat(chunks)));
+    client.on("data", (chunk) => {
+      chunks.push(chunk);
+      if (chunk.includes(0x0a)) {
+        client.destroy();
+        resolve(Buffer.concat(chunks));
+      }
+    });
+  });
+}
 
-def socket_path() -> str:
-    configured = os.environ.get("HERDR_SOCKET_PATH")
-    if configured:
-        return configured
+async function main() {
+  if (process.argv.length !== 3) {
+    console.error("usage: herdr-focus-pane PANE_ID");
+    return 2;
+  }
 
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    session = os.environ.get("HERDR_SESSION")
-    if session and session != "default":
-        return str(config_home / "herdr" / "sessions" / session / "herdr.sock")
-    return str(config_home / "herdr" / "herdr.sock")
+  const requestId = `dotfiles:pane-focus:${process.pid}`;
+  const request = {
+    id: requestId,
+    method: "pane.focus",
+    params: { pane_id: process.argv[2] },
+  };
 
-
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("usage: herdr-focus-pane PANE_ID", file=sys.stderr)
-        return 2
-
-    request_id = f"dotfiles:pane-focus:{os.getpid()}"
-    request = {
-        "id": request_id,
-        "method": "pane.focus",
-        "params": {"pane_id": sys.argv[1]},
+  try {
+    const buf = await exchange(request);
+    const newline = buf.indexOf(0x0a);
+    const responseLine = newline === -1 ? buf : buf.subarray(0, newline + 1);
+    if (responseLine.length === 0) {
+      throw new Error("Herdr closed the socket without a response");
     }
+    const response = JSON.parse(responseLine.toString());
+    if (response?.id !== requestId) {
+      throw new Error("Herdr returned a response with the wrong request ID");
+    }
+    if ("error" in response) {
+      const error = response.error;
+      throw new Error(error?.message || error?.code || "pane focus failed");
+    }
+  } catch (error) {
+    console.error(`herdr-focus-pane: ${error.message}`);
+    return 1;
+  }
 
-    try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-            client.settimeout(5)
-            client.connect(socket_path())
-            client.sendall(json.dumps(request, separators=(",", ":")).encode() + b"\n")
-            response_line = client.makefile("rb").readline()
-        if not response_line:
-            raise RuntimeError("Herdr closed the socket without a response")
-        response = json.loads(response_line)
-        if response.get("id") != request_id:
-            raise RuntimeError("Herdr returned a response with the wrong request ID")
-        if "error" in response:
-            error = response["error"]
-            raise RuntimeError(error.get("message") or error.get("code") or "pane focus failed")
-    except (OSError, ValueError, RuntimeError) as error:
-        print(f"herdr-focus-pane: {error}", file=sys.stderr)
-        return 1
+  return 0;
+}
 
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+process.exitCode = await main();

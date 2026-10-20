@@ -1,13 +1,8 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
 import test from "node:test";
+import { readToml } from "./helpers/toml.mjs";
 
-const parsed = spawnSync("python3", ["-c", `
-import json, pathlib, tomllib
-print(json.dumps(tomllib.loads(pathlib.Path("home/config/superfile/hotkeys.toml").read_text())))
-`], { encoding: "utf8" });
-assert.equal(parsed.status, 0, parsed.stderr);
-const hotkeys = JSON.parse(parsed.stdout);
+const hotkeys = readToml("home/config/superfile/hotkeys.toml");
 
 const typingActions = ["confirm_typing", "cancel_typing"];
 const normalActions = ["parent_directory", "search_bar"];

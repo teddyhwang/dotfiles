@@ -6,87 +6,90 @@ import path from "node:path";
 import test from "node:test";
 
 const repo = process.cwd();
-const python = spawnSync("python3", ["-c", "import sys; print(sys.executable)"], { encoding: "utf8" }).stdout.trim();
 const baseline = JSON.parse(await readFile(path.join(repo, "apps/pi/packages.json"), "utf8"));
 const herdSource = baseline.packages[3];
 const roles = ["generalist", "implementer", "researcher", "reviewer", "scout"];
-const mock = `#!${python}
-import json, os, pathlib, re, sys
-home = pathlib.Path(os.environ['HOME'])
-name = pathlib.Path(sys.argv[0]).name
-args = sys.argv[1:]
-with (home / 'calls').open('a') as log:
-    log.write(json.dumps({'name':name, 'args':args, 'cwd':os.getcwd(), 'agent':os.environ.get('PI_CODING_AGENT_DIR')}) + '\\n')
-agent = home / '.pi/agent'
-def artifact(source):
-    if source.startswith(('/', '~/')):
-        return pathlib.Path(source.replace('~', str(home), 1))
-    if source.startswith('npm:'):
-        name = source[4:]
-        if '@' in name[1:]: name = name.rsplit('@', 1)[0]
-        return agent / 'npm/node_modules' / name
-    # Pi accepts SCP/shorthand only with git:, or explicit protocol URLs.
-    assert source.startswith('git:') or source.startswith(('https://', 'http://', 'ssh://', 'git://'))
-    source = source.removeprefix('git:')
-    source = re.sub(r'^(https?://github.com/|ssh://git@github.com/|git://github.com/|git@github.com:|github.com/)', '', source)
-    source = source.split('@')[0].removesuffix('.git')
-    return agent / 'git/github.com' / source
-if name == 'pi':
-    assert args[0] == 'install' and args[2:] == ['--no-approve']
-    assert pathlib.Path.cwd() == home
-    assert os.environ['PI_CODING_AGENT_DIR'] == str(agent)
-    source = args[1]
-    agent.mkdir(parents=True, exist_ok=True)
-    settings = agent / 'settings.json'
-    data = json.loads(settings.read_text()) if settings.exists() else {}
-    data.setdefault('packages', [])
-    if not any((e if isinstance(e,str) else e['source']) == source for e in data['packages']):
-        data['packages'].append(source)
-    settings.write_text(json.dumps(data))
-    if os.environ.get('FAIL_PI') and os.environ['FAIL_PI'] in source:
-        sys.exit(8)
-    target = artifact(source)
-    target.mkdir(parents=True, exist_ok=True)
-    (target / 'package.json').write_text('{}')
-    marker = target.parent / ('.' + target.name + '.pi-update-incomplete')
-    if not os.environ.get('KEEP_MARKER') and marker.exists(): marker.unlink()
-    if 'pi-herdsman' in str(target).lower():
-        (target / 'scripts').mkdir(exist_ok=True)
-        (target / 'scripts/build.mjs').write_text('// upstream build fixture')
-elif name == 'git':
-    assert args[0] == '-C' and args[2:] == ['config', '--get', 'remote.origin.url']
-    if pathlib.Path(args[1]).name == 'legacy-herdsman':
-        print('git@github.com:boadij/pi-herdsman.git')
-    else: sys.exit(1)
-elif name == 'npm':
-    assert args == ['install', '--prefix', str(home / '.cache/pi-herdsman-build'), '--no-audit', '--no-fund', 'esbuild@0.28.2']
-    target = home / '.cache/pi-herdsman-build/node_modules/esbuild'
-    target.mkdir(parents=True, exist_ok=True)
-    (target / 'package.json').write_text('{}')
-elif name == 'node':
-    assert args == [str(pathlib.Path.cwd() / 'scripts/build.mjs')]
-    if os.environ.get('FAIL_BUILD'): sys.exit(9)
-    assert (pathlib.Path.cwd() / 'node_modules/esbuild/package.json').is_file()
-    target = pathlib.Path.cwd() / 'dist'
-    (target / 'agent-definitions').mkdir(parents=True, exist_ok=True)
-    (target / 'index.js').write_text('// bundled')
-    for role in ['generalist','implementer','researcher','reviewer','scout']:
-        (target / 'agent-definitions' / (role + '.md')).write_text(role)
-elif name == 'herdr':
-    assert args == ['integration','install','pi']
-else: raise Exception('unexpected native command')
+// Native command mock (pi, git, npm, node, herdr), implemented in Node.
+const mock = "#!" + process.execPath + "\n" + String.raw`const fs = require('fs'), path = require('path'), assert = require('assert'), cp = require('child_process');
+const home = process.env.HOME;
+const name = path.basename(process.argv[1]);
+const args = process.argv.slice(2);
+// pi.sh runs the provisioner through the first node on PATH, which is this mock.
+if (name === 'node' && args[0] && path.basename(args[0]) === 'pi_packages.mjs') {
+  process.exit(cp.spawnSync(process.execPath, args, { stdio: 'inherit' }).status ?? 1);
+}
+fs.appendFileSync(path.join(home, 'calls'), JSON.stringify({name, args, cwd: process.cwd(), agent: process.env.PI_CODING_AGENT_DIR ?? null}) + '\n');
+const agent = path.join(home, '.pi/agent');
+const write = (file, text) => fs.writeFileSync(file, text);
+const mkdirp = (dir) => fs.mkdirSync(dir, { recursive: true });
+function artifact(source) {
+  if (source.startsWith('/') || source.startsWith('~/')) return source.replace('~', () => home);
+  if (source.startsWith('npm:')) {
+    let name = source.slice(4);
+    if (name.slice(1).includes('@')) name = name.slice(0, name.lastIndexOf('@'));
+    return path.join(agent, 'npm/node_modules', name);
+  }
+  // Pi accepts SCP/shorthand only with git:, or explicit protocol URLs.
+  assert.ok(source.startsWith('git:') || ['https://', 'http://', 'ssh://', 'git://'].some(p => source.startsWith(p)));
+  if (source.startsWith('git:')) source = source.slice(4);
+  source = source.replace(/^(https?:\/\/github.com\/|ssh:\/\/git@github.com\/|git:\/\/github.com\/|git@github.com:|github.com\/)/, '');
+  source = source.split('@')[0];
+  if (source.endsWith('.git')) source = source.slice(0, -4);
+  return path.join(agent, 'git/github.com', source);
+}
+if (name === 'pi') {
+  assert.ok(args[0] === 'install' && args.length === 3 && args[2] === '--no-approve');
+  assert.equal(process.cwd(), home);
+  assert.equal(process.env.PI_CODING_AGENT_DIR, agent);
+  const source = args[1];
+  mkdirp(agent);
+  const settings = path.join(agent, 'settings.json');
+  const data = fs.existsSync(settings) ? JSON.parse(fs.readFileSync(settings, 'utf8')) : {};
+  if (!data.packages) data.packages = [];
+  if (!data.packages.some(e => (typeof e === 'string' ? e : e.source) === source)) data.packages.push(source);
+  write(settings, JSON.stringify(data));
+  if (process.env.FAIL_PI && source.includes(process.env.FAIL_PI)) process.exit(8);
+  const target = artifact(source);
+  mkdirp(target);
+  write(path.join(target, 'package.json'), '{}');
+  const marker = path.join(path.dirname(target), '.' + path.basename(target) + '.pi-update-incomplete');
+  if (!process.env.KEEP_MARKER && fs.existsSync(marker)) fs.unlinkSync(marker);
+  if (target.toLowerCase().includes('pi-herdsman')) {
+    mkdirp(path.join(target, 'scripts'));
+    write(path.join(target, 'scripts/build.mjs'), '// upstream build fixture');
+  }
+} else if (name === 'git') {
+  assert.deepEqual([args[0], ...args.slice(2)], ['-C', 'config', '--get', 'remote.origin.url']);
+  if (path.basename(args[1]) === 'legacy-herdsman') console.log('git@github.com:boadij/pi-herdsman.git');
+  else process.exit(1);
+} else if (name === 'npm') {
+  assert.deepEqual(args, ['install', '--prefix', path.join(home, '.cache/pi-herdsman-build'), '--no-audit', '--no-fund', 'esbuild@0.28.2']);
+  const target = path.join(home, '.cache/pi-herdsman-build/node_modules/esbuild');
+  mkdirp(target);
+  write(path.join(target, 'package.json'), '{}');
+} else if (name === 'node') {
+  assert.deepEqual(args, [path.join(process.cwd(), 'scripts/build.mjs')]);
+  if (process.env.FAIL_BUILD) process.exit(9);
+  assert.ok(fs.statSync(path.join(process.cwd(), 'node_modules/esbuild/package.json')).isFile());
+  const target = path.join(process.cwd(), 'dist');
+  mkdirp(path.join(target, 'agent-definitions'));
+  write(path.join(target, 'index.js'), '// bundled');
+  for (const role of ['generalist', 'implementer', 'researcher', 'reviewer', 'scout']) write(path.join(target, 'agent-definitions', role + '.md'), role);
+} else if (name === 'herdr') {
+  assert.deepEqual(args, ['integration', 'install', 'pi']);
+} else throw new Error('unexpected native command');
 `;
 
-async function fixture(t, { pi = "path", herdr = true } = {}) {
+async function fixture(t, { pi = "path", herdr = true, node = true } = {}) {
   const base = await realpath(await mkdtemp(path.join(os.tmpdir(), "dotfiles-pi-")));
   t.after(() => rm(base, { recursive: true, force: true }));
   const home = path.join(base, "home");
   const bin = path.join(base, "bin");
   await mkdir(home);
   await mkdir(bin);
-  await symlink(python, path.join(bin, "python3"));
   await symlink("/usr/bin/dirname", path.join(bin, "dirname"));
-  const commands = ["npm", "git", "node", ...(herdr ? ["herdr"] : [])];
+  // The mock `node` hands pi_packages.mjs to the real Node (process.execPath).
+  const commands = ["npm", "git", ...(node ? ["node"] : []), ...(herdr ? ["herdr"] : [])];
   if (pi === "path") commands.push("pi");
   for (const name of commands) await writeFile(path.join(bin, name), mock, { mode: 0o755 });
   if (pi === "local" || pi === "agent") {
@@ -458,6 +461,15 @@ test("unknown arguments fail before commands or configuration changes", async (t
   const result = f.run({}, ["--dry-run"]);
   assert.equal(result.status, 2);
   assert.match(result.stderr, /Usage:/);
+  assert.deepEqual(await f.calls(), []);
+  await assert.rejects(stat(f.settings), { code: "ENOENT" });
+});
+
+test("missing node fails with a clear message before commands or configuration changes", async (t) => {
+  const f = await fixture(t, { node: false });
+  const result = f.run();
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /pi\.sh: node is required; install packages first \(run setup\.sh\)/);
   assert.deepEqual(await f.calls(), []);
   await assert.rejects(stat(f.settings), { code: "ENOENT" });
 });

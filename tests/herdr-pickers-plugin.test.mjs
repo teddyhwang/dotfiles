@@ -4,18 +4,12 @@ import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { readToml } from "./helpers/toml.mjs";
 
 const pluginRoot = path.resolve("plugins/herdr-pickers");
 const picker = path.join(pluginRoot, "picker.sh");
-const parsed = spawnSync("python3", ["-c", `
-import json, pathlib, tomllib
-print(json.dumps({
-    "manifest": tomllib.loads(pathlib.Path("plugins/herdr-pickers/herdr-plugin.toml").read_text()),
-    "keys": tomllib.loads(pathlib.Path("home/config/herdr/config.toml").read_text())["keys"],
-}))
-`], { encoding: "utf8" });
-assert.equal(parsed.status, 0, parsed.stderr);
-const { manifest, keys } = JSON.parse(parsed.stdout);
+const manifest = readToml("plugins/herdr-pickers/herdr-plugin.toml");
+const { keys } = readToml("home/config/herdr/config.toml");
 const commands = keys.command;
 const jq = spawnSync("sh", ["-c", "command -v jq"], { encoding: "utf8" });
 assert.equal(jq.status, 0, "Herdr picker tests require jq");

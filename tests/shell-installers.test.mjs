@@ -48,7 +48,10 @@ printf 'support\\n' >"$prefix/share/blesh/support"
 `, { mode: 0o755 });
   const target = path.join(home, shell === "zsh" ? ".local/share/zinit/zinit.git" : ".local/share/blesh");
   const entry = shell === "zsh" ? "zinit.zsh" : "ble.sh";
+  // A new session has no controlling terminal, so consent prompts read the
+  // test's stdin instead of /dev/tty when the suite runs in a terminal.
   const run = (extra = {}, input = "") => spawnSync("/bin/sh", [path.join(checkout, "scripts", `${shell}.sh`)], {
+    detached: true,
     cwd: tmpdir(),
     encoding: "utf8",
     timeout: 10_000,

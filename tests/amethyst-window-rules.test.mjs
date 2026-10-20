@@ -2,15 +2,10 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { readYaml } from "./helpers/yaml.mjs";
 
 const configPath = fileURLToPath(new URL("../apps/amethyst/amethyst.yml", import.meta.url));
-const parsed = spawnSync("ruby", [
-  "-ryaml", "-rjson", "-e",
-  "puts JSON.generate(YAML.safe_load(File.read(ARGV.fetch(0))))",
-  configPath,
-], { encoding: "utf8" });
-assert.equal(parsed.status, 0, parsed.stderr);
-const config = JSON.parse(parsed.stdout);
+const config = readYaml(configPath);
 const chrome = config.floating.filter((entry) => entry.id === "com.google.Chrome");
 assert.equal(config["floating-is-blacklist"], false, "rules must be a tiling allowlist");
 assert.equal(chrome.length, 1, "Chrome must have exactly one rule");
@@ -54,34 +49,23 @@ for (const [title, shouldTile] of cases) {
 }
 
 // Amethyst uses Foundation/ICU, not JavaScript's regex engine. Exercise the
-// exact same parsed YAML and cases in Foundation when running on macOS.
+// exact same parsed YAML and cases in Foundation when running on macOS, through
+// JavaScript for Automation's Objective-C bridge.
 test("Chrome rules agree with Amethyst's Foundation regex engine", {
   skip: process.platform !== "darwin",
 }, () => {
-  const result = spawnSync("swift", ["-e", `
-    import Foundation
-    struct Input: Decodable {
-        let patterns: [String]
-        let cases: [Case]
+  const result = spawnSync("osascript", ["-l", "JavaScript", "-e", `
+    ObjC.import("Foundation");
+    function run(argv) {
+      const input = JSON.parse(argv[0]);
+      const tiles = (title) => input.patterns.some((pattern) =>
+        $(title).rangeOfStringOptions(pattern, $.NSRegularExpressionSearch).location !== $.NSNotFound);
+      return JSON.stringify(input.cases.filter((item) => tiles(item.title) !== item.shouldTile).map((item) => item.title));
     }
-    struct Case: Decodable {
-        let title: String
-        let shouldTile: Bool
-    }
-    let input = try JSONDecoder().decode(Input.self, from: FileHandle.standardInput.readDataToEndOfFile())
-    for item in input.cases {
-        let tiles = input.patterns.contains {
-            item.title.range(of: $0, options: .regularExpression) != nil
-        }
-        precondition(tiles == item.shouldTile, "Incorrect rule for: \\(item.title)")
-    }
-  `], {
-    encoding: "utf8",
-    input: JSON.stringify({
-      patterns: chrome[0]["window-titles"],
-      cases: cases.map(([title, shouldTile]) => ({ title, shouldTile })),
-    }),
-    timeout: 60_000,
-  });
-  assert.equal(result.status, 0, result.error?.message || result.stderr || result.stdout);
+  `, JSON.stringify({
+    patterns: chrome[0]["window-titles"],
+    cases: cases.map(([title, shouldTile]) => ({ title, shouldTile })),
+  })], { encoding: "utf8", timeout: 60_000 });
+  assert.equal(result.status, 0, result.error?.message || result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), [], "Incorrect rules for these titles");
 });

@@ -1,95 +1,108 @@
-#!/usr/bin/env python3
-"""Give every pane in a Herdr tab an equal share, like tmux's select-layout even-*.
+#!/usr/bin/env node
+// Give every pane in a Herdr tab an equal share, like tmux's select-layout even-*.
+//
+// Herdr has no even-layout action and no CLI for split ratios, so this talks to
+// the socket API directly: layout.export to read the split tree, then
+// layout.set_split_ratio per split node. Each node's ratio becomes
+// leaves(first) / leaves(node), which makes every leaf the same size whatever
+// the nesting looks like.
+import { connect } from "node:net";
+import { homedir } from "node:os";
 
-Herdr has no even-layout action and no CLI for split ratios, so this talks to
-the socket API directly: layout.export to read the split tree, then
-layout.set_split_ratio per split node. Each node's ratio becomes
-leaves(first) / leaves(node), which makes every leaf the same size whatever
-the nesting looks like.
-"""
-import json
-import os
-import socket
-import sys
+const SOCKET = process.env.HERDR_SOCKET_PATH ?? `${homedir()}/.config/herdr/herdr.sock`;
+const MAX_RESPONSE_BYTES = 1024 * 1024;
 
-SOCKET = os.environ.get(
-    "HERDR_SOCKET_PATH", os.path.expanduser("~/.config/herdr/herdr.sock")
-)
-try:
-    TIMEOUT_SECONDS = float(os.environ.get("HERDR_SOCKET_TIMEOUT", "2"))
-    if TIMEOUT_SECONDS <= 0:
-        raise ValueError
-except ValueError:
-    raise SystemExit("herdr-even-layout: HERDR_SOCKET_TIMEOUT must be positive") from None
-MAX_RESPONSE_BYTES = 1024 * 1024
+function fail(message) {
+  console.error(`herdr-even-layout: ${message}`);
+  process.exit(1);
+}
 
+let timeoutMs;
+{
+  const raw = process.env.HERDR_SOCKET_TIMEOUT ?? "2";
+  const seconds = /^\s*[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?\s*$/.test(raw) ? Number(raw) : NaN;
+  if (!(seconds > 0)) fail("HERDR_SOCKET_TIMEOUT must be positive");
+  timeoutMs = seconds * 1000;
+}
 
-def call(method, params):
-    try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-            s.settimeout(TIMEOUT_SECONDS)
-            s.connect(SOCKET)
-            request = {"id": "even", "method": method, "params": params}
-            s.sendall((json.dumps(request) + "\n").encode())
-            buf = b""
-            while not buf.endswith(b"\n"):
-                chunk = s.recv(65536)
-                if not chunk:
-                    break
-                buf += chunk
-                if len(buf) > MAX_RESPONSE_BYTES:
-                    raise ValueError("response exceeded 1 MiB")
+// One request per connection; the reply is a single newline-terminated line.
+function exchange(request) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    const client = connect(SOCKET);
+    client.setTimeout(timeoutMs);
+    client.on("timeout", () => client.destroy(new Error("timed out")));
+    client.on("error", reject);
+    client.on("connect", () => client.write(`${JSON.stringify(request)}\n`));
+    client.on("data", (chunk) => {
+      chunks.push(chunk);
+      size += chunk.length;
+      if (size > MAX_RESPONSE_BYTES) {
+        client.destroy(new Error("response exceeded 1 MiB"));
+      } else if (chunk[chunk.length - 1] === 0x0a) {
+        client.destroy();
+        resolve(Buffer.concat(chunks));
+      }
+    });
+    client.on("end", () => reject(new Error("incomplete response")));
+  });
+}
 
-        if not buf.endswith(b"\n"):
-            raise ValueError("incomplete response")
-        reply = json.loads(buf.decode().splitlines()[0])
-    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as error:
-        raise SystemExit(f"herdr-even-layout: {error}") from error
+async function call(method, params) {
+  let reply;
+  try {
+    const buf = await exchange({ id: "even", method, params });
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(buf);
+    reply = JSON.parse(text.split(/\r\n|[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]/)[0]);
+  } catch (error) {
+    fail(error.message);
+  }
 
-    if "error" in reply:
-        error = reply["error"]
-        message = error.get("message", error) if isinstance(error, dict) else error
-        raise SystemExit(f"herdr-even-layout: {message}")
-    if "result" not in reply:
-        raise SystemExit("herdr-even-layout: response did not contain a result")
-    return reply["result"]
+  if (reply !== null && typeof reply === "object" && "error" in reply) {
+    const error = reply.error;
+    fail(error !== null && typeof error === "object" ? (error.message ?? error) : error);
+  }
+  if (reply === null || typeof reply !== "object" || !("result" in reply)) {
+    fail("response did not contain a result");
+  }
+  return reply.result;
+}
 
+function leaves(node) {
+  if (node.type === "pane") return 1;
+  return leaves(node.first) + leaves(node.second);
+}
 
-def leaves(node):
-    if node.get("type") == "pane":
-        return 1
-    return leaves(node["first"]) + leaves(node["second"])
+// Collect [path, ratio] for every split, deepest last.
+function plan(node, path, out) {
+  if (node.type === "pane") return;
+  const { first, second } = node;
+  out.push([path, leaves(first) / (leaves(first) + leaves(second))]);
+  plan(first, [...path, false], out);
+  plan(second, [...path, true], out);
+}
 
+async function main() {
+  const params = {};
+  const tabId = process.env.HERDR_ACTIVE_TAB_ID;
+  if (tabId) params.tab_id = tabId;
 
-def plan(node, path, out):
-    """Collect (path, ratio) for every split, deepest last."""
-    if node.get("type") == "pane":
-        return
-    first, second = node["first"], node["second"]
-    out.append((path, leaves(first) / (leaves(first) + leaves(second))))
-    plan(first, path + [False], out)
-    plan(second, path + [True], out)
+  const root = (await call("layout.export", params)).layout.root;
+  if (root.type === "pane") return; // single pane, nothing to even out
 
+  const changes = [];
+  plan(root, [], changes);
+  for (const [path, ratio] of changes) {
+    await call("layout.set_split_ratio", { ...params, path, ratio });
+  }
 
-def main():
-    params = {}
-    tab_id = os.environ.get("HERDR_ACTIVE_TAB_ID")
-    if tab_id:
-        params["tab_id"] = tab_id
+  if (process.argv.includes("--verbose")) {
+    for (const [path, ratio] of changes) {
+      const shown = path.map((second) => (second ? "True" : "False")).join(", ");
+      console.log(`path=[${shown}] ratio=${ratio.toFixed(4)}`);
+    }
+  }
+}
 
-    root = call("layout.export", params)["layout"]["root"]
-    if root.get("type") == "pane":
-        return  # single pane, nothing to even out
-
-    changes = []
-    plan(root, [], changes)
-    for path, ratio in changes:
-        call("layout.set_split_ratio", dict(params, path=path, ratio=ratio))
-
-    if "--verbose" in sys.argv:
-        for path, ratio in changes:
-            print(f"path={path} ratio={ratio:.4f}")
-
-
-if __name__ == "__main__":
-    main()
+await main();

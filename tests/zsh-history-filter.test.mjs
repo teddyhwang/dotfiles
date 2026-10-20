@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { readToml } from "./helpers/toml.mjs";
 
 const zshrc = await readFile("home/.zshrc", "utf8");
 // Load only the history policy so these tests don't initialize personal plugins.
@@ -119,15 +120,10 @@ fc -W "$2"
 
 // Parse actual TOML rather than maintaining a second copy of the Atuin policy.
 test("Atuin filters explicit Pi resumes, not ordinary commands", () => {
-  const result = spawnSync("python3", ["-c", `
-import json, re, sys, tomllib
-with open("home/config/atuin/config.toml", "rb") as file:
-    patterns = tomllib.load(file)["history_filter"]
-commands = json.load(sys.stdin)
-print(json.dumps([any(re.search(pattern, command) for pattern in patterns) for command in commands]))
-`], { input: JSON.stringify([...resumes, ...ordinary]), encoding: "utf8" });
-  assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout), [
+  // Atuin uses Rust regex; these patterns use only syntax that JavaScript shares.
+  const patterns = readToml("home/config/atuin/config.toml").history_filter.map((pattern) => new RegExp(pattern));
+  const matches = [...resumes, ...ordinary].map((command) => patterns.some((pattern) => pattern.test(command)));
+  assert.deepEqual(matches, [
     ...resumes.map(() => true),
     ...ordinary.map(() => false),
   ]);

@@ -1,44 +1,56 @@
-#!/bin/bash
-set -euo pipefail
+#!/usr/bin/env node
+// Install the tinty-generated opencode theme as "tinty-current" and select it.
+//
+// Usage: tinty-opencode-hook THEME_FILE
 
-theme_file="${1:-}"
-opencode_dir="$HOME/.config/opencode"
-themes_dir="$opencode_dir/themes"
-theme_dest="$themes_dir/tinty-current.json"
+import { spawnSync } from "node:child_process";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, statSync, writeSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
 
-auto_cleanup() {
-  [[ -n "${tmp_theme:-}" && -e "$tmp_theme" ]] && rm -f "$tmp_theme"
-  return 0
+// Each replacement applies at most once per line.
+const THEME_EDITS = [
+  // Change backgroundElement to darker grey for prompt area.
+  [/"backgroundElement": \{ "dark": "base02"/, '"backgroundElement": { "dark": "base01"'],
+  // Update diff backgrounds to use direct hex colors (opencode may not support custom defs).
+  [/"diffAddedBg": \{ "dark": "[^"]*"/, '"diffAddedBg": { "dark": "#1a2e1a"'],
+  [/"diffRemovedBg": \{ "dark": "[^"]*"/, '"diffRemovedBg": { "dark": "#2e1a1a"'],
+  [/"diffAddedLineNumberBg": \{ "dark": "[^"]*"/, '"diffAddedLineNumberBg": { "dark": "#1a2e1a"'],
+  [/"diffRemovedLineNumberBg": \{ "dark": "[^"]*"/, '"diffRemovedLineNumberBg": { "dark": "#2e1a1a"'],
+];
+
+const themeFile = process.argv[2] ?? "";
+if (!themeFile || !existsSync(themeFile) || !statSync(themeFile).isFile()) process.exit(0);
+
+const opencodeDir = path.join(process.env.HOME || homedir(), ".config/opencode");
+const themesDir = path.join(opencodeDir, "themes");
+mkdirSync(themesDir, { recursive: true });
+
+// latin1 keeps every byte as it was; the patterns are ASCII.
+const theme = readFileSync(themeFile, "latin1").split("\n").map((line) =>
+  THEME_EDITS.reduce((edited, [pattern, replacement]) => edited.replace(pattern, () => replacement), line)).join("\n");
+const temporary = path.join(themesDir, `.tinty-current.${process.pid}.${Date.now()}.json`);
+try {
+  const descriptor = openSync(temporary, "wx", 0o600);
+  try {
+    writeSync(descriptor, theme, null, "latin1");
+  } finally {
+    closeSync(descriptor);
+  }
+  renameSync(temporary, path.join(themesDir, "tinty-current.json"));
+} finally {
+  rmSync(temporary, { force: true });
 }
-trap auto_cleanup EXIT
 
-[[ -n "$theme_file" && -f "$theme_file" ]] || exit 0
+const jsonc = path.join(opencodeDir, "opencode.jsonc");
+const config = existsSync(jsonc) ? jsonc : path.join(opencodeDir, "opencode.json");
+if (!existsSync(config) || statSync(config).size === 0) {
+  writeFileSync(config, '{ "theme": "tinty-current" }\n');
+} else {
+  // Select the theme only where a "theme" key already exists.
+  const source = readFileSync(config, "latin1");
+  const updated = source.replace(/"theme"\s*:\s*"[^"]*"/, '"theme": "tinty-current"');
+  if (updated !== source) writeFileSync(config, updated, "latin1");
+}
 
-mkdir -p "$themes_dir"
-tmp_theme="$(mktemp "$themes_dir/.tinty-current.XXXXXX.json")"
-cp "$theme_file" "$tmp_theme"
-
-# Change backgroundElement to darker grey for prompt area
-perl -i -pe 's/"backgroundElement": \{ "dark": "base02"/"backgroundElement": { "dark": "base01"/' "$tmp_theme"
-
-# Update diff backgrounds to use direct hex colors (opencode may not support custom defs)
-perl -i -pe 's/"diffAddedBg": \{ "dark": "[^"]*"/"diffAddedBg": { "dark": "#1a2e1a"/' "$tmp_theme"
-perl -i -pe 's/"diffRemovedBg": \{ "dark": "[^"]*"/"diffRemovedBg": { "dark": "#2e1a1a"/' "$tmp_theme"
-perl -i -pe 's/"diffAddedLineNumberBg": \{ "dark": "[^"]*"/"diffAddedLineNumberBg": { "dark": "#1a2e1a"/' "$tmp_theme"
-perl -i -pe 's/"diffRemovedLineNumberBg": \{ "dark": "[^"]*"/"diffRemovedLineNumberBg": { "dark": "#2e1a1a"/' "$tmp_theme"
-
-mv -f "$tmp_theme" "$theme_dest"
-
-if [ -f "$opencode_dir/opencode.jsonc" ]; then
-  cfg="$opencode_dir/opencode.jsonc"
-else
-  cfg="$opencode_dir/opencode.json"
-fi
-
-if [ ! -s "$cfg" ]; then
-  echo '{ "theme": "tinty-current" }' > "$cfg"
-else
-  perl -0pi -e 'if (/"theme"\s*:/) { s/"theme"\s*:\s*"[^"]*"/"theme": "tinty-current"/ }' "$cfg"
-fi
-
-killall -SIGUSR2 opencode 2>/dev/null || true
+spawnSync("killall", ["-SIGUSR2", "opencode"], { stdio: "ignore" });

@@ -1,19 +1,11 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { readToml } from "./helpers/toml.mjs";
 
-const parsed = spawnSync("python3", ["-c", `
-import json, pathlib, tomllib
-root = pathlib.Path("home/config")
-print(json.dumps({
-    "config": tomllib.loads((root / "superfile/config.toml").read_text()),
-    "theme": tomllib.loads((root / "superfile/theme/seti.toml").read_text()),
-    "tinty": tomllib.loads((root / "tinted-theming/tinty/config.toml").read_text()),
-}))
-`], { encoding: "utf8" });
-assert.equal(parsed.status, 0, parsed.stderr);
-const { config, theme, tinty } = JSON.parse(parsed.stdout);
+const config = readToml("home/config/superfile/config.toml");
+const theme = readToml("home/config/superfile/theme/seti.toml");
+const tinty = readToml("home/config/tinted-theming/tinty/config.toml");
 
 // Base16 Seti UI, from tinted-theming/schemes base16/seti.yaml.
 const seti = {

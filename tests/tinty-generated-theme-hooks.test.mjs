@@ -4,14 +4,9 @@ import { mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, writeFileSy
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { readToml } from "./helpers/toml.mjs";
 
-const parsed = spawnSync("python3", ["-c", `
-import json, pathlib, tomllib
-config = tomllib.loads(pathlib.Path("home/config/tinted-theming/tinty/config.toml").read_text())
-print(json.dumps({item["name"]: item["hook"] for item in config["items"]}))
-`], { encoding: "utf8" });
-assert.equal(parsed.status, 0, parsed.stderr);
-const hooks = JSON.parse(parsed.stdout);
+const hooks = Object.fromEntries(readToml("home/config/tinted-theming/tinty/config.toml").items.map((item) => [item.name, item.hook]));
 
 function fixture(t, name) {
   const root = mkdtempSync(path.join(os.tmpdir(), "tinty-generated-theme-"));

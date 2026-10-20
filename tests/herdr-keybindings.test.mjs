@@ -5,21 +5,12 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { readToml } from "./helpers/toml.mjs";
 
-const parsed = spawnSync("python3", ["-c", `
-import json, pathlib, tomllib
-config = tomllib.loads(pathlib.Path("home/config/herdr/config.toml").read_text())
-print(json.dumps({
-    "commands": config["keys"]["command"],
-    "prompt_new_tab_name": config["ui"]["prompt_new_tab_name"],
-    "switch_tab": config["keys"]["switch_tab"],
-}))
-`], { encoding: "utf8" });
-assert.equal(parsed.status, 0, parsed.stderr);
-const config = JSON.parse(parsed.stdout);
-const bindings = config.commands;
-assert.equal(config.prompt_new_tab_name, false, "one-based new-tab prompt must be disabled");
-assert.equal(config.switch_tab, "", "native one-based tab switching must be disabled");
+const config = readToml("home/config/herdr/config.toml");
+const bindings = config.keys.command;
+assert.equal(config.ui.prompt_new_tab_name, false, "one-based new-tab prompt must be disabled");
+assert.equal(config.keys.switch_tab, "", "native one-based tab switching must be disabled");
 const jq = spawnSync("sh", ["-c", "command -v jq"], { encoding: "utf8" });
 assert.equal(jq.status, 0, "Herdr keybinding tests require jq");
 

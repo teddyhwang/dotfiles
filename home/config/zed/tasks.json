@@ -39,7 +39,7 @@
   {
     // \fs: open the current file in Stewardlens.
     "label": "stewardlens",
-    "command": "open \"https://stewardlens.shopify.io/search?q=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=\"\"))' \"$ZED_RELATIVE_FILE\")\"",
+    "command": "open \"https://stewardlens.shopify.io/search?q=$(node -p 'encodeURIComponent(process.argv[1]).replace(/[!\\x27()*]/g, (c) => \"%\" + c.charCodeAt(0).toString(16).toUpperCase())' -- \"$ZED_RELATIVE_FILE\")\"",
     "reveal": "never",
     "hide": "on_success",
     "show_summary": false,

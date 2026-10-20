@@ -107,16 +107,19 @@ sudo ./scripts/macbook_t2_linux.sh
 ./scripts/check.sh
 ```
 
-This runs shell syntax checks, ShellCheck, structured-config parsing, Python and
-Lua compilation checks when available, and the Node test suite. GitHub Actions
-runs the same check on Linux and macOS. Validation needs Node 24+, Python 3.11+,
-Ruby with `YAML.safe_load_file`, jq, ShellCheck, Bash, and Zsh. Neovim and tmux enable
+This runs shell syntax checks, ShellCheck, structured-config parsing, Node and
+Lua syntax checks when available, and the Node test suite. GitHub Actions
+runs the same check on Linux and macOS. Validation needs Node 24+, jq, taplo,
+yq (mikefarah's Go version), ShellCheck, Bash, and Zsh. Neovim and tmux enable
 additional isolated integration tests.
+
+The repository's own code is shell or Node only; see `AGENTS.md` for the
+language rules.
 
 Measure warm startup locally (no cache deletion or dependency installation):
 
 ```sh
-python3 scripts/benchmark.py --runs 21
+node scripts/benchmark.mjs --runs 21
 ```
 
 This measures startup plus immediate exit, without a TTY. It does not measure

@@ -8,34 +8,32 @@ import test from "node:test";
 const repo = process.cwd();
 const script = path.join(repo, "bootstrap.sh");
 const realGit = spawnSync("sh", ["-c", "command -v git"], { encoding: "utf8" }).stdout.trim();
-const python = String.raw`
-import errno, os, pty, subprocess, sys
-if os.environ.get("NO_TTY") == "1":
-    sys.exit(subprocess.run(["/bin/sh", sys.argv[1]], start_new_session=True).returncode)
-pid, master = pty.fork()
-if pid == 0:
-    # Simulate a downloaded script with no terminal on stdin. The bootstrap
-    # must reconnect prompts and setup to its controlling terminal itself.
-    null = os.open(os.devnull, os.O_RDONLY)
-    os.dup2(null, 0)
-    os.close(null)
-    os.execl("/bin/sh", "sh", sys.argv[1])
-os.write(master, b"\n")
-while True:
-    try:
-        data = os.read(master, 65536)
-        if not data:
-            break
-        sys.stdout.buffer.write(data)
-        sys.stdout.buffer.flush()
-    except OSError as error:
-        if error.errno == errno.EIO:
-            break
-        raise
-os.close(master)
-_, status = os.waitpid(pid, 0)
-sys.exit(os.waitstatus_to_exitcode(status))
+// Simulate a downloaded script with no terminal on stdin. The bootstrap must
+// reconnect prompts and setup to its controlling terminal itself.
+const child = 'exec </dev/null; exec /bin/sh "$1"';
+const quote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
+
+// Node has no pseudo-terminal API, so `script` provides the controlling
+// terminal. It forwards a Return from its stdin to the terminal and returns
+// the child's status. Its stdin must be an anonymous pipe (macOS `script`
+// rejects Node's sockets and FIFOs) that stays open until `script` exits: at
+// end of input, macOS `script` sends the terminal an end-of-file, which can
+// arrive before the Return.
+const terminal = String.raw`
+directory=$(mktemp -d) || exit 1
+trap 'rm -rf "$directory"' EXIT
+{ printf '\n'; while [ ! -e "$directory/done" ]; do sleep 0.1; done; } |
+  { script "$@"; status=$?; : >"$directory/done"; exit "$status"; }
 `;
+
+// BSD (macOS) and util-linux `script` take different arguments.
+function withTerminal(file, options) {
+  if (options.env.NO_TTY === "1") return spawnSync("/bin/sh", [file], { ...options, detached: true });
+  const args = process.platform === "darwin"
+    ? ["-q", "/dev/null", "/bin/sh", "-c", child, "sh", file]
+    : ["-q", "-e", "-c", `/bin/sh -c ${quote(child)} sh ${quote(file)}`, "/dev/null"];
+  return spawnSync("/bin/sh", ["-c", terminal, "sh", ...args], options);
+}
 
 async function fixture(t, ready = true) {
   const root = await mkdtemp(path.join(tmpdir(), "dotfiles-bootstrap-test-"));
@@ -89,7 +87,7 @@ exit "$SETUP_STATUS"
   git("-C", remote, "add", "setup.sh");
   git("-C", remote, "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", "fixture");
   if (ready) await writeFile(clt, "ready");
-  const run = (extra = {}) => spawnSync("python3", ["-c", python, script], {
+  const run = (extra = {}) => withTerminal(script, {
     env: { ...env, ...extra }, encoding: "utf8", input: "", timeout: 15_000,
   });
   const calls = () => readFile(log, "utf8").catch(() => "");

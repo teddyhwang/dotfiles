@@ -24,18 +24,22 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
       - name: Install Linux validation tools
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install --yes jq lua5.4 neovim ruby shellcheck tmux zsh
+        run: |
+          sudo apt-get update && sudo apt-get install --yes jq lua5.4 neovim shellcheck tmux zsh
+          # Ubuntu packages neither taplo nor mikefarah's yq; pin release binaries.
+          curl -fsSL -o /tmp/taplo.gz https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-linux-x86_64.gz
+          curl -fsSL -o /tmp/yq https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_amd64
+          printf '%s  %s\n' \
+            8fe196b894ccf9072f98d4e1013a180306e17d244830b03986ee5e8eabeb6156 /tmp/taplo.gz \
+            8e34fc298390875de416e6a4afcb8cabeceb25d9aa8506c1a2f9353cf702ea5f /tmp/yq | sha256sum --check
+          gunzip /tmp/taplo.gz
+          sudo install -m 0755 /tmp/taplo /tmp/yq /usr/local/bin/
       - name: Install macOS validation tools
         if: runner.os == 'macOS'
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"
-        run: |
-          brew install bash jq lua neovim ruby shellcheck tmux zsh
-          echo "$(brew --prefix ruby)/bin" >> "$GITHUB_PATH"
+        run: brew install bash jq lua neovim shellcheck taplo tmux yq zsh
       - name: Validate
         run: ./scripts/check.sh

@@ -121,9 +121,19 @@ test("macOS package setup selects the personal or work Brewfile without implicit
       brew,
       `#!/bin/sh\ncase "$1" in\n  shellenv) exit 0 ;;\n  bundle) printf '%s\\n' "$*" >>"$BREW_LOG"; exit 0 ;;\n  --prefix) printf '%s\\n' "$HOME/no-fzf"; exit 0 ;;\nesac\n`,
     );
-    for (const command of ["herdr", "launchctl"]) {
+    const commands = {
+      herdr: "exit 0",
+      launchctl: "exit 0",
+      pgrep: "exit 1",
+      defaults: `case "$1" in
+  read) test -f "$HOME/amethyst-imported.plist" ;;
+  import) cp "$3" "$HOME/amethyst-imported.plist" ;;
+  *) exit 99 ;;
+esac`,
+    };
+    for (const [command, body] of Object.entries(commands)) {
       const executable = path.join(bin, command);
-      await writeFile(executable, "#!/bin/sh\nexit 0\n");
+      await writeFile(executable, `#!/bin/sh\n${body}\n`);
       await chmod(executable, 0o755);
     }
     await chmod(brew, 0o755);
@@ -142,6 +152,8 @@ test("macOS package setup selects the personal or work Brewfile without implicit
     let invocation = await readFile(log, "utf8");
     assert.ok(invocation.includes(`check --no-upgrade --file ${repo}/Brewfile`), invocation);
     assert.match(result.stdout, /devx not detected; using the personal Brewfile/);
+    assert.equal(await readlink(path.join(home, ".amethyst.yml")), path.join(repo, "apps/amethyst/amethyst.yml"));
+    assert.match(await readFile(path.join(home, "amethyst-imported.plist"), "utf8"), /KeyboardShortcuts_cycle-layout/);
 
     const devx = path.join(bin, "devx");
     await writeFile(devx, "#!/bin/sh\nexit 0\n");

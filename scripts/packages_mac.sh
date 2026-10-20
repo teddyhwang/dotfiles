@@ -71,28 +71,7 @@ if ! command -v herdr >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ -d "$HOME/Library/Application Support/Amethyst" ]; then
-  if [ ! -f "$HOME/Library/Preferences/com.amethyst.Amethyst.plist" ]; then
-    print_progress "Copying Amethyst config file..."
-    cp "$DOTFILES_DIR/apps/amethyst/com.amethyst.Amethyst.plist" "$HOME/Library/Preferences/com.amethyst.Amethyst.plist"
-    track_change
-  else
-    print_info "Amethyst config file is installed"
-  fi
-
-  if [ ! -f "$HOME/Library/Application Support/Amethyst/Layouts/uniform-columns.js" ]; then
-    print_progress "Copying Amethyst custom layout file..."
-    mkdir -p "$HOME/Library/Application Support/Amethyst/Layouts"
-    cp "$DOTFILES_DIR/apps/amethyst/uniform-columns.js" "$HOME/Library/Application Support/Amethyst/Layouts/uniform-columns.js"
-    track_change
-  else
-    print_info "Amethyst custom layout is installed"
-  fi
-
-  print_progress "Symlinking Amethyst YAML config..."
-  validate_and_symlink "$DOTFILES_DIR/apps/amethyst/amethyst.yml" "$HOME/.amethyst.yml"
-else
-  print_warning "Amethyst is not installed"
-fi
+# Provision before first launch too; never launch or restart the app here.
+sh "$SCRIPT_DIR/amethyst.sh"
 
 print_conditional_success "macOS packages"

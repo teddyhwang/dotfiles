@@ -1,8 +1,54 @@
 # Amethyst
 
-`~/.amethyst.yml` links to `amethyst.yml`. YAML values override GUI preferences
-on launch; restart **Amethyst**, not Chrome, after editing. Keyboard shortcuts
-remain in the GUI/plist because YAML modifier definitions can reset shortcuts.
+## Provisioning and preference recovery
+
+Package setup calls the standalone helper, which also works before Amethyst's
+first launch:
+
+```sh
+sh scripts/amethyst.sh
+```
+
+It creates the needed directories and links `~/.amethyst.yml` to `amethyst.yml`
+and the custom layout to `uniform-columns.js` in Amethyst's Application Support
+Layouts directory. Existing conflicting files use the shared confirmation/backup
+flow; agreeing to replace them preserves originals in dotfiles backups.
+
+For a fresh HOME with no preference file or defaults domain, the helper imports
+`com.amethyst.Amethyst.plist` as the saved settings/shortcut profile using macOS
+`defaults import`. Snapshot `EncodedWindowManager`, `NS*` window state and `SU*`
+updater metadata are excluded. YAML/layout files and this saved plist are the
+repository sources; this does not capture your latest runtime customizations.
+
+Existing preferences, **including stock defaults**, are preserved on normal
+runs. To deliberately reset settings and shortcuts to the saved profile, quit
+Amethyst first, then run from the repository:
+
+```sh
+sh scripts/amethyst.sh --restore-preferences
+```
+
+This exports current preferences into a unique, private directory under
+`~/.local/state/dotfiles/backups/amethyst.XXXXXX/` before importing. Export failure
+refuses the reset; an import failure keeps the backup for recovery. Existing
+monitor/window state, updater metadata and unrelated keys are retained. The
+entire `KeyboardShortcuts_*` namespace is replaced, so stock-only shortcuts not
+in the saved profile remain unbound. Saved migration markers and legacy command
+entries are retained to prevent recreation of default bindings.
+
+No preferences are imported while Amethyst is running. The helper never launches,
+quits or restarts it. **Launch Amethyst manually afterward**, and grant/regrant
+Accessibility permission in System Settings if requested.
+
+YAML values override GUI preferences on launch; restart **Amethyst**, not Chrome,
+after editing. Keyboard shortcuts remain in the GUI/plist because YAML modifier
+definitions can reset shortcuts.
+
+Provisioning regression tests (native commands and Homebrew are mocked):
+
+```sh
+node --test tests/amethyst-setup.test.mjs
+```
 
 ## Chrome: tile browser windows, float PiP
 

@@ -140,6 +140,12 @@ contain stale key paths, credential helpers, or work-only includes.
 - **macOS permissions:** grant Accessibility/Input Monitoring to the window and
   input tools you actually use (Amethyst, Hammerspoon, Karabiner, Raycast, etc.),
   plus other permissions when macOS asks. Review Login Items in System Settings.
+- **Amethyst settings:** setup links the YAML/custom layout before first launch
+  and initializes saved shortcuts only when no preferences exist. If Amethyst
+  has already created stock defaults, quit it and run
+  `sh scripts/amethyst.sh --restore-preferences` from this checkout to restore
+  the saved profile with a backup. Existing preferences are otherwise preserved.
+  Launch Amethyst manually afterward; see [Amethyst recovery](../apps/amethyst/README.md).
 - **Displays:** arrange the monitors in System Settings. Hammerspoon uses display
   ordering; verify its application placement on the new monitor arrangement.
 - **Remote access:** Remote Login is opt-in in System Settings. Check hostname,

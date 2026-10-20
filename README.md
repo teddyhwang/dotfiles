@@ -348,8 +348,11 @@ Updates remain explicit. After changing/updating a Git package's ref, rerun
 `pi update --extensions` updates managed packages, not local clones; a configured
 Git commit stays pinned. Local clones still need their own deliberate Git update.
 
-Herdsman's strict tool schemas exceed Anthropic's compiled-grammar limit, so
-`home/pi-agent/models.json` turns off strict tools for the `anthropic` provider.
+Keep Pi's default strict tool calling for Anthropic models; a test enforces
+this. Strict calling stops agents from calling tools they do not have. Before
+Herdsman v0.20.0, its tools exceeded Anthropic's grammar limit and every request
+failed with HTTP 400. If that error comes back, update Herdsman and restart old
+sessions. Do not turn strict tools off.
 
 Herdsman is the default bounded-delegation executor; do not expose both it and
 legacy agent-teams for routine delegation. In `~/.pi/agent/settings.json`, use

@@ -20,11 +20,15 @@ for (const provider of ["openai", "openai-codex"]) {
   });
 }
 
-// pi-herdsman adds strict tools whose combined grammar exceeds Anthropic's
-// compiled-grammar limit (HTTP 400). Pi still validates tool arguments locally.
-// https://platform.claude.com/docs/en/build-with-claude/structured-outputs#schema-complexity-limits
-test("anthropic sends tools without strict constrained sampling", () => {
-  assert.deepEqual(providers.anthropic, { compat: { supportsStrictTools: false } });
+// Pi turns on strict tool calling for Claude models. It stops agents from
+// calling tools they do not have (boadij/pi-herdsman#395). Do not turn it off
+// for the anthropic provider or a model. Herdsman v0.20.0 (#239) fixed the
+// HTTP 400 grammar-limit error that once made us turn it off.
+test("anthropic keeps Pi's default strict tool calling", () => {
+  const configs = [providers.anthropic, ...Object.values(providers.anthropic?.modelOverrides ?? {})];
+  for (const config of configs) {
+    assert.notEqual(config?.compat?.supportsStrictTools, false);
+  }
 });
 
 test("existing Codex long-context overrides remain unchanged", () => {

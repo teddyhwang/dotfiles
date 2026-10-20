@@ -16,13 +16,16 @@ const text = (file) => {
   }
 };
 
-const FORBIDDEN_EXTENSIONS = new Set([".py", ".pyw", ".rb", ".pl", ".pm", ".php", ".go", ".rs", ".swift", ".java", ".kt", ".tcl", ".exp", ".r"]);
+const FORBIDDEN_EXTENSIONS = new Set([".py", ".pyw", ".rb", ".pl", ".pm", ".php", ".go", ".rs", ".java", ".kt", ".tcl", ".exp", ".r"]);
 const APP_LANGUAGES = [
   // Lua: Neovim, Hammerspoon, WezTerm and Hyprland read it.
   { extension: ".lua", allowed: /^(home\/config\/nvim\/|home\/\.hammerspoon\/|home\/\.wezterm\.lua$|home\/hypr\/)/ },
   // QML and JavaScript: Omarchy plugins, Amethyst layouts and opensessions plugins.
   { extension: ".qml", allowed: /^home\/omarchy\/plugins\// },
   { extension: ".js", allowed: /^(home\/omarchy\/plugins\/|apps\/amethyst\/|home\/config\/opensessions\/plugins\/)/ },
+  // Swift: only wavelink-bt-bridge, which the user approved because it needs
+  // real-time CoreAudio callbacks that JavaScript for Automation cannot run.
+  { extension: ".swift", allowed: /^apps\/wavelink-bt-bridge\// },
 ];
 const SHEBANG_INTERPRETERS = new Set(["sh", "bash", "zsh", "node", "awk"]);
 

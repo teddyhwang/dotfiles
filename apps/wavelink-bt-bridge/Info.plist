@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>CFBundleIdentifier</key>
+    <string>localhost.wavelink-bt-bridge</string>
+    <key>CFBundleName</key>
+    <string>wavelink-bt-bridge</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <!-- macOS asks for microphone access before any app can read an audio
+         input, including Wave Link's virtual mix devices. -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>wavelink-bt-bridge reads the Elgato Wave Link mix to play it on your Bluetooth headphones.</string>
+  </dict>
+</plist>

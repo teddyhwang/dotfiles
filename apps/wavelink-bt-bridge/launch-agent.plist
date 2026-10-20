@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>localhost.wavelink-bt-bridge</string>
+    <!-- launchd does not expand ~ or $HOME, so scripts/wavelink_bt_bridge.sh
+         replaces @HOME@ when it installs this file. Running the binary
+         directly, not through a shell, lets macOS ask for microphone access
+         in its own name. -->
+    <key>ProgramArguments</key>
+    <array>
+      <string>@HOME@/.local/bin/wavelink-bt-bridge</string>
+    </array>
+    <key>StandardOutPath</key>
+    <string>@HOME@/Library/Logs/wavelink-bt-bridge.log</string>
+    <key>StandardErrorPath</key>
+    <string>@HOME@/Library/Logs/wavelink-bt-bridge.log</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    <!-- Keep launchd from throttling it like a background job. -->
+    <key>ProcessType</key>
+    <string>Interactive</string>
+  </dict>
+</plist>

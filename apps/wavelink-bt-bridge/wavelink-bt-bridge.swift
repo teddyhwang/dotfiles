@@ -216,6 +216,24 @@ func waveLinkUses(_ config: [String: Any], deviceUID uid: String) -> [String] {
   return places
 }
 
+/// Returns Wave Link's main output as its device ID and name.
+func waveLinkMainOutput(_ config: [String: Any]) -> (id: String, name: String?)? {
+  guard let id = (config["mainOutput"] as? [String: Any])?["deviceID"] as? String else { return nil }
+  let entry = (config["devices"] as? [[String: Any]] ?? []).first { $0["id"] as? String == id }
+  return (id, entry?["name"] as? String)
+}
+
+/// Returns whether Wave Link's main output is this CoreAudio device. Wave
+/// Link names most devices by their CoreAudio UID, but Elgato hardware by
+/// model and serial number, such as "Wave XLR A01DA446200KUC".
+func waveLinkMainOutputIs(_ config: [String: Any], _ device: Device) -> Bool {
+  guard let main = waveLinkMainOutput(config) else { return false }
+  if main.id == device.uid { return true }
+  guard main.id.contains(" "), let serial = main.id.split(separator: " ").last, serial.count >= 6,
+        device.uid.contains(":\(serial):") || device.uid.hasSuffix(":\(serial)") else { return false }
+  return main.name.map { device.name.localizedCaseInsensitiveContains($0) } ?? true
+}
+
 /// Returns whether a process with this bundle ID is connected to CoreAudio,
 /// or nil when the system cannot tell.
 func audioProcessRunning(bundleID: String) -> Bool? {
@@ -231,15 +249,17 @@ final class WaveLinkConfig {
   private var modified: Date?
   private var config: [String: Any] = [:]
 
-  func uses(deviceUID uid: String) -> [String] {
+  func current() -> [String: Any] {
     let date = (try? FileManager.default.attributesOfItem(atPath: Self.path))?[.modificationDate] as? Date
     if date != modified {
       modified = date
       let data = FileManager.default.contents(atPath: Self.path) ?? Data()
       config = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
     }
-    return waveLinkUses(config, deviceUID: uid)
+    return config
   }
+
+  func uses(deviceUID uid: String) -> [String] { waveLinkUses(current(), deviceUID: uid) }
 }
 
 // MARK: - Ring buffer
@@ -331,21 +351,31 @@ final class Consumer {
   /// squared. An integral gain of a quarter of the square of the
   /// proportional gain damps the loop critically: it settles in about
   /// 4 / proportionalGain seconds, and the integral cancels the clock drift,
-  /// so the buffer holds its target with no steady error.
+  /// so the buffer holds its target with no steady error. While the integral
+  /// learns the drift, the fill dips below the target. A gain of 1 shortens
+  /// that dip, but with 512-frame bursts and the 0.5 s smoothing it makes the
+  /// loop oscillate.
   static let proportionalGain = 0.5
   static let integralGain = proportionalGain * proportionalGain / 4
   static let maxRateDeviation = 0.002
   /// Fill above the target beyond which the output must have stalled.
   static let stallSeconds = 0.04
+  /// Highest target that underruns can raise the target to.
+  static let maxTargetSeconds = 0.04
 
   let ring: FrameRing
   let sampleRate: Double
-  let targetFrames: Int
+  /// Fill to hold. Only the output IO thread changes it, after an underrun.
+  private var targetFrames: Int
+  private let halfBurst: Int
   /// Fill to start from. The input adds frames in bursts, so a fill read at a
   /// random moment lies up to one burst above the average that follows.
   /// Starting half a burst above the target keeps that average at or above
   /// the target; the rate control drains the rest.
-  let startFrames: Int
+  private var startFrames: Int
+  /// How much each underrun raises the target, or 0 to keep it fixed.
+  private let stepFrames: Int
+  private let maxTargetFrames: Int
   private var isRunning = false
   private var smoothedFill: Double
   private var integral = 0.0
@@ -357,6 +387,7 @@ final class Consumer {
   /// The integral term, which converges on the drift between the two clocks.
   let driftPartsPerMillion = Atomic<Int>(0)
   let averageFillFrames = Atomic<Int>(0)
+  let currentTargetFrames = Atomic<Int>(0)
   private let lowestHeadroom = Atomic<Int>(Int.max)
   private let largestPull = Atomic<Int>(0)
 
@@ -370,12 +401,16 @@ final class Consumer {
   /// Returns the largest pull since the last call.
   func takeLargestPull() -> Int { largestPull.exchange(0, ordering: .relaxed) }
 
-  init(ring: FrameRing, sampleRate: Double, targetFrames: Int, inputFrames: Int) {
+  init(ring: FrameRing, sampleRate: Double, targetFrames: Int, inputFrames: Int, stepFrames: Int = 0) {
     self.ring = ring
     self.sampleRate = sampleRate
     self.targetFrames = targetFrames
-    startFrames = targetFrames + (inputFrames + 1) / 2
+    halfBurst = (inputFrames + 1) / 2
+    startFrames = targetFrames + halfBurst
+    self.stepFrames = stepFrames
+    maxTargetFrames = max(targetFrames, Int(Self.maxTargetSeconds * sampleRate))
     smoothedFill = Double(targetFrames)
+    currentTargetFrames.store(targetFrames, ordering: .relaxed)
   }
 
   /// Fills `frames` frames of `left` and `right` and returns the playback
@@ -410,6 +445,13 @@ final class Consumer {
       (right + copied).update(repeating: 0, count: frames - copied)
       underruns.add(1, ordering: .relaxed)
       isRunning = false
+      // An IO thread ran later than the margin allows. Hold more audio from
+      // now on, so the same delay does not cause another dropout.
+      if stepFrames > 0, targetFrames < maxTargetFrames {
+        targetFrames = min(maxTargetFrames, targetFrames + stepFrames)
+        startFrames = targetFrames + halfBurst
+        currentTargetFrames.store(targetFrames, ordering: .relaxed)
+      }
     }
 
     let seconds = Double(frames) / sampleRate
@@ -459,16 +501,22 @@ final class Bridge {
 
   /// Time added to the least safe fill, to cover IO threads that run late.
   static let marginSeconds = 0.002
+  /// Part of an input burst added to the margin. The fill dips while the rate
+  /// control learns the drift, and larger bursts make that dip deeper: with
+  /// 512-frame bursts and only the fixed margin, 4 runs in 100 underran once.
+  static let marginBursts = 0.25
 
   /// Returns the ring fill to hold before each pull. The output pulls
   /// `clientOutputFrames` at a time. The input adds `inputFrames` at a time,
   /// at a phase that drifts through every value, so the fill before a pull
   /// varies by `inputFrames`. The fill never runs dry when its average is
-  /// half of that above the pull size; `nil` latency adds the margin to that.
+  /// half of that above the pull size; `nil` latency adds the margin and
+  /// `jitterFrames` to that.
   static func targetFrames(inputFrames: Int, clientOutputFrames: Double, sampleRate: Double,
-                           latencySeconds: Double?) -> Int {
+                           latencySeconds: Double?, jitterFrames: Double = 0) -> Int {
     let least = clientOutputFrames + Double(inputFrames) / 2
-    let frames = latencySeconds.map { max($0 * sampleRate, least) } ?? least + marginSeconds * sampleRate
+    let margin = marginSeconds * sampleRate + marginBursts * Double(inputFrames)
+    let frames = latencySeconds.map { max($0 * sampleRate, least) } ?? least + margin + jitterFrames
     return Int(frames.rounded(.up))
   }
 
@@ -511,11 +559,17 @@ final class Bridge {
 
     inputFrames = input.bufferFrames
     outputFrames = output.bufferFrames
-    let target = Bridge.targetFrames(inputFrames: inputFrames,
-                                     clientOutputFrames: Double(outputFrames) * sampleRate / outputRate,
-                                     sampleRate: sampleRate, latencySeconds: latencySeconds)
+    // Bluetooth outputs run their IO thread less regularly. With only the
+    // 2 ms margin, a Bose NC 700 underran three times in 30 seconds, so add
+    // one more output buffer for them. Any underrun also raises the target.
+    let clientOutputFrames = Double(outputFrames) * sampleRate / outputRate
+    let target = Bridge.targetFrames(inputFrames: inputFrames, clientOutputFrames: clientOutputFrames,
+                                     sampleRate: sampleRate, latencySeconds: latencySeconds,
+                                     jitterFrames: output.isBluetooth ? clientOutputFrames : 0)
     ring = FrameRing(minimumFrames: max(32_768, 8 * target))
-    consumer = Consumer(ring: ring, sampleRate: sampleRate, targetFrames: target, inputFrames: inputFrames)
+    let step = latencySeconds == nil ? max(Int(0.001 * sampleRate), Int((clientOutputFrames / 2).rounded(.up))) : 0
+    consumer = Consumer(ring: ring, sampleRate: sampleRate, targetFrames: target, inputFrames: inputFrames,
+                        stepFrames: step)
     gain = Float(pow(10, gainDecibels / 20))
   }
 
@@ -545,7 +599,9 @@ final class Bridge {
     }
   }
 
-  var targetMilliseconds: Double { Double(consumer.targetFrames) / sampleRate * 1000 }
+  var targetMilliseconds: Double {
+    Double(consumer.currentTargetFrames.load(ordering: .relaxed)) / sampleRate * 1000
+  }
 
   func start() throws {
     guard !started else { return }
@@ -652,6 +708,7 @@ struct Options {
   var input = "Elgato Wave Link Personal Mix"
   var output = "auto"
   var park = "auto"
+  var trigger = "auto"
   var app: String? = "com.elgato.WaveLink3"
   var ioFrames: Int? = 64
   var latencySeconds: Double?
@@ -670,6 +727,9 @@ struct Options {
                        Default: auto.
       --park DEVICE    Default output to use while the bridge runs, "auto" or "off".
                        Default: auto (Elgato hardware, then the built-in speakers).
+      --trigger DEVICE Bridge only while Wave Link's main output is this device, "auto"
+                       for the --park device, or "any". Choosing another main output in
+                       Wave Link then plays the mix there only. Default: auto.
       --app BUNDLE_ID  Bridge only while this app uses CoreAudio, or "none".
                        Default: com.elgato.WaveLink3. With the default, the bridge
                        also waits while Wave Link sends a mix to the output itself.
@@ -697,6 +757,7 @@ struct Options {
       case "--input": options.input = next(argument)
       case "--output": options.output = next(argument)
       case "--park": options.park = next(argument)
+      case "--trigger": options.trigger = next(argument)
       case "--app":
         let value = next(argument)
         options.app = value == "none" ? nil : value
@@ -779,7 +840,15 @@ final class Supervisor {
   }
 
   /// Returns why the bridge cannot run now, or nil when it can.
-  private func blocker(appRunning: Bool, input: Device?, headset: Device?) -> String? {
+  /// Returns the device that Wave Link's main output must be for the bridge
+  /// to run, or nil when any main output will do.
+  private func triggerSpec() -> String? {
+    guard options.watchesWaveLink, options.trigger != "any" else { return nil }
+    if options.trigger != "auto" { return options.trigger }
+    return options.park == "off" ? "auto" : options.park
+  }
+
+  private func blocker(devices: [Device], appRunning: Bool, input: Device?, headset: Device?) -> String? {
     if !appRunning { return "Waiting for \(options.app ?? "the app") to start" }
     guard input != nil else { return "Waiting for the input \"\(options.input)\"" }
     guard let headset else {
@@ -792,6 +861,18 @@ final class Supervisor {
           "Choose another device there; Wave Link 3.3+ cannot drive it"
       }
     }
+    // Wave Link's main output says where to listen: the trigger device means
+    // the headset, and any other device means that device only.
+    if let spec = triggerSpec() {
+      guard let trigger = choosePark(spec, devices: devices, headset: headset) else {
+        return "Waiting for the trigger device \"\(spec)\""
+      }
+      let config = waveLinkConfig.current()
+      if !waveLinkMainOutputIs(config, trigger) {
+        let main = waveLinkMainOutput(config).map { "\"\($0.name ?? $0.id)\"" } ?? "not set"
+        return "Idle: Wave Link's main output is \(main). To listen on \(headset.label), choose \(trigger.label) there"
+      }
+    }
     return nil
   }
 
@@ -802,7 +883,7 @@ final class Supervisor {
     let headset = chooseOutput(options.output, devices: devices, defaultID: Device.defaultOutputID,
                                previousUID: chosenOutputUID)
     chosenOutputUID = headset?.uid
-    let blocked = blocker(appRunning: appRunning, input: input, headset: headset)
+    let blocked = blocker(devices: devices, appRunning: appRunning, input: input, headset: headset)
 
     if let bridge {
       var reason: String?
@@ -913,7 +994,7 @@ final class Supervisor {
     let drops = bridge.consumer.droppedFrames.load(ordering: .relaxed)
     if underruns != reportedUnderruns || drops != reportedDrops {
       log("Buffer: \(underruns - reportedUnderruns) underruns and \(drops - reportedDrops) dropped frames " +
-          "since the last report")
+          String(format: "since the last report; target now %.1f ms", bridge.targetMilliseconds))
       reportedUnderruns = underruns
       reportedDrops = drops
     }
@@ -951,6 +1032,9 @@ func listDevices(_ options: Options) {
   }
   let defaultID = Device.defaultOutputID
   let config = WaveLinkConfig()
+  if let main = waveLinkMainOutput(config.current()) {
+    print("Wave Link main output: \"\(main.name ?? main.id)\"")
+  }
   for device in Device.all() {
     let marker = device.id == defaultID ? " [default output]" : ""
     print("\(device.label)\(marker)\n  uid \(device.uid), transport \(fourCC(device.transport)), " +
@@ -1037,9 +1121,15 @@ func selfTest() -> Bool {
       let ppm = consumer.driftPartsPerMillion.load(ordering: .relaxed)
       print(String(format: "IO %3d frames, drift %+4.0f ppm: buffer %5.2f ms (target %5.2f), measured %+4d ppm, %d underruns",
                    ioFrames, drift, fillMs, targetMs, ppm, underruns))
+      // The fill ripples with each input burst, so the values read at the end
+      // vary more with larger bursts: up to 0.72 ms and 34 ppm with 512 frames
+      // in 300 runs, and 0.04 ms and 3 ppm with 64 frames.
+      let burstMs = Double(ioFrames) / inputRate * 1000
       expect(underruns == 0, "no underruns with \(ioFrames) frames at \(drift) ppm")
-      expect(abs(fillMs - targetMs) < 0.5, "the buffer holds its target with \(ioFrames) frames at \(drift) ppm")
-      expect(abs(Double(ppm) - drift) < 20, "the rate control measures the drift with \(ioFrames) frames at \(drift) ppm")
+      expect(abs(fillMs - targetMs) < max(0.25, 0.15 * burstMs),
+             "the buffer holds its target with \(ioFrames) frames at \(drift) ppm")
+      expect(abs(Double(ppm) - drift) < max(10, Double(ioFrames) / 8),
+             "the rate control measures the drift with \(ioFrames) frames at \(drift) ppm")
     }
   }
 
@@ -1088,6 +1178,51 @@ func selfTest() -> Bool {
          "the Wave Link check finds the main output and mix outputs")
   expect(waveLinkUses(config, deviceUID: "uid-6").isEmpty, "the Wave Link check ignores other devices")
   expect(waveLinkUses([:], deviceUID: "uid-3").isEmpty, "the Wave Link check accepts a missing config")
+
+  // Wave Link's main output matches CoreAudio devices by UID, and Elgato
+  // hardware by serial number.
+  let realXLR = Device(id: 9, uid: "AppleUSBAudioEngine:Elgato Systems:Elgato Wave XLR:A01DA446200KUC:2,1",
+                       name: "Elgato Wave XLR", transport: kAudioDeviceTransportTypeUSB, inputChannels: 1,
+                       outputChannels: 2, isAlive: true)
+  let usbSpeaker = Device(id: 10, uid: "AppleUSBAudioEngine:Bose Corporation:Bose USB Audio:143000:1",
+                          name: "Bose USB Audio", transport: kAudioDeviceTransportTypeUSB, inputChannels: 0,
+                          outputChannels: 6, isAlive: true)
+  let devices: [[String: Any]] = [
+    ["id": "Wave XLR A01DA446200KUC", "name": "Wave XLR"],
+    ["id": usbSpeaker.uid, "name": "Bose USB Audio"],
+  ]
+  let onXLR: [String: Any] = ["mainOutput": ["deviceID": "Wave XLR A01DA446200KUC"], "devices": devices]
+  let onSpeaker: [String: Any] = ["mainOutput": ["deviceID": usbSpeaker.uid], "devices": devices]
+  expect(waveLinkMainOutputIs(onXLR, realXLR), "an Elgato main output matches by serial number")
+  expect(!waveLinkMainOutputIs(onXLR, usbSpeaker), "an Elgato main output matches no other device")
+  expect(waveLinkMainOutputIs(onSpeaker, usbSpeaker), "a main output matches by UID")
+  expect(!waveLinkMainOutputIs(onSpeaker, realXLR), "a main output by UID matches no other device")
+  expect(!waveLinkMainOutputIs([:], realXLR), "a missing main output matches nothing")
+  expect(waveLinkMainOutput(onXLR)?.name == "Wave XLR", "the main output takes Wave Link's device name")
+
+  // Each underrun raises the target by one step, up to the limit.
+  do {
+    let ring = FrameRing(minimumFrames: 32_768)
+    let consumer = Consumer(ring: ring, sampleRate: 48_000, targetFrames: 400, inputFrames: 64, stepFrames: 150)
+    let block = UnsafeMutablePointer<Float>.allocate(capacity: 2 * 4096)
+    block.initialize(repeating: 0.25, count: 2 * 4096)
+    defer { block.deallocate() }
+    func feed(_ frames: Int) { ring.write(frames: frames, left: block, leftStride: 2, right: block + 1, rightStride: 2) }
+    feed(432)
+    _ = consumer.pull(frames: 300, left: left, right: right)
+    _ = consumer.pull(frames: 300, left: left, right: right)
+    expect(consumer.underruns.load(ordering: .relaxed) == 1, "starving the consumer counts an underrun")
+    expect(consumer.currentTargetFrames.load(ordering: .relaxed) == 550, "an underrun raises the target by one step")
+    feed(581)
+    _ = consumer.pull(frames: 1, left: left, right: right)
+    expect(consumer.underruns.load(ordering: .relaxed) == 1, "the consumer starts again at the raised target")
+    for _ in 0..<40 {
+      feed(2_100)  // Enough to start again at the highest target, then starve.
+      _ = consumer.pull(frames: 4096, left: left, right: right)
+    }
+    expect(consumer.currentTargetFrames.load(ordering: .relaxed) == Int(Consumer.maxTargetSeconds * 48_000),
+           "underruns never raise the target past its limit")
+  }
 
   print(passed ? "Self-test passed" : "Self-test failed")
   return passed

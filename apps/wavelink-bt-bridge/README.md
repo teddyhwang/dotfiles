@@ -27,8 +27,10 @@ two clocks and plays the result on the headset.
 - The helper uses IO buffers of 64 frames on both devices, instead of the
   usual 512. Each process has its own IO buffer size, so this does not change
   Wave Link. With small buffers, each side moves only a little audio at a time.
-  The ring buffer then needs only about 4 ms: one pull of the output, half a
-  burst of the input, and a 2 ms margin for IO threads that run late.
+  The ring buffer then needs only about 4.5 ms: one pull of the output, half
+  a burst of the input, and a margin of 2 ms plus a quarter of an input burst
+  for IO threads that run late and for the dip while the rate control learns
+  the drift.
 - A rate control with an integral term measures the drift between the two
   clocks and cancels it, so the buffer holds its target exactly.
 - Wave Link captures app audio with a process tap on the macOS default output.
@@ -42,17 +44,30 @@ two clocks and plays the result on the headset.
   - Wave Link is running.
   - A Bluetooth output is connected.
   - Wave Link does not send audio to that headset itself.
+  - Wave Link's main output is the trigger device. By default that is the
+    device that the default output moves to: Elgato hardware first, then the
+    built-in speakers. `--trigger DEVICE` chooses another one, and
+    `--trigger any` bridges with any main output.
+- Bluetooth outputs accept IO buffers no smaller than about 256 frames and run
+  their IO thread less regularly, so the ring holds one more output buffer for
+  them. Each underrun raises the target by about half an output buffer, up to
+  40 ms.
 - When a device or a sample rate changes, the helper restarts the bridge.
 
 ## Set up Wave Link
 
-1. In Wave Link, set the main output to a 48 kHz device, for example the
-   Wave XLR.
-2. Remove the headset from the outputs of every mix.
-3. Keep the headset connected to the Mac over Bluetooth.
+1. Remove the headset from the outputs of every mix in Wave Link, and never
+   choose it as the main output.
+2. Keep the headset connected to the Mac over Bluetooth.
+3. Choose where to listen with Wave Link's main output:
+   - **Wave XLR** (the trigger device): the helper plays the Personal Mix on
+     the headset. Nothing plays from the Wave XLR unless something is plugged
+     into its headphone jack.
+   - **Any other device**, for example a USB speaker: Wave Link plays the mix
+     there only, and the helper stays idle.
 
-While Wave Link still uses the headset, the helper waits and logs where Wave
-Link uses it.
+The helper notices a change of main output within about a second. While it is
+idle, its log says why and what to choose.
 
 ## Install
 
@@ -92,8 +107,9 @@ changes the binary.
   volume in Wave Link.
 - If you select the headset as the macOS output while the bridge runs, the
   helper moves the output away again.
-- The bridge adds about 7 ms to the latency of the headset: 1.3 ms for each IO
-  buffer and about 4 ms in the ring buffer. Bluetooth itself adds much more;
-  macOS reports about 180 ms for a Bose NC 700.
+- The bridge adds about 22 ms to the latency of a Bose NC 700: 1.3 ms for the
+  input IO buffer, 5.8 ms for the 256-frame output IO buffer and about 15 ms
+  in the ring buffer. For a wired output it adds about 7 ms. Bluetooth itself
+  adds much more; macOS reports about 180 ms for a Bose NC 700.
 - If an app uses the microphone of the headset, macOS switches the headset to
   a lower-quality call mode. The helper follows the new sample rate.

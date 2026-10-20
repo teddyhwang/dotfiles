@@ -128,6 +128,21 @@ struct Device: Equatable {
   var bufferFrames: Int { Int(HAL.value(id, kAudioDevicePropertyBufferFrameSize, default: UInt32(512))) }
   var label: String { "\"\(name)\"" }
 
+  /// Clamps an IO buffer size to the range the device accepts.
+  func clampedBufferFrames(_ frames: Int) -> UInt32 {
+    let range = HAL.value(id, kAudioDevicePropertyBufferFrameSizeRange, default: AudioValueRange())
+    guard range.mMaximum >= range.mMinimum, range.mMaximum > 0 else { return UInt32(frames) }
+    return UInt32(min(max(Double(frames), range.mMinimum), range.mMaximum))
+  }
+
+  /// Sets the IO buffer size of this process. Each process has its own, so
+  /// this does not change the buffer size of Wave Link or other apps.
+  func setBufferFrames(_ frames: UInt32) -> OSStatus {
+    var address = HAL.address(kAudioDevicePropertyBufferFrameSize)
+    var value = frames
+    return AudioObjectSetPropertyData(id, &address, 0, nil, UInt32(MemoryLayout<UInt32>.size), &value)
+  }
+
   static func all() -> [Device] {
     HAL.array(HAL.system, kAudioHardwarePropertyDevices, of: AudioObjectID.self).compactMap { id in
       guard let uid = HAL.string(id, kAudioDevicePropertyDeviceUID),
@@ -311,28 +326,55 @@ final class FrameRing {
 /// the output consumes frames exactly as fast as the input produces them.
 final class Consumer {
   static let smoothingSeconds = 0.5
-  /// Change of playback rate per second of fill error. The loop settles in
-  /// about 1 / gain seconds and holds a steady error of drift / gain.
-  static let gainPerSecond = 0.1
+  /// Gains of the rate control. The fill error is in seconds and the rate
+  /// change is a fraction, so the gains are per second and per second
+  /// squared. An integral gain of a quarter of the square of the
+  /// proportional gain damps the loop critically: it settles in about
+  /// 4 / proportionalGain seconds, and the integral cancels the clock drift,
+  /// so the buffer holds its target with no steady error.
+  static let proportionalGain = 0.5
+  static let integralGain = proportionalGain * proportionalGain / 4
   static let maxRateDeviation = 0.002
+  /// Fill above the target beyond which the output must have stalled.
+  static let stallSeconds = 0.04
 
   let ring: FrameRing
   let sampleRate: Double
   let targetFrames: Int
+  /// Fill to start from. The input adds frames in bursts, so a fill read at a
+  /// random moment lies up to one burst above the average that follows.
+  /// Starting half a burst above the target keeps that average at or above
+  /// the target; the rate control drains the rest.
+  let startFrames: Int
   private var isRunning = false
   private var smoothedFill: Double
+  private var integral = 0.0
   private var rate = 1.0
 
   // Read from other threads for status and tests.
   let underruns = Atomic<Int>(0)
   let droppedFrames = Atomic<Int>(0)
-  let ratePartsPerMillion = Atomic<Int>(0)
+  /// The integral term, which converges on the drift between the two clocks.
+  let driftPartsPerMillion = Atomic<Int>(0)
   let averageFillFrames = Atomic<Int>(0)
+  private let lowestHeadroom = Atomic<Int>(Int.max)
+  private let largestPull = Atomic<Int>(0)
 
-  init(ring: FrameRing, sampleRate: Double, targetFrames: Int) {
+  /// Returns the fewest frames left in the ring after a pull since the last
+  /// call, or nil when there was no pull.
+  func takeLowestHeadroom() -> Int? {
+    let value = lowestHeadroom.exchange(Int.max, ordering: .relaxed)
+    return value == Int.max ? nil : value
+  }
+
+  /// Returns the largest pull since the last call.
+  func takeLargestPull() -> Int { largestPull.exchange(0, ordering: .relaxed) }
+
+  init(ring: FrameRing, sampleRate: Double, targetFrames: Int, inputFrames: Int) {
     self.ring = ring
     self.sampleRate = sampleRate
     self.targetFrames = targetFrames
+    startFrames = targetFrames + (inputFrames + 1) / 2
     smoothedFill = Double(targetFrames)
   }
 
@@ -341,21 +383,25 @@ final class Consumer {
   func pull(frames: Int, left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>) -> Double {
     var available = ring.available
     if !isRunning {
-      guard available >= targetFrames else {
+      guard available >= startFrames else {
         left.update(repeating: 0, count: frames)
         right.update(repeating: 0, count: frames)
         return rate
       }
-      ring.discard(keeping: targetFrames)
-      available = targetFrames
-      smoothedFill = Double(targetFrames)
+      ring.discard(keeping: startFrames)
+      available = startFrames
+      smoothedFill = Double(startFrames)
       isRunning = true
-    } else if available > 4 * targetFrames + frames {
-      // The output stalled while the input kept writing. Go back to the target
-      // instead of playing old audio late.
-      droppedFrames.add(ring.discard(keeping: targetFrames), ordering: .relaxed)
-      available = targetFrames
-      smoothedFill = Double(targetFrames)
+    } else if available > 2 * startFrames + Int(Self.stallSeconds * sampleRate) + frames {
+      // The output stalled while the input kept writing. Go back to the start
+      // fill instead of playing old audio late.
+      droppedFrames.add(ring.discard(keeping: startFrames), ordering: .relaxed)
+      available = startFrames
+      smoothedFill = Double(startFrames)
+    }
+    if frames > largestPull.load(ordering: .relaxed) { largestPull.store(frames, ordering: .relaxed) }
+    if available - frames < lowestHeadroom.load(ordering: .relaxed) {
+      lowestHeadroom.store(available - frames, ordering: .relaxed)
     }
 
     let copied = ring.read(frames: frames, left: left, right: right)
@@ -366,11 +412,13 @@ final class Consumer {
       isRunning = false
     }
 
-    let alpha = min(1, Double(frames) / sampleRate / Self.smoothingSeconds)
-    smoothedFill += alpha * (Double(available) - smoothedFill)
+    let seconds = Double(frames) / sampleRate
+    smoothedFill += min(1, seconds / Self.smoothingSeconds) * (Double(available) - smoothedFill)
     let errorSeconds = (smoothedFill - Double(targetFrames)) / sampleRate
-    rate = 1 + max(-Self.maxRateDeviation, min(Self.maxRateDeviation, Self.gainPerSecond * errorSeconds))
-    ratePartsPerMillion.store(Int(((rate - 1) * 1_000_000).rounded()), ordering: .relaxed)
+    let limit = Self.maxRateDeviation
+    integral = max(-limit, min(limit, integral + Self.integralGain * errorSeconds * seconds))
+    rate = 1 + max(-limit, min(limit, Self.proportionalGain * errorSeconds + integral))
+    driftPartsPerMillion.store(Int((integral * 1_000_000).rounded()), ordering: .relaxed)
     averageFillFrames.store(Int(smoothedFill.rounded()), ordering: .relaxed)
     return rate
   }
@@ -395,6 +443,8 @@ final class Bridge {
   let output: Device
   let sampleRate: Double
   let outputRate: Double
+  let inputFrames: Int
+  let outputFrames: Int
   let ring: FrameRing
   let consumer: Consumer
   let gain: Float
@@ -407,7 +457,22 @@ final class Bridge {
   private var inputProc: AudioDeviceIOProcID?
   private var started = false
 
-  init(input: Device, output: Device, latencySeconds: Double, gainDecibels: Double) throws {
+  /// Time added to the least safe fill, to cover IO threads that run late.
+  static let marginSeconds = 0.002
+
+  /// Returns the ring fill to hold before each pull. The output pulls
+  /// `clientOutputFrames` at a time. The input adds `inputFrames` at a time,
+  /// at a phase that drifts through every value, so the fill before a pull
+  /// varies by `inputFrames`. The fill never runs dry when its average is
+  /// half of that above the pull size; `nil` latency adds the margin to that.
+  static func targetFrames(inputFrames: Int, clientOutputFrames: Double, sampleRate: Double,
+                           latencySeconds: Double?) -> Int {
+    let least = clientOutputFrames + Double(inputFrames) / 2
+    let frames = latencySeconds.map { max($0 * sampleRate, least) } ?? least + marginSeconds * sampleRate
+    return Int(frames.rounded(.up))
+  }
+
+  init(input: Device, output: Device, ioFrames: Int?, latencySeconds: Double?, gainDecibels: Double) throws {
     self.input = input
     self.output = output
     sampleRate = input.nominalRate
@@ -419,22 +484,39 @@ final class Bridge {
       guard isFloat else { throw BridgeError("\(input.label) does not deliver 32-bit float samples") }
     }
 
-    // Keep at least two buffers of each device, so neither side's bursts can
-    // empty the ring.
-    let clientOutputFrames = Double(output.bufferFrames) * sampleRate / outputRate
-    let minimum = 2 * (Double(input.bufferFrames) + clientOutputFrames)
-    let target = Int(max(latencySeconds * sampleRate, minimum).rounded())
-    ring = FrameRing(minimumFrames: max(32_768, 8 * target))
-    consumer = Consumer(ring: ring, sampleRate: sampleRate, targetFrames: target)
-    gain = Float(pow(10, gainDecibels / 20))
-
-    outputUnit = try Bridge.makeUnit(kAudioUnitType_Output, kAudioUnitSubType_HALOutput)
+    let outputUnit = try Bridge.makeUnit(kAudioUnitType_Output, kAudioUnitSubType_HALOutput)
+    var varispeed: AudioUnit?
     do {
       varispeed = try Bridge.makeUnit(kAudioUnitType_FormatConverter, kAudioUnitSubType_Varispeed)
+      try Bridge.set(outputUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Output, 0, UInt32(1),
+                     "enabling output")
+      try Bridge.set(outputUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, UInt32(0),
+                     "disabling input")
+      try Bridge.set(outputUnit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0, output.id,
+                     "selecting \(output.label)")
+      // Smaller IO buffers mean smaller bursts on each side, so the ring can
+      // hold less audio.
+      if let ioFrames {
+        try Bridge.set(outputUnit, kAudioDevicePropertyBufferFrameSize, kAudioUnitScope_Global, 0,
+                       output.clampedBufferFrames(ioFrames), "setting the \(output.label) buffer size")
+        try check(input.setBufferFrames(input.clampedBufferFrames(ioFrames)), "setting the \(input.label) buffer size")
+      }
     } catch {
+      if let varispeed { AudioComponentInstanceDispose(varispeed) }
       AudioComponentInstanceDispose(outputUnit)
       throw error
     }
+    self.outputUnit = outputUnit
+    self.varispeed = varispeed!
+
+    inputFrames = input.bufferFrames
+    outputFrames = output.bufferFrames
+    let target = Bridge.targetFrames(inputFrames: inputFrames,
+                                     clientOutputFrames: Double(outputFrames) * sampleRate / outputRate,
+                                     sampleRate: sampleRate, latencySeconds: latencySeconds)
+    ring = FrameRing(minimumFrames: max(32_768, 8 * target))
+    consumer = Consumer(ring: ring, sampleRate: sampleRate, targetFrames: target, inputFrames: inputFrames)
+    gain = Float(pow(10, gainDecibels / 20))
   }
 
   deinit {
@@ -463,7 +545,7 @@ final class Bridge {
     }
   }
 
-  var targetMilliseconds: Int { Int((Double(consumer.targetFrames) / sampleRate * 1000).rounded()) }
+  var targetMilliseconds: Double { Double(consumer.targetFrames) / sampleRate * 1000 }
 
   func start() throws {
     guard !started else { return }
@@ -472,10 +554,6 @@ final class Bridge {
       mFormatFlags: kAudioFormatFlagsNativeFloatPacked | kAudioFormatFlagIsNonInterleaved,
       mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 32, mReserved: 0)
 
-    try Bridge.set(outputUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Output, 0, UInt32(1), "enabling output")
-    try Bridge.set(outputUnit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, UInt32(0), "disabling input")
-    try Bridge.set(outputUnit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0, output.id,
-                   "selecting \(output.label)")
     // AUHAL converts this client format to the device's own rate and layout.
     try Bridge.set(outputUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, clientFormat,
                    "setting the output client format")
@@ -575,7 +653,8 @@ struct Options {
   var output = "auto"
   var park = "auto"
   var app: String? = "com.elgato.WaveLink3"
-  var latencySeconds = 0.05
+  var ioFrames: Int? = 64
+  var latencySeconds: Double?
   var gainDecibels = 0.0
   var verbose = false
 
@@ -594,9 +673,13 @@ struct Options {
       --app BUNDLE_ID  Bridge only while this app uses CoreAudio, or "none".
                        Default: com.elgato.WaveLink3. With the default, the bridge
                        also waits while Wave Link sends a mix to the output itself.
-      --latency MS     Target buffer in milliseconds. Default: 50.
+      --io-frames N    IO buffer size of both devices in frames, or "default" to keep
+                       theirs. Smaller buffers lower the delay. Default: 64.
+      --latency MS     Target buffer in milliseconds, or "auto" for the least that is
+                       safe with the IO buffers. Default: auto.
       --gain DB        Gain for the mix in decibels. Default: 0.
-      --verbose        Log buffer statistics every 5 seconds.
+      --verbose        Log buffer statistics every 5 seconds instead of every 10 minutes.
+                       SIGUSR1 logs them at once.
       --list           List audio devices and exit.
       --self-test      Test the ring buffer, drift control and device choices without audio devices.
     """
@@ -617,9 +700,22 @@ struct Options {
       case "--app":
         let value = next(argument)
         options.app = value == "none" ? nil : value
+      case "--io-frames":
+        let value = next(argument)
+        if value == "default" {
+          options.ioFrames = nil
+        } else {
+          guard let frames = Int(value), frames >= 16, frames <= 4096 else { fail("--io-frames must be default or 16 to 4096") }
+          options.ioFrames = frames
+        }
       case "--latency":
-        guard let value = Double(next(argument)), value >= 5, value <= 1000 else { fail("--latency must be 5 to 1000") }
-        options.latencySeconds = value / 1000
+        let value = next(argument)
+        if value == "auto" {
+          options.latencySeconds = nil
+        } else {
+          guard let ms = Double(value), ms >= 1, ms <= 1000 else { fail("--latency must be auto or 1 to 1000") }
+          options.latencySeconds = ms / 1000
+        }
       case "--gain":
         guard let value = Double(next(argument)), value >= -96, value <= 24 else { fail("--gain must be -96 to 24") }
         options.gainDecibels = value
@@ -651,7 +747,7 @@ final class Supervisor {
   private var lastRenderCount = -1
   private var lastWritten = -1
   private var stalledTicks = 0
-  private var ticks = 0
+  private var lastReport = Date()
   private var reportedUnderruns = 0
   private var reportedDrops = 0
   private var microphoneRequested = false
@@ -700,7 +796,6 @@ final class Supervisor {
   }
 
   func tick() {
-    ticks += 1
     let devices = Device.all()
     let appRunning = options.app.map { audioProcessRunning(bundleID: $0) ?? true } ?? true
     let input = findDevice(options.input, in: devices.filter { $0.inputChannels > 0 && $0.isAlive })
@@ -743,8 +838,8 @@ final class Supervisor {
 
   private func startBridge(input: Device, headset: Device) {
     do {
-      let bridge = try Bridge(input: input, output: headset, latencySeconds: options.latencySeconds,
-                              gainDecibels: options.gainDecibels)
+      let bridge = try Bridge(input: input, output: headset, ioFrames: options.ioFrames,
+                              latencySeconds: options.latencySeconds, gainDecibels: options.gainDecibels)
       bridge.muted.store(Device.defaultOutputID == headset.id, ordering: .relaxed)
       try bridge.start()
       self.bridge = bridge
@@ -754,7 +849,8 @@ final class Supervisor {
       reportedUnderruns = 0
       reportedDrops = 0
       status("Bridging \(input.label) (\(Int(bridge.sampleRate)) Hz) to \(headset.label) " +
-             "(\(Int(bridge.outputRate)) Hz), buffer \(bridge.targetMilliseconds) ms")
+             "(\(Int(bridge.outputRate)) Hz), IO buffers \(bridge.inputFrames)/\(bridge.outputFrames) frames, " +
+             String(format: "target %.1f ms", bridge.targetMilliseconds))
     } catch {
       status("Could not start: \(error)")
       nextStartAttempt = Date().addingTimeInterval(5)
@@ -790,20 +886,29 @@ final class Supervisor {
   }
 
   /// Gives the default output back to the headset, unless someone chose
-  /// another device in the meantime.
+  /// another device in the meantime. While the headset is disconnected, it
+  /// waits for the headset to come back.
   private func restoreDefaultOutput(_ devices: [Device]) {
     guard let parked else { return }
-    self.parked = nil
-    guard Device.defaultOutputID == parked.park.id,
-          let headset = devices.first(where: { $0.uid == parked.headsetUID && $0.isAlive && $0.outputChannels > 0 })
+    guard Device.defaultOutputID == parked.park.id else {
+      self.parked = nil
+      return
+    }
+    guard let headset = devices.first(where: { $0.uid == parked.headsetUID && $0.isAlive && $0.outputChannels > 0 })
     else { return }
     if Device.setDefaultOutput(headset) == noErr {
+      self.parked = nil
       log("Moved the macOS default output back to \(headset.label)")
     }
   }
 
-  private func report() {
-    guard let bridge else { return }
+  /// Logs underruns as they happen, and buffer statistics every 10 minutes,
+  /// every 5 seconds with --verbose, or now when `force` is set.
+  func report(force: Bool = false) {
+    guard let bridge else {
+      if force { log("Status: \(lastStatus)") }
+      return
+    }
     let underruns = bridge.consumer.underruns.load(ordering: .relaxed)
     let drops = bridge.consumer.droppedFrames.load(ordering: .relaxed)
     if underruns != reportedUnderruns || drops != reportedDrops {
@@ -812,12 +917,16 @@ final class Supervisor {
       reportedUnderruns = underruns
       reportedDrops = drops
     }
-    guard ticks % (options.verbose ? 5 : 3600) == 0 else { return }
-    let fill = Double(bridge.consumer.averageFillFrames.load(ordering: .relaxed)) / bridge.sampleRate * 1000
+    guard force || Date().timeIntervalSince(lastReport) >= (options.verbose ? 5 : 600) else { return }
+    lastReport = Date()
+    let milliseconds = { (frames: Int) in Double(frames) / bridge.sampleRate * 1000 }
+    let fill = milliseconds(bridge.consumer.averageFillFrames.load(ordering: .relaxed))
+    let headroom = bridge.consumer.takeLowestHeadroom().map { String(format: "%.1f ms", milliseconds($0)) } ?? "none"
     let peak = bridge.inputPeak.take()
     let peakText = peak > 0 ? String(format: "%.1f dBFS", 20 * log10(Double(peak))) : "silent"
-    log(String(format: "Status: buffer %.1f ms (target %d ms), rate %+d ppm, input peak %@",
-               fill, bridge.targetMilliseconds, bridge.consumer.ratePartsPerMillion.load(ordering: .relaxed), peakText))
+    log(String(format: "Status: buffer %.1f ms (target %.1f ms), lowest headroom %@, largest pull %d frames, " +
+               "clock drift %+d ppm, input peak %@", fill, bridge.targetMilliseconds, headroom,
+               bridge.consumer.takeLargestPull(), bridge.consumer.driftPartsPerMillion.load(ordering: .relaxed), peakText))
   }
 
   func shutdown() {
@@ -889,41 +998,49 @@ func selfTest() -> Bool {
     if nextWrite > 1 << 23 { break }  // Stay inside the range where Float counts exactly.
   }
 
-  // The rate control holds the buffer at its target for both directions of drift.
-  for drift in [-500.0, -50, 0, 50, 500] {
-    let inputRate = 48_000.0, outputRate = 44_100.0
-    let ring = FrameRing(minimumFrames: 32_768)
-    let consumer = Consumer(ring: ring, sampleRate: inputRate, targetFrames: 2_400)
-    let block = UnsafeMutablePointer<Float>.allocate(capacity: 2 * 512)
-    block.initialize(repeating: 0.25, count: 2 * 512)
-    defer { block.deallocate() }
-    var time = 0.0, nextInput = 0.0, nextOutput = 0.0, rate = 1.0, owed = 0.0
-    let inputPeriod = 512 / (inputRate * (1 + drift / 1_000_000))
-    let outputPeriod = 512 / outputRate
-    var underrunsAfterStart = 0
-    while time < 300 {
-      if nextInput <= nextOutput {
-        time = nextInput
-        ring.write(frames: 512, left: block, leftStride: 2, right: block + 1, rightStride: 2)
-        nextInput += inputPeriod
-      } else {
-        time = nextOutput
-        owed += 512 * inputRate / outputRate * rate
-        let frames = Int(owed)
-        owed -= Double(frames)
-        let before = consumer.underruns.load(ordering: .relaxed)
-        rate = consumer.pull(frames: frames, left: left, right: right)
-        if time > 1, consumer.underruns.load(ordering: .relaxed) > before { underrunsAfterStart += 1 }
-        nextOutput += outputPeriod
+  // With the least safe target, the rate control holds the buffer without
+  // underruns for several IO buffer sizes, both directions of drift, and IO
+  // threads that run up to `late` seconds late.
+  for (ioFrames, late) in [(512, 0.001), (128, 0.001), (64, 0.0005)] {
+    for drift in [-500.0, 0, 500] {
+      let inputRate = 48_000.0, outputRate = 44_100.0
+      let clientOutputFrames = Double(ioFrames) * inputRate / outputRate
+      let target = Bridge.targetFrames(inputFrames: ioFrames, clientOutputFrames: clientOutputFrames,
+                                       sampleRate: inputRate, latencySeconds: nil)
+      let ring = FrameRing(minimumFrames: 32_768)
+      let consumer = Consumer(ring: ring, sampleRate: inputRate, targetFrames: target, inputFrames: ioFrames)
+      let block = UnsafeMutablePointer<Float>.allocate(capacity: 2 * ioFrames)
+      block.initialize(repeating: 0.25, count: 2 * ioFrames)
+      defer { block.deallocate() }
+      let inputPeriod = Double(ioFrames) / (inputRate * (1 + drift / 1_000_000))
+      let outputPeriod = Double(ioFrames) / outputRate
+      var nextInput = 0.0, nextOutput = 0.0, inputAt = 0.0, outputAt = 0.0, rate = 1.0, owed = 0.0
+      var underruns = 0
+      while min(inputAt, outputAt) < 120 {
+        if inputAt <= outputAt {
+          ring.write(frames: ioFrames, left: block, leftStride: 2, right: block + 1, rightStride: 2)
+          nextInput += inputPeriod
+          inputAt = nextInput + Double.random(in: 0...late, using: &generator)
+        } else {
+          owed += clientOutputFrames * rate
+          let frames = Int(owed)
+          owed -= Double(frames)
+          let before = consumer.underruns.load(ordering: .relaxed)
+          rate = consumer.pull(frames: frames, left: left, right: right)
+          underruns += consumer.underruns.load(ordering: .relaxed) - before
+          nextOutput += outputPeriod
+          outputAt = nextOutput + Double.random(in: 0...late, using: &generator)
+        }
       }
+      let targetMs = Double(target) / inputRate * 1000
+      let fillMs = Double(consumer.averageFillFrames.load(ordering: .relaxed)) / inputRate * 1000
+      let ppm = consumer.driftPartsPerMillion.load(ordering: .relaxed)
+      print(String(format: "IO %3d frames, drift %+4.0f ppm: buffer %5.2f ms (target %5.2f), measured %+4d ppm, %d underruns",
+                   ioFrames, drift, fillMs, targetMs, ppm, underruns))
+      expect(underruns == 0, "no underruns with \(ioFrames) frames at \(drift) ppm")
+      expect(abs(fillMs - targetMs) < 0.5, "the buffer holds its target with \(ioFrames) frames at \(drift) ppm")
+      expect(abs(Double(ppm) - drift) < 20, "the rate control measures the drift with \(ioFrames) frames at \(drift) ppm")
     }
-    let fillMs = Double(consumer.averageFillFrames.load(ordering: .relaxed)) / inputRate * 1000
-    let ppm = consumer.ratePartsPerMillion.load(ordering: .relaxed)
-    print(String(format: "drift %+5.0f ppm: buffer %.1f ms (target 50.0), rate %+d ppm, %d underruns",
-                 drift, fillMs, ppm, underrunsAfterStart))
-    expect(underrunsAfterStart == 0, "no underruns at \(drift) ppm")
-    expect(abs(fillMs - 50) < 10, "the buffer stays near its target at \(drift) ppm")
-    expect(abs(Double(ppm) - drift) < 50, "the rate cancels the drift at \(drift) ppm")
   }
 
   // Device choices.
@@ -1020,6 +1137,11 @@ enum Main {
       source.resume()
       signals.append(source)
     }
+    signal(SIGUSR1, SIG_IGN)
+    let statusSignal = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: main)
+    statusSignal.setEventHandler { supervisor.report(force: true) }
+    statusSignal.resume()
+    signals.append(statusSignal)
     log("Started (input \"\(options.input)\", output \(options.output), park \(options.park))")
     withExtendedLifetime((timer, signals)) { RunLoop.main.run() }
   }

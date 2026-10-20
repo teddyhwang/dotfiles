@@ -23,7 +23,14 @@ two clocks and plays the result on the headset.
   the design of Apple's CAPlayThrough sample.
 - AUHAL converts 48 kHz to the rate of the headset. Varispeed changes the
   playback rate by a few parts per million. This keeps the ring buffer at its
-  target of 50 ms.
+  target.
+- The helper uses IO buffers of 64 frames on both devices, instead of the
+  usual 512. Each process has its own IO buffer size, so this does not change
+  Wave Link. With small buffers, each side moves only a little audio at a time.
+  The ring buffer then needs only about 4 ms: one pull of the output, half a
+  burst of the input, and a 2 ms margin for IO threads that run late.
+- A rate control with an integral term measures the drift between the two
+  clocks and cancels it, so the buffer holds its target exactly.
 - Wave Link captures app audio with a process tap on the macOS default output.
   If the headset were the default output, Wave Link would also capture and
   mute the helper. The audio would then feed back into the mix. While the
@@ -65,7 +72,12 @@ changes the binary.
 ## Use
 
 - **Log:** `~/Library/Logs/wavelink-bt-bridge.log`. Each change of state and
-  each buffer underrun is logged. Buffer statistics are logged every hour.
+  each buffer underrun is logged. Buffer statistics are logged every 10
+  minutes. To log them now, run
+  `launchctl kill SIGUSR1 gui/$(id -u)/localhost.wavelink-bt-bridge`.
+- **Statistics:** "lowest headroom" is the least audio that was left in the
+  buffer after a pull. If it gets near 0 ms, or underruns are logged, raise
+  `--io-frames` or `--latency`.
 - **Devices:** `wavelink-bt-bridge --list` shows the devices, the microphone
   access, and where Wave Link uses each output.
 - **Test:** `wavelink-bt-bridge --self-test` tests the ring buffer, the drift
@@ -80,6 +92,8 @@ changes the binary.
   volume in Wave Link.
 - If you select the headset as the macOS output while the bridge runs, the
   helper moves the output away again.
-- The bridge adds about 50 ms to the latency of the headset.
+- The bridge adds about 7 ms to the latency of the headset: 1.3 ms for each IO
+  buffer and about 4 ms in the ring buffer. Bluetooth itself adds much more;
+  macOS reports about 180 ms for a Bose NC 700.
 - If an app uses the microphone of the headset, macOS switches the headset to
   a lower-quality call mode. The helper follows the new sample rate.

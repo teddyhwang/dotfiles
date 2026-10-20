@@ -112,7 +112,7 @@ install_pi_agent_definitions() {
   done
 }
 
-# Remove our copies whose source is gone, or work copies on a personal machine.
+# Remove our copies whose source is gone or belongs to the other profile.
 prune_pi_agent_definitions() {
   for target in "$1"/*.md; do
     [ -f "$target" ] && [ ! -L "$target" ] || continue
@@ -120,6 +120,7 @@ prune_pi_agent_definitions() {
     [ -n "$source_path" ] || continue
     case "$source_path" in
       home/pi-agent/agents/work/*) [ "$2" -eq 1 ] || source_path="" ;;
+      home/pi-agent/agents/personal/*) [ "$2" -eq 0 ] || source_path="" ;;
     esac
     if [ -z "$source_path" ] || [ ! -f "$DOTFILES_DIR/$source_path" ]; then
       rm -- "$target"
@@ -152,6 +153,8 @@ for filepath in "$DOTFILES_DIR"/home/pi-agent/*; do
     install_pi_agent_definitions "$filepath" "$dst_path"
     if [ "$work_machine" -eq 1 ]; then
       install_pi_agent_definitions "$filepath/work" "$dst_path"
+    else
+      install_pi_agent_definitions "$filepath/personal" "$dst_path"
     fi
     continue
   fi

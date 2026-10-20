@@ -51,6 +51,7 @@ const allowedAgentModels = new Set([
 ]);
 const systemPath = "/usr/bin:/bin:/usr/sbin:/sbin";
 const workAgents = ["data-auditor.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"];
+const personalAgents = ["implementer.md", "reviewer.md"];
 // Overrides of Herdsman's bundled roles. Other definitions are new roles.
 const bundledAgents = new Set(["generalist.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"]);
 const piExtension = (name) => `~/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/${name}/index.ts`;
@@ -144,12 +145,40 @@ test("the generalist override applies everywhere and keeps the bundled prompt an
   assert.doesNotMatch(source, /^(model|tools|extensions|noExtensions):/m, "generalist inherits the lead's model and tools");
 });
 
-test("linker installs the generalist override on personal machines too", async (t) => {
+test("Herdsman implementation is cheaper at medium thinking while review stays strong at high", async () => {
+  const policies = {
+    personal: { implementer: "openai-codex/gpt-6-luna", reviewer: "openai-codex/gpt-6.1-sol" },
+    work: { implementer: "anthropic/claude-sonnet-5-5", reviewer: "anthropic/claude-opus-5-5" },
+  };
+  for (const [profile, models] of Object.entries(policies)) {
+    for (const [role, model] of Object.entries(models)) {
+      const name = `${role}.md`;
+      const source = await readFile(path.join(repo, "home/pi-agent/agents", profile, name), "utf8");
+      assert.ok(source.startsWith(`---\n# Managed by dotfiles: home/pi-agent/agents/${profile}/${name}\n`));
+      assert.match(source, new RegExp(`^name: ${role}$`, "m"));
+      assertKeepsBundledPrompt(name, source);
+      assert.equal(source.match(/^model: (.+)$/m)?.[1], model);
+      assert.equal(source.match(/^thinking: (.+)$/m)?.[1], role === "implementer" ? "medium" : "high");
+      if (profile === "personal") {
+        assert.doesNotMatch(source, /^(tools|extensions|noExtensions):/m, "personal roles keep the bundled tool and extension policy");
+      }
+    }
+  }
+});
+
+test("linker installs shared and personal Herdsman overrides as regular files without work dependencies", async (t) => {
   const agents = await agentHome(t);
-  await runLinker(t, path.dirname(path.dirname(path.dirname(agents))), { work: false });
-  assert.deepEqual(await readdir(agents), ["generalist.md"]);
-  assert.equal(await readFile(path.join(agents, "generalist.md"), "utf8"),
-    await readFile(path.join(repo, "home/pi-agent/agents/generalist.md"), "utf8"));
+  const home = path.dirname(path.dirname(path.dirname(agents)));
+  await runLinker(t, home, { work: false });
+  assert.deepEqual((await readdir(agents)).sort(), ["generalist.md", ...personalAgents]);
+  for (const name of ["generalist.md", ...personalAgents]) {
+    assert.ok((await lstat(path.join(agents, name))).isFile());
+    const directory = name === "generalist.md" ? "" : "personal";
+    assert.equal(await readFile(path.join(agents, name), "utf8"),
+      await readFile(path.join(repo, "home/pi-agent/agents", directory, name), "utf8"));
+  }
+  const rerun = await runLinker(t, home, { work: false });
+  assert.doesNotMatch(rerun.stdout, /(?:Installed|Removed) .*\/\.pi\/agent\/agents\//, "an unchanged profile must be idempotent");
 });
 
 test("linker copies work Herdsman overrides as regular files on work machines", async (t) => {
@@ -163,14 +192,20 @@ test("linker copies work Herdsman overrides as regular files on work machines", 
   }
 });
 
-test("linker keeps a user-owned definition that shares a work override name", async (t) => {
-  const agents = await agentHome(t);
-  await writeFile(path.join(agents, "scout.md"), "---\nname: scout\n---\nuser-owned\n");
-  await runLinker(t, path.dirname(path.dirname(path.dirname(agents))), { work: true });
-  assert.equal(await readFile(path.join(agents, "scout.md"), "utf8"), "---\nname: scout\n---\nuser-owned\n");
-});
+for (const work of [false, true]) {
+  test(`linker keeps user-owned role settings on ${work ? "work" : "personal"} machines`, async (t) => {
+    const agents = await agentHome(t);
+    for (const role of ["scout", "implementer", "reviewer"]) {
+      await writeFile(path.join(agents, `${role}.md`), `---\nname: ${role}\n---\nuser-owned\n`);
+    }
+    await runLinker(t, path.dirname(path.dirname(path.dirname(agents))), { work });
+    for (const role of ["scout", "implementer", "reviewer"]) {
+      assert.equal(await readFile(path.join(agents, `${role}.md`), "utf8"), `---\nname: ${role}\n---\nuser-owned\n`);
+    }
+  });
+}
 
-test("linker refreshes stale managed copies and removes work copies on personal machines", async (t) => {
+test("linker refreshes stale managed copies and switches between personal and work profiles", async (t) => {
   const agents = await agentHome(t);
   const home = path.dirname(path.dirname(path.dirname(agents)));
   await writeFile(path.join(agents, "scout.md"), "---\n# Managed by dotfiles: home/pi-agent/agents/work/scout.md\nname: scout\n---\n");
@@ -180,7 +215,20 @@ test("linker refreshes stale managed copies and removes work copies on personal 
     await readFile(path.join(repo, "home/pi-agent/agents/work/scout.md"), "utf8"));
 
   await runLinker(t, home, { work: false });
-  assert.deepEqual((await readdir(agents)).sort(), ["custom.md", "generalist.md"]);
+  assert.deepEqual((await readdir(agents)).sort(), ["custom.md", "generalist.md", ...personalAgents]);
+  for (const name of personalAgents) {
+    assert.equal(await readFile(path.join(agents, name), "utf8"),
+      await readFile(path.join(repo, "home/pi-agent/agents/personal", name), "utf8"));
+  }
+
+  await runLinker(t, home, { work: true });
+  for (const name of workAgents) {
+    assert.equal(await readFile(path.join(agents, name), "utf8"),
+      await readFile(path.join(repo, "home/pi-agent/agents/work", name), "utf8"));
+  }
+  assert.equal(await readFile(path.join(agents, "custom.md"), "utf8"), "user-owned definition\n");
+  const rerun = await runLinker(t, home, { work: true });
+  assert.doesNotMatch(rerun.stdout, /(?:Installed|Removed) .*\/\.pi\/agent\/agents\//, "work copies must not be replaced by personal defaults on rerun");
 });
 
 test("linker removes a managed copy whose source no longer exists", async (t) => {

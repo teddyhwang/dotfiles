@@ -11,7 +11,7 @@
 # bash edits of tracked files, and blocks destructive git and pkill commands.
 name: implementer
 model: anthropic/claude-sonnet-5-5
-thinking: high
+thinking: medium
 extensions: ["~/.pi/agent/extensions/shopify-proxy", "~/.pi/agent/extensions/background-jobs", "~/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/shell-guard/index.ts"]
 tools: ["read", "bash", "edit", "write", "bg_run", "bg_wait", "bg_log", "bg_stop", "bg_list"]
 bodyMode: append

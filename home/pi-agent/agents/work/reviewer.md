@@ -5,7 +5,7 @@
 # The appended body stops calls to tools that reviewers do not have. Keep it
 # after Herdsman v0.27.0; see the replay note in scout.md.
 name: reviewer
-model: anthropic/claude-sonnet-5-5
+model: anthropic/claude-opus-5-5
 thinking: high
 extensions: ["~/.pi/agent/extensions/shopify-proxy", "builtin:mcp"]
 bodyMode: append

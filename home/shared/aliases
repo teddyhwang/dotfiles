@@ -12,14 +12,14 @@ alias mocha='tinty apply base16-catppuccin-mocha'
 
 alias gpgstart='gpgconf --launch gpg-agent'
 if command -v lsd >/dev/null 2>&1; then
-  alias ls='lsd'
+	alias ls='lsd'
 fi
 alias main='git checkout main'
 alias mux="tmuxinator"
 alias ping='prettyping --nolegend'
 alias please='sudo $(fc -ln -1)'
 if [[ -n "${ZSH_VERSION:-}" ]]; then
-  alias rake='noglob rake'
+	alias rake='noglob rake'
 fi
 alias n="nvim"
 alias vi='nvim'
@@ -27,7 +27,8 @@ alias weather='curl wttr.in'
 alias pr='npx @in-the-loop-labs/pair-review'
 alias critique='bunx critique'
 
-alias mini='ssh teddys-mac-mini.local'
+alias mini='ssh mac-mini.local'
+alias mini-old='ssh teddys-mac-mini.local'
 alias work='ssh teddys-shopify-macBook-pro.local'
 alias mbp='ssh omarchy-mbp.local'
 alias nicole='ssh nicolepaik@nicoles-macbook-air.local'

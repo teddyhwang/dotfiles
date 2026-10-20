@@ -29,8 +29,14 @@ sh scripts/amethyst.sh --restore-preferences
 ```
 
 This exports current preferences into a unique, private directory under
-`~/.local/state/dotfiles/backups/amethyst.XXXXXX/` before importing. Export failure
-refuses the reset; an import failure keeps the backup for recovery. Existing
+`~/.local/state/dotfiles/backups/amethyst.XXXXXX/` before resetting. Because
+`defaults import` merges rather than replaces keys, an existing domain is deleted
+only after backup and profile preparation succeed; deletion failure refuses the
+import. Fresh imports do not delete an absent domain. If reset import fails, the
+helper attempts to restore the exported backup (clearing any partially imported
+domain first), reports whether rollback succeeded, and returns failure either
+way. The backup is always retained. If rollback fails, keep Amethyst closed and
+recover from the printed backup path before launching it. Existing
 monitor/window state, updater metadata and unrelated keys are retained. The
 entire `KeyboardShortcuts_*` namespace is replaced, so stock-only shortcuts not
 in the saved profile remain unbound. Saved migration markers and legacy command

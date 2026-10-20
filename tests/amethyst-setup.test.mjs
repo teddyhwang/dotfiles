@@ -18,20 +18,50 @@ async function sandbox(t) {
   };
   await symlink(python, path.join(bin, "python3"));
   await executable("pgrep", 'exit "${RUNNING:-1}"');
-  await executable("defaults", `printf '%s\\n' "$*" >>"$HOME/calls"
-case "$1" in
-  read) test -f "$HOME/current.plist" ;;
-  export) test "$EXPORT_FAIL" != 1 || exit 1; cp "$HOME/current.plist" "$3" ;;
-  import) test "$IMPORT_FAIL" != 1 || exit 1; cp "$3" "$HOME/imported.plist"; cp "$3" "$HOME/current.plist" ;;
-  *) exit 99 ;;
-esac`);
+  // Native defaults import merges keys; only delete clears the domain.
+  await writeFile(path.join(bin, "mock-defaults.py"), `import os, pathlib, plistlib, shutil, sys
+home = pathlib.Path(os.environ['HOME'])
+current = home / 'current.plist'
+args = sys.argv[1:]
+with (home / 'calls').open('a') as log:
+    print(' '.join(args), file=log)
+operation = args[0]
+if operation == 'read':
+    sys.exit(0 if current.exists() else 1)
+if operation == 'export':
+    if os.environ['EXPORT_FAIL'] == '1' or not current.exists():
+        sys.exit(1)
+    shutil.copyfile(current, args[2])
+elif operation == 'delete':
+    if os.environ['DELETE_FAIL'] == '1' or not current.exists():
+        sys.exit(1)
+    current.unlink()
+elif operation == 'import':
+    counter = home / 'import-count'
+    count = int(counter.read_text()) + 1 if counter.exists() else 1
+    counter.write_text(str(count))
+    if count > 1 and os.environ['ROLLBACK_FAIL'] == '1':
+        sys.exit(1)
+    if count == 1 and os.environ.get('IMPORT_FAIL_BEFORE_WRITE') == '1':
+        sys.exit(1)
+    merged = plistlib.loads(current.read_bytes()) if current.exists() else {}
+    merged.update(plistlib.loads(pathlib.Path(args[2]).read_bytes()))
+    current.write_bytes(plistlib.dumps(merged))
+    shutil.copyfile(current, home / 'imported.plist')
+    # Simulate an import failure after partial/complete writes, not just before.
+    if count == 1 and os.environ['IMPORT_FAIL'] == '1':
+        sys.exit(1)
+else:
+    sys.exit(99)
+`);
+  await executable("defaults", 'exec python3 "$HOME/bin/mock-defaults.py" "$@"');
   await executable("brew", `case "$1" in
   shellenv) exit 0 ;;
   --prefix) printf '%s/no-fzf\\n' "$HOME" ;;
   *) exit 0 ;;
 esac`);
   await executable("herdr", "exit 0");
-  const env = { ...process.env, HOME: home, PATH: `${bin}:/usr/bin:/bin`, EXPORT_FAIL: "0", IMPORT_FAIL: "0" };
+  const env = { ...process.env, HOME: home, PATH: `${bin}:/usr/bin:/bin`, EXPORT_FAIL: "0", IMPORT_FAIL: "0", IMPORT_FAIL_BEFORE_WRITE: "0", DELETE_FAIL: "0", ROLLBACK_FAIL: "0" };
   const run = (args = [], extra = {}, script = "amethyst.sh") => spawnSync("sh", [path.join(repo, "scripts", script), ...args], {
     env: { ...env, ...extra }, encoding: "utf8", input: "", timeout: 15000,
   });
@@ -68,7 +98,9 @@ assert actual == {k:v for k,v in saved.items() if k != 'EncodedWindowManager' an
     assert.equal(imported["migrated-toggle-float"], true);
     assert.ok(!Object.keys(imported).some((key) => key.startsWith("NS") || key.startsWith("SU") || key === "EncodedWindowManager"));
     assert.equal(s.run().status, 0);
-    assert.equal((await readFile(path.join(s.home, "calls"), "utf8")).match(/^import /gm).length, 1);
+    const calls = await readFile(path.join(s.home, "calls"), "utf8");
+    assert.equal(calls.match(/^import /gm).length, 1);
+    assert.doesNotMatch(calls, /^delete /m);
     assert.deepEqual((await readdir(path.join(s.home, ".local/state/dotfiles"))).filter((name) => name.startsWith("amethyst.")), []);
   });
 }
@@ -94,7 +126,8 @@ test("existing stock domain is preserved; explicit restore backs up and merges p
   assert.equal((await stat(path.join(backupDir, "preferences.plist"))).mode & 0o777, 0o600);
   assert.deepEqual(profile(s.home, `.local/state/dotfiles/backups/${backups[0]}/preferences.plist`), current);
   const calls = await readFile(path.join(s.home, "calls"), "utf8");
-  assert.ok(calls.indexOf("export ") < calls.indexOf("import "));
+  assert.ok(calls.indexOf("export ") < calls.indexOf("delete "));
+  assert.ok(calls.indexOf("delete ") < calls.indexOf("import "));
 });
 
 for (const existing of [false, true]) {
@@ -104,24 +137,73 @@ for (const existing of [false, true]) {
     const result = s.run(["--restore-preferences"], { RUNNING: "0" });
     assert.notEqual(result.status, 0);
     assert.match(result.stdout, /Quit Amethyst/);
-    assert.doesNotMatch(await readFile(path.join(s.home, "calls"), "utf8"), /export |import /);
+    assert.doesNotMatch(await readFile(path.join(s.home, "calls"), "utf8"), /export |delete |import /);
   });
 }
 
-for (const failure of ["EXPORT_FAIL", "IMPORT_FAIL"]) {
+for (const failure of ["EXPORT_FAIL", "IMPORT_FAIL", "IMPORT_FAIL_BEFORE_WRITE"]) {
   test(`${failure} is reported without discarding backup`, async (t) => {
     const s = await sandbox(t);
     await s.plist("current.plist", { stock: true });
     const result = s.run(["--restore-preferences"], { [failure]: "1" });
     assert.notEqual(result.status, 0);
     assert.match(result.stdout, /Could not (export|import)/);
-    if (failure === "EXPORT_FAIL") assert.doesNotMatch(await readFile(path.join(s.home, "calls"), "utf8"), /import /);
+    if (failure === "EXPORT_FAIL") assert.doesNotMatch(await readFile(path.join(s.home, "calls"), "utf8"), /delete |import /);
     else {
       const backups = await readdir(path.join(s.home, ".local/state/dotfiles/backups"));
       assert.equal(backups.length, 1);
+      assert.match(result.stdout, /Rollback succeeded/);
+      assert.deepEqual(await readFile(path.join(s.home, "current.plist")),
+        await readFile(path.join(s.home, ".local/state/dotfiles/backups", backups[0], "preferences.plist")));
+      const calls = await readFile(path.join(s.home, "calls"), "utf8");
+      assert.equal(calls.match(/^delete /gm).length, failure === "IMPORT_FAIL_BEFORE_WRITE" ? 1 : 2);
+      assert.equal(calls.match(/^import /gm).length, 2);
     }
   });
 }
+
+test("delete failure refuses reset and preserves the original domain and backup", async (t) => {
+  const s = await sandbox(t);
+  await s.plist("current.plist", { KeyboardShortcuts_stockOnly: "stock", NSWindow: "keep" });
+  const before = await readFile(path.join(s.home, "current.plist"));
+  const result = s.run(["--restore-preferences"], { DELETE_FAIL: "1" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /Could not delete.*refusing import/);
+  assert.deepEqual(await readFile(path.join(s.home, "current.plist")), before);
+  assert.doesNotMatch(await readFile(path.join(s.home, "calls"), "utf8"), /import /);
+  const backups = await readdir(path.join(s.home, ".local/state/dotfiles/backups"));
+  assert.deepEqual(await readFile(path.join(s.home, ".local/state/dotfiles/backups", backups[0], "preferences.plist")), before);
+});
+
+test("rollback import failure reports the preserved recovery backup", async (t) => {
+  const s = await sandbox(t);
+  await s.plist("current.plist", { KeyboardShortcuts_stockOnly: "original" });
+  const before = await readFile(path.join(s.home, "current.plist"));
+  const result = s.run(["--restore-preferences"], { IMPORT_FAIL: "1", ROLLBACK_FAIL: "1" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /Rollback failed.*Keep Amethyst closed.*preserved backup:/);
+  assert.doesNotMatch(result.stdout, /Rollback succeeded/);
+  const backups = await readdir(path.join(s.home, ".local/state/dotfiles/backups"));
+  assert.deepEqual(await readFile(path.join(s.home, ".local/state/dotfiles/backups", backups[0], "preferences.plist")), before);
+});
+
+test("explicit restore initializes an absent domain without deleting it", async (t) => {
+  const s = await sandbox(t);
+  const result = s.run(["--restore-preferences"]);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.doesNotMatch(await readFile(path.join(s.home, "calls"), "utf8"), /delete |export /);
+});
+
+test("explicit restore of an absent domain never deletes; failed fresh import has no rollback", async (t) => {
+  const s = await sandbox(t);
+  const result = s.run(["--restore-preferences"], { IMPORT_FAIL: "1" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /Could not import/);
+  assert.doesNotMatch(result.stdout, /Rollback/);
+  const calls = await readFile(path.join(s.home, "calls"), "utf8");
+  assert.doesNotMatch(calls, /delete |export /);
+  assert.equal(calls.match(/^import /gm).length, 1);
+});
 
 test("an existing preference file is preserved even if defaults read fails", async (t) => {
   const s = await sandbox(t);

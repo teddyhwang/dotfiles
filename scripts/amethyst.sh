@@ -81,8 +81,31 @@ if ! python3 "$SCRIPT_DIR/amethyst_preferences.py" \
   print_error "Could not prepare Amethyst preferences; refusing import."
   exit 1
 fi
+# defaults import merges keys rather than replacing the domain. Delete only
+# after a successful backup and preparation, never for a fresh absent domain.
+if [ "$existing_preferences" -eq 1 ]; then
+  if ! defaults delete "$domain"; then
+    print_error "Could not delete existing Amethyst preferences; refusing import. Backup preserved at $current_plist"
+    exit 1
+  fi
+fi
 if ! defaults import "$domain" "$work_dir/preferences.plist"; then
-  print_error "Could not import Amethyst preferences. Any exported backup above is preserved."
+  print_error "Could not import Amethyst preferences."
+  if [ "$existing_preferences" -eq 1 ]; then
+    # A failed import may have written some keys. Clear them before rollback
+    # so merging the backup cannot retain new keys from the failed profile.
+    rollback_ready=1
+    if [ -e "$preferences" ] || defaults read "$domain" >/dev/null 2>&1; then
+      if ! defaults delete "$domain"; then
+        rollback_ready=0
+      fi
+    fi
+    if [ "$rollback_ready" -eq 1 ] && defaults import "$domain" "$current_plist"; then
+      print_warning "Rollback succeeded: restored original Amethyst preferences from $current_plist"
+    else
+      print_error "Rollback failed. Keep Amethyst closed and recover from the preserved backup: $current_plist"
+    fi
+  fi
   exit 1
 fi
 track_change

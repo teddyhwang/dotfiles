@@ -260,10 +260,34 @@ Theming", with the highlight overrides from Neovim's `config/colorscheme.lua`.
 ### Pi extensions
 
 Personal Pi extension code and tests live in
-[`teddyhwang/pi-extensions`](https://github.com/teddyhwang/pi-extensions),
-installed with `pi install git:https://github.com/teddyhwang/pi-extensions`.
-The Pi CLI, packages, authentication, and machine-local settings are separate
-from `setup.sh`; see the [new Mac checklist](docs/mac-setup.md).
+[`teddyhwang/pi-extensions`](https://github.com/teddyhwang/pi-extensions).
+Once the Pi CLI is installed, `setup.sh` provisions the shared package baseline
+in [`apps/pi/packages.json`](apps/pi/packages.json): personal extensions, Vim
+mode, Herdsman, Autoresearch and Anthropic authentication support. Git sources
+use HTTPS rather than requiring SSH keys. The personal `pi-extensions` repository
+is private: authenticate on the new machine with `gh auth login` followed by
+`gh auth setup-git` before installing it. Public packages need no GitHub login;
+setup never copies credentials from another computer.
+
+If Pi is installed **after** running setup, install the packages without rerunning
+the rest of workstation setup:
+
+```sh
+cd ~/src/github.com/teddyhwang/dotfiles
+sh scripts/pi.sh
+```
+
+The helper also finds Pi in `~/.local/bin` or `~/.pi/agent/bin` before those
+locations reach a new shell's PATH. Without Pi, setup prints a skip/rerun hint;
+it does not install or update the CLI. It installs missing packages and repairs
+missing package/build artifacts, not routine upgrades. Existing package sources,
+pins, resource filters and unrelated settings are preserved. New entries get the
+baseline resource filters; top-level resource/tool defaults are filled only when
+absent. Settings changes preserve a private backup under
+`~/.local/state/dotfiles/backups/`.
+
+Authentication, MCP connections, model choices and other machine-local settings
+are not copied from another machine. See the [new Mac checklist](docs/mac-setup.md).
 This repository manages Pi configuration and integration wiring only; do not
 add extension implementations here or maintain separate personal copies in
 `~/.pi/agent/extensions`. After package changes, use `/reload` in active sessions.
@@ -271,10 +295,10 @@ add extension implementations here or maintain separate personal copies in
 `home/pi-agent/AGENTS.md` holds the global Pi rules: use `edit` for file
 changes, do not poll with `sleep`, batch independent calls, and how to read
 links. Setup links it to `~/.pi/agent/AGENTS.md`, and Pi loads it in every
-working directory when a session starts. Only pi-extensions is installed on
-every machine, so a rule that names any other tool, agent, or CLI must be
-conditional ("if `bg_wait` is available"). `tests/pi-agents-md.test.mjs`
-enforces this.
+working directory when a session starts. These portable rules assume only
+pi-extensions: other tools, agents or CLIs may still be absent or deliberately
+filtered on an existing machine, so references to them stay conditional
+("if `bg_wait` is available"). `tests/pi-agents-md.test.mjs` enforces this.
 
 The package's `/skill:home-assistant` is the maintained Home Assistant workflow:
 access, safe updates, dashboards, HomeKit, backups and verification. This repo
@@ -302,27 +326,24 @@ The former dotfiles `session-tab-name` extension now belongs to that package.
 Setup removes only its exact old dotfiles symlink, preserving third-party
 extensions and user-maintained files. See `AGENTS.md` for the ownership guardrail.
 
-[Pi Herdsman](https://github.com/boadij/pi-herdsman) is installed from a local
-clone of `main`. The npm release targets an older Pi. A git install has no
-built `dist/index.js`, and its dependency install fails when the package proxy
-does not serve the Pi 1.0.0 packages.
+[Pi Herdsman](https://github.com/boadij/pi-herdsman) uses the tested Git revision
+in the package baseline, rather than the older npm runtime. Its Git checkout
+needs an explicit build: Pi's production-only dependency install does not run
+Herdsman's `prepack` hook or install esbuild. The setup helper installs only
+`esbuild@0.28.2` in `~/.cache/pi-herdsman-build`, links a missing build dependency,
+and runs Herdsman's own build script when its bundled outputs are missing. It
+does not patch third-party source or install another copy of Pi's host packages.
+Existing local Herdsman clones and their package declarations remain supported.
 
-```sh
-git clone https://github.com/boadij/pi-herdsman ~/src/github.com/boadij/pi-herdsman
-cd ~/src/github.com/boadij/pi-herdsman
-# Install only esbuild, outside the clone, so no copy of Pi's own packages
-# lands in node_modules.
-npm install --prefix ~/.cache/pi-herdsman-build esbuild@0.28.2
-mkdir -p node_modules
-ln -sfn ~/.cache/pi-herdsman-build/node_modules/esbuild node_modules/esbuild
-node scripts/build.mjs
-pi install ~/src/github.com/boadij/pi-herdsman
-herdr integration install pi
-```
+When herdr is available, the helper also runs `herdr integration install pi`;
+Herdr continues to own that generated integration. No sessions are started or
+restarted. Do not use the upstream Herdsman `install.sh`: it installs a different
+Pi/herdr runtime.
 
-To update, run `git pull && node scripts/build.mjs` in the clone, then `/reload`.
-`pi update` does not update local packages. Do not use the upstream `install.sh`:
-it installs the runtime of the older npm release.
+Updates remain explicit. After changing/updating a Git package's ref, rerun
+`sh scripts/pi.sh` to rebuild any removed Herdsman outputs, then `/reload`.
+`pi update --extensions` updates managed packages, not local clones; a configured
+Git commit stays pinned. Local clones still need their own deliberate Git update.
 
 Herdsman's strict tool schemas exceed Anthropic's compiled-grammar limit, so
 `home/pi-agent/models.json` turns off strict tools for the `anthropic` provider.
@@ -355,7 +376,9 @@ This is a selection fragment, **not a replacement settings file**. Keep the
 Herdsman, Vim, search, authentication and other package entries. Remove an old
 explicit `+…find-skills/SKILL.md` inclusion before adding its exclusions; both
 skill roots are excluded because personal Pi skills may symlink to `.agents`.
-Setup does not overwrite these machine-local resource selections.
+Fresh installs receive these selections automatically. Existing package filters
+and top-level resource selections remain machine-local and are not overwritten;
+merge this fragment when deliberately changing an existing installation.
 
 The generic finder routes ordinary how-to questions through skill discovery;
 keep it opt-in. Autoresearch's recipes are also opt-in until their correctness

@@ -153,11 +153,18 @@ contain stale key paths, credential helpers, or work-only includes.
   No router ports are opened. Existing aliases still name the existing hosts.
 - **Servers:** Ollama is installed but not enabled at login. Optional databases
   are not in the personal Brewfile. Install/start them deliberately if needed.
-- **Pi:** the CLI, packages, logins, and machine-local `settings.json` are not
-  installed/restored by setup. The linked model/rule/agent files are only
-  configuration. Install the CLI and canonical `pi-extensions` package, then
-  restore/review package selections and authenticate. See the README's Pi
-  section for package/Herdsman instructions; HTTPS avoids an SSH prerequisite.
+- **Pi:** install the CLI separately and authenticate on this machine. When Pi
+  is available, setup installs the five shared packages from
+  [`apps/pi/packages.json`](../apps/pi/packages.json), builds Herdsman when needed,
+  and installs Herdr's Pi integration if herdr is available. If you install Pi
+  after setup, run `sh scripts/pi.sh` from the checkout. The helper finds the
+  standard user install even before a fresh terminal picks up its PATH. It adds
+  missing packages/default selections without replacing existing settings,
+  package pins or filters; it never copies credentials or MCP connections from
+  another machine. See the [README's Pi section](../README.md#pi-extensions).
+  Git sources use HTTPS, so SSH keys are not required. The private personal
+  `pi-extensions` repository does require access: run `gh auth login` and
+  `gh auth setup-git` on the new machine first. Public packages need no login.
 - **Other apps/toolchains:** only Brewfile entries are installed; other linked
   app configurations do not imply the app is installed. Project runtimes,
   language dependencies, Neovim's tools, and optional integrations may require

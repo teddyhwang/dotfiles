@@ -63,5 +63,7 @@ Linux)
   ;;
 esac
 
+sh "${SCRIPT_DIR}/scripts/pi.sh"
+
 print_success "Local setup complete 🚀"
 print_line

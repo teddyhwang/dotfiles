@@ -1,0 +1,18 @@
+{
+  "packages": [
+    "npm:pi-vim",
+    {
+      "source": "git:https://github.com/teddyhwang/pi-extensions",
+      "extensions": ["-extensions/agent-teams/index.ts"]
+    },
+    {
+      "source": "https://github.com/davebcn87/pi-autoresearch",
+      "skills": []
+    },
+    "git:github.com/boadij/pi-herdsman@382a18800198b082730d89cd4132d38d25b5d669",
+    "npm:@gotgenes/pi-anthropic-auth"
+  ],
+  "extensions": ["-extensions/unifi-network/index.ts"],
+  "skills": ["-skills/find-skills/SKILL.md", "-../../.agents/skills/find-skills/SKILL.md"],
+  "defaultTools": ["+codemode", "+tool_search"]
+}

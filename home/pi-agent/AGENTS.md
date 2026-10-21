@@ -29,7 +29,6 @@ fallback in the same rule, or say what is missing.
 - If they are not available, wait in one call, for example
   `until <check>; do sleep 10; done`, and give bash a timeout that is longer
   than the expected wait.
-- If `bk_wait` is available, use it to wait for Buildkite builds.
 
 ## Batching
 
@@ -37,21 +36,15 @@ fallback in the same rule, or say what is missing.
   parallel tool calls. If `codemode` is available, use one script for more than
   about four calls, or when the output needs filtering.
 - If Herdsman agents are available, send broad codebase exploration to a
-  `scout` agent. If a `data-auditor` agent is defined, send checks of claims or
-  numbers against local data to it.
+  `scout` agent.
 
 ## Links
 
 - If you use `web_fetch` or another fetch tool, it cannot read pages behind a
   login: it gets an SSO page or a 401. Use the tool for that site, or ask the
   user for the content.
-- Meteorite pull requests (`meteorite.shopify.io/.../pulls/N`): if the `gs` CLI
-  is installed, use `gs pr view N`. For shop/world PR data, use
-  `gh api graphql`, because `gs api` returns 404 for those PRs.
 - Google Docs (`docs.google.com`): if a Google Docs tool is available, use it.
   Otherwise ask the user for an export or for the text.
-- Quick sites (`*.quick.shopify.io`): if `quick_read` is available, use it,
-  with `raw: true` for JSON. It registers only where Quick is set up.
 
 ## Toil
 

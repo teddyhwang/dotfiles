@@ -9,18 +9,14 @@ const repo = process.cwd();
 const source = path.join(repo, "home/pi-agent/AGENTS.md");
 
 // Only pi-extensions is installed on every machine. Anything else that a rule
-// names (shop-pi-fy tools, Herdsman agents, Shopify CLIs, tools that register
-// only where they are set up) must be conditional.
+// names (tools from other packages, Herdsman agents, CLIs) must be
+// conditional.
 const optional = [
   "bg_run",
   "bg_wait",
-  "bk_wait",
   "codemode",
   "web_fetch",
-  "quick_read",
   "scout",
-  "data-auditor",
-  "gs pr view",
   "Google Docs tool",
 ];
 
@@ -41,6 +37,11 @@ test("global Pi rules make every tool outside pi-extensions conditional", async 
       assert.match(rule, /\bif\b/i, `a rule names ${name} without a condition: ${rule}`);
     }
   }
+});
+
+test("global Pi rules contain nothing work-related", async () => {
+  const markdown = await readFile(source, "utf8");
+  assert.doesNotMatch(markdown, /shopify|meteorite|buildkite|bk_wait|quick_read|gs pr|data-auditor/i);
 });
 
 test("global Pi rules contain no machine-specific paths", async () => {

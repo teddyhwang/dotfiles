@@ -1,6 +1,7 @@
 # Local tooling and OS artifacts
 .DS_Store
-.claude/
+.claude/*
+!.claude/skills/
 .ruby-lsp/
 .ruff_cache/
 **/__pycache__/

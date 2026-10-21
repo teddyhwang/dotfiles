@@ -21,7 +21,11 @@ fallback in the same rule, or say what is missing.
 - Do not poll with `sleep N; check`. Each check costs a full model turn, and
   shell-guard blocks it if `bg_wait` is available.
 - If `bg_run` and `bg_wait` are available, start long jobs with `bg_run`. Then
-  call `bg_wait` with a timeout that is longer than the expected run time.
+  call `bg_wait` with a timeout of at most 10 minutes. If the job is still
+  running, give one line of progress from `bg_log` and wait again.
+- Before a call that can block for more than about 2 minutes (a wait, an
+  `until` loop, a slow build, test or log query), tell the user in one line
+  what you wait for and how long you expect it to take.
 - If they are not available, wait in one call, for example
   `until <check>; do sleep 10; done`, and give bash a timeout that is longer
   than the expected wait.

@@ -51,7 +51,7 @@ const allowedAgentModels = new Set([
 ]);
 const systemPath = "/usr/bin:/bin:/usr/sbin:/sbin";
 const workAgents = ["data-auditor.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"];
-const personalAgents = ["implementer.md", "reviewer.md"];
+const personalAgents = ["implementer.md", "researcher.md", "reviewer.md", "scout.md"];
 // Overrides of Herdsman's bundled roles. Other definitions are new roles.
 const bundledAgents = new Set(["generalist.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"]);
 const piExtension = (name) => `~/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/${name}/index.ts`;
@@ -147,7 +147,12 @@ test("the generalist override applies everywhere and keeps the bundled prompt an
 
 test("Herdsman implementation is cheaper at medium thinking while review stays strong at high", async () => {
   const policies = {
-    personal: { implementer: "openai-codex/gpt-6-luna", reviewer: "openai-codex/gpt-6.1-sol" },
+    personal: {
+      implementer: "openai-codex/gpt-6.1-sol",
+      reviewer: "openai-codex/gpt-6.1-sol",
+      scout: "openai-codex/gpt-6.1-sol",
+      researcher: "openai-codex/gpt-6.1-sol",
+    },
     work: { implementer: "anthropic/claude-sonnet-5-5", reviewer: "anthropic/claude-opus-5-5" },
   };
   for (const [profile, models] of Object.entries(policies)) {

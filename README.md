@@ -408,10 +408,13 @@ substituting APIs.
 
 Herdsman agents inherit the lead's model unless a definition pins one. Setup
 copies the matching profile into `~/.pi/agent/agents/`. Personal machines use
-`home/pi-agent/agents/personal/`: `implementer` runs OpenAI Codex GPT-6 Luna
-with medium thinking for speed and cost; `reviewer` runs GPT-6.1 Sol with high
-thinking for independent quality checks. Both retain the bundled prompts and
-tools. These providers need their normal Pi authentication.
+`home/pi-agent/agents/personal/`: `implementer` runs OpenAI Codex GPT-6.1 Sol
+with medium thinking; `scout`, `researcher` and `reviewer` run GPT-6.1 Sol
+with high thinking. In October sessions Sol finished bounded work several
+times faster and cheaper than an inherited Opus lead, while GPT-6 Luna at
+medium stopped part-way in 10 of 11 implementer runs, so Luna is not used for
+delegated work. All keep the bundled prompts and tools; `generalist` still
+inherits the lead's model. These providers need their normal Pi authentication.
 
 On work machines (devx detected), setup uses `home/pi-agent/agents/work/`
 instead:

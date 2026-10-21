@@ -36,6 +36,7 @@ for directory in \
   "$HOME/.config" \
   "$HOME/.local/bin" \
   "$HOME/.pi/agent" \
+  "$HOME/.agents/skills" \
   "$HOME/.claude"; do
   if [ -d "$directory" ]; then
     find "$directory" -type l -print 2>/dev/null >>"$links_file"

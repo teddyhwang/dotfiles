@@ -161,3 +161,24 @@ for filepath in "$DOTFILES_DIR"/home/pi-agent/*; do
 
   validate_and_symlink "$filepath" "$dst_path"
 done
+
+print_progress "\nSetting up toil tracking..."
+
+# The trigger line in home/pi-agent/AGENTS.md loads this skill from the
+# user-level Agent Skills root. Keep an existing install (for example one from
+# skills.sh) unless the user agrees to replace it; either resolves the path.
+toil_skill="$DOTFILES_DIR/.agents/skills/toil-tracker"
+validate_and_symlink "$toil_skill" "$HOME/.agents/skills/toil-tracker"
+
+# The journal is machine-local. Seed an empty index from the skill's template,
+# and never write over an existing one.
+toil_index="$HOME/toil/index.md"
+if [ ! -e "$toil_index" ] && [ ! -L "$toil_index" ]; then
+  validate_home_target "$toil_index" || exit 1
+  mkdir -p -- "$HOME/toil"
+  awk '/^```markdown$/ && !seen { inside = 1; seen = 1; next } inside && /^```$/ { exit } inside { print }' \
+    "$toil_skill/references/index-template.md" >"$toil_index"
+  print_info "Created $toil_index"
+else
+  print_info "$toil_index already exists."
+fi

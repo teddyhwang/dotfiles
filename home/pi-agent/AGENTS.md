@@ -52,3 +52,10 @@ fallback in the same rule, or say what is missing.
   Otherwise ask the user for an export or for the text.
 - Quick sites (`*.quick.shopify.io`): if `quick_read` is available, use it,
   with `raw: true` for JSON. It registers only where Quick is set up.
+
+## Toil
+
+- Toil Tracker: when a task hits avoidable friction (retries, dead ends,
+  misleading output, wrong docs), load the toil-tracker skill
+  (~/.agents/skills/toil-tracker/SKILL.md), record it in ~/toil/index.md, and
+  say what you recorded, fixed or drafted in your summary.

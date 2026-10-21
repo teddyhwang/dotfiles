@@ -303,6 +303,13 @@ pi-extensions: other tools, agents or CLIs may still be absent or deliberately
 filtered on an existing machine, so references to them stay conditional
 ("if `bg_wait` is available"). `tests/pi-agents-md.test.mjs` enforces this.
 
+The same file carries the always-on Toil Tracker trigger line, so every Pi
+session (including Herdsman agents) journals avoidable friction. Setup links the
+skill from `.agents/skills/toil-tracker` to `~/.agents/skills/toil-tracker`
+(keeping an existing install) and seeds an empty machine-local journal at
+`~/toil/index.md` from the skill's template, never overwriting one. Change the
+journal's action map in that index header to grant direct fixes or filing.
+
 The package's `/skill:home-assistant` is the maintained Home Assistant workflow:
 access, safe updates, dashboards, HomeKit, backups and verification. This repo
 owns only the nonsecret site configuration and runbook at

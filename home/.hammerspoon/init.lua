@@ -107,6 +107,8 @@ CaffeinateWatcher = hs.caffeinate.watcher.new(function(event)
 		for _, delay in ipairs({ 3, 7, 12, 20 }) do
 			hs.timer.doAfter(delay, MoveAppsToScreen2)
 		end
+		-- Always re-tile once after wake, even if no windows needed moving
+		hs.timer.doAfter(20, reevaluateAmethyst)
 		StartWindowPolling()
 	end
 end)

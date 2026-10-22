@@ -7,46 +7,83 @@ hs.allowAppleScript(true)
 local screen2Apps = { "Discord", "Cybertron Dashboard", "Spotify" }
 local screen1Apps = { "Ghostty" }
 
-function MoveAppsToScreen2()
-	local screens = hs.screen.allScreens()
-	if #screens < 2 then
+-- Primary display (ultrawide) is screen 1; the first other display is screen 2.
+-- allScreens() order is not guaranteed, so don't index it directly.
+local function targetScreens()
+	local primary = hs.screen.primaryScreen()
+	if not primary then
+		return nil
+	end
+	for _, s in ipairs(hs.screen.allScreens()) do
+		if s:id() ~= primary:id() then
+			return primary, s
+		end
+	end
+	return nil
+end
+
+-- Calls fn(win, targetScreen) for each window of a pinned app that is on the wrong screen.
+-- Skips windows with no screen or a zero-size frame (common right after wake), which
+-- would make moveToScreen throw "not a rect".
+local function forEachMisplacedWindow(fn)
+	local screen1, screen2 = targetScreens()
+	if not screen1 then
 		return
 	end
+	for _, group in ipairs({ { screen2Apps, screen2 }, { screen1Apps, screen1 } }) do
+		local apps, target = group[1], group[2]
+		for _, appName in ipairs(apps) do
+			local app = hs.application.find(appName)
+			if app then
+				for _, win in ipairs(app:allWindows()) do
+					local ws = win:screen()
+					local f = win:frame()
+					if ws and f and f.w > 0 and f.h > 0 and ws:id() ~= target:id() then
+						if fn(win, target) == false then
+							return
+						end
+					end
+				end
+			end
+		end
+	end
+end
 
-	local screen1 = screens[1]
-	local screen2 = screens[2]
+local function hasMisplacedWindows()
+	local found = false
+	forEachMisplacedWindow(function()
+		found = true
+		return false
+	end)
+	return found
+end
 
+-- Debounced Amethyst reevaluate (⌥⇧Z), delayed so it doesn't undo the moves
+AmethystReevaluateTimer = nil
+local function reevaluateAmethyst()
+	if AmethystReevaluateTimer then
+		AmethystReevaluateTimer:stop()
+	end
+	AmethystReevaluateTimer = hs.timer.doAfter(2, function()
+		AmethystReevaluateTimer = nil
+		hs.eventtap.keyStroke({ "alt", "shift" }, "z")
+	end)
+end
+
+function MoveAppsToScreen2()
 	local movedAny = false
-	for _, appName in ipairs(screen2Apps) do
-		local app = hs.application.find(appName)
-		if app then
-			for _, win in ipairs(app:allWindows()) do
-				local ws = win:screen()
-				if ws and ws:id() ~= screen2:id() then
-					win:moveToScreen(screen2, false, false, 0)
-					movedAny = true
-				end
-			end
-		end
-	end
-	for _, appName in ipairs(screen1Apps) do
-		local app = hs.application.find(appName)
-		if app then
-			for _, win in ipairs(app:allWindows()) do
-				local ws = win:screen()
-				if ws and ws:id() ~= screen1:id() then
-					win:moveToScreen(screen1, false, false, 0)
-					movedAny = true
-				end
-			end
-		end
-	end
-
-	-- Delay Amethyst reevaluate so it doesn't undo the moves
-	if movedAny then
-		hs.timer.doAfter(2, function()
-			hs.eventtap.keyStroke({ "alt", "shift" }, "z")
+	forEachMisplacedWindow(function(win, target)
+		local ok, err = pcall(function()
+			win:moveToScreen(target, false, false, 0)
 		end)
+		if ok then
+			movedAny = true
+		else
+			print("MoveAppsToScreen2: could not move " .. tostring(win:title()) .. ": " .. tostring(err))
+		end
+	end)
+	if movedAny then
+		reevaluateAmethyst()
 	end
 end
 
@@ -85,34 +122,8 @@ function StartWindowPolling()
 	end
 	if not WindowPollTimer then
 		WindowPollTimer = hs.timer.doEvery(5, function()
-			local screens = hs.screen.allScreens()
-			if #screens < 2 then
-				return
-			end
-
-			local screen1 = screens[1]
-			local screen2 = screens[2]
-			for _, appName in ipairs(screen2Apps) do
-				local app = hs.application.find(appName)
-				if app then
-					for _, win in ipairs(app:allWindows()) do
-						if win:screen() and win:screen():id() ~= screen2:id() then
-							MoveAppsToScreen2()
-							return
-						end
-					end
-				end
-			end
-			for _, appName in ipairs(screen1Apps) do
-				local app = hs.application.find(appName)
-				if app then
-					for _, win in ipairs(app:allWindows()) do
-						if win:screen() and win:screen():id() ~= screen1:id() then
-							MoveAppsToScreen2()
-							return
-						end
-					end
-				end
+			if hasMisplacedWindows() then
+				MoveAppsToScreen2()
 			end
 		end)
 	end

@@ -1,7 +1,7 @@
 -- GeForce NOW gaming mode.
 --
 -- When GeForce NOW launches:
---   * toggle HDR on with BetterDisplay's ctrl+alt+h shortcut
+--   * turn HDR on for the Samsung ultrawide with BetterDisplay's CLI, if it was off
 --   * take Tailscale down, if it was running, for a direct connection
 -- When GeForce NOW quits, undo whatever was changed.
 --
@@ -12,8 +12,8 @@ local M = {}
 
 local BUNDLE_ID = "com.nvidia.gfnpc.mall"
 local SETTINGS_KEY = "geforceNowGamingMode"
-local HDR_MODS = { "ctrl", "alt" }
-local HDR_KEY = "h"
+local BETTERDISPLAY = "/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay"
+local HDR_DISPLAY = "C49RG9x" -- Samsung Odyssey; BetterDisplay display name
 local TAILSCALE_CANDIDATES = {
 	"/usr/local/bin/tailscale",
 	"/opt/homebrew/bin/tailscale",
@@ -33,10 +33,9 @@ local function tailscaleBinary()
 	return nil
 end
 
-local function runTailscale(args, callback)
-	local binary = tailscaleBinary()
-	if not binary then
-		log("tailscale CLI not found")
+local function run(binary, args, callback)
+	if not binary or not hs.fs.attributes(binary) then
+		log("CLI not found: " .. tostring(binary))
 		if callback then
 			callback(false, "")
 		end
@@ -44,22 +43,37 @@ local function runTailscale(args, callback)
 	end
 	local task = hs.task.new(binary, function(exitCode, stdout, stderr)
 		if exitCode ~= 0 then
-			log("tailscale " .. table.concat(args, " ") .. " failed: " .. (stderr or ""))
+			log(binary .. " " .. table.concat(args, " ") .. " failed: " .. (stderr or ""))
 		end
 		if callback then
 			callback(exitCode == 0, stdout or "")
 		end
 	end, args)
 	if not task or not task:start() then
-		log("could not start tailscale " .. table.concat(args, " "))
+		log("could not start " .. binary .. " " .. table.concat(args, " "))
 		if callback then
 			callback(false, "")
 		end
 	end
 end
 
-local function toggleHdr()
-	hs.eventtap.keyStroke(HDR_MODS, HDR_KEY)
+local function runTailscale(args, callback)
+	run(tailscaleBinary(), args, callback)
+end
+
+local function setHdr(display, value, callback)
+	run(BETTERDISPLAY, { "set", "-name=" .. display, "-hdr=" .. value }, callback)
+end
+
+-- Turn HDR on unless it already is; callback(true) means we changed it.
+local function enableHdr(display, callback)
+	run(BETTERDISPLAY, { "get", "-name=" .. display, "-hdr" }, function(ok, stdout)
+		if not ok or stdout:match("^%s*on%s*$") then
+			callback(false)
+			return
+		end
+		setHdr(display, "on", callback)
+	end)
 end
 
 local function loadState()
@@ -74,9 +88,15 @@ local function enable()
 	if loadState() then
 		return -- already active (e.g. a relaunch); don't toggle HDR twice
 	end
-	local state = { hdr = true, tailscale = false }
+	local state = { hdrDisplay = false, tailscale = false }
 	saveState(state)
-	toggleHdr()
+
+	enableHdr(HDR_DISPLAY, function(changed)
+		if changed then
+			state.hdrDisplay = HDR_DISPLAY
+			saveState(state)
+		end
+	end)
 
 	runTailscale({ "status", "--json" }, function(ok, stdout)
 		if not ok then
@@ -102,8 +122,8 @@ local function restore()
 		return
 	end
 	saveState(nil)
-	if state.hdr then
-		toggleHdr()
+	if state.hdrDisplay then
+		setHdr(state.hdrDisplay, "off")
 	end
 	if state.tailscale then
 		runTailscale({ "up" })

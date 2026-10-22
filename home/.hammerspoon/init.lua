@@ -126,4 +126,7 @@ end
 
 hs.hotkey.bind({ "cmd", "shift" }, "W", MoveAppsToScreen2)
 
+-- HDR on and Tailscale off while GeForce NOW runs (global to prevent GC)
+GeForceNow = require("geforce_now").start()
+
 hs.alert.show("Hammerspoon loaded")

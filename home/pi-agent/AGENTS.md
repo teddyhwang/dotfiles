@@ -35,6 +35,10 @@ fallback in the same rule, or say what is missing.
 - When calls do not depend on each other, make them in the same turn as
   parallel tool calls. If `codemode` is available, use one script for more than
   about four calls, or when the output needs filtering.
+- Never put a call that reads, views, or uses a file in the same parallel
+  batch as the call that creates or changes it. Wait for the producer to
+  finish successfully before starting the consumer. If `codemode` is available,
+  chain dependent calls with `await`; otherwise use successive tool calls.
 - If Herdsman agents are available, send broad codebase exploration to a
   `scout` agent.
 

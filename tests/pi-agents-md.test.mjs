@@ -39,6 +39,20 @@ test("global Pi rules make every tool outside pi-extensions conditional", async 
   }
 });
 
+test("global Pi batching rules sequence dependent file producers and consumers", async () => {
+  const markdown = await readFile(source, "utf8");
+  const batching = markdown.split("## Batching\n")[1]?.split("\n## ")[0];
+  assert.ok(batching, "batching rules exist");
+  const rules = bullets(batching);
+  assert.ok(rules.some((rule) => /When calls do not depend on each other/.test(rule)),
+    "independent calls can still run in parallel");
+  const dependency = rules.find((rule) => /Never put a call that reads, views, or uses a file/.test(rule));
+  assert.ok(dependency, "file consumers cannot run alongside their producers");
+  assert.match(dependency, /same parallel batch as the call that creates or changes it/);
+  assert.match(dependency, /finish successfully before starting the consumer/);
+  assert.match(dependency, /If `codemode` is available.*`await`.*otherwise use successive tool calls/);
+});
+
 test("global Pi rules contain nothing work-related", async () => {
   const markdown = await readFile(source, "utf8");
   assert.doesNotMatch(markdown, /shopify|meteorite|buildkite|bk_wait|quick_read|gs pr|data-auditor/i);

@@ -10,7 +10,7 @@ const configRoot = path.join(repo, "home/config/home-assistant");
 
 test("Home Assistant site configuration contains only nonsecret connection settings", async () => {
   const settings = JSON.parse(await readFile(path.join(configRoot, "agent.json"), "utf8"));
-  assert.deepEqual(Object.keys(settings).sort(), ["authClientId", "remoteConfigDir", "sshTarget", "url"]);
+  assert.deepEqual(Object.keys(settings).sort(), ["authClientId", "remoteConfigDir", "sshTarget", "transport", "url"]);
   const url = new URL(settings.url);
   const client = new URL(settings.authClientId);
   assert.ok(["http:", "https:"].includes(url.protocol));
@@ -19,6 +19,8 @@ test("Home Assistant site configuration contains only nonsecret connection setti
   assert.equal(client.username + client.password + client.search + client.hash, "");
   assert.equal(settings.sshTarget, `root@${url.hostname}`);
   assert.equal(settings.remoteConfigDir, "/homeassistant");
+  assert.equal(settings.transport, "system-nc");
+  assert.equal(url.protocol, "http:", "the explicit system-nc transport cannot downgrade HTTPS");
   assert.deepEqual((await readdir(configRoot)).sort(), ["agent.json", "site.md"]);
 });
 
@@ -35,6 +37,13 @@ test("Home Assistant site runbook preserves the approved lock estimate and curre
   assert.match(notes, /cannot observe that door cycle/);
   assert.match(notes, /must NEVER call lock\/button\/MQTT vehicle command services/);
   assert.match(notes, /core\.config_entries|integration\/auth-storage/);
+});
+
+test("Home Assistant runbook documents explicit transport and safe read-only history", async () => {
+  const notes = await readFile(path.join(configRoot, "site.md"), "utf8");
+  for (const text of ["transport: system-nc", "HA_TRANSPORT=direct", "rejects\nHTTPS without downgrading", "history/history_during_period", "logbook/get_events", "explicit timezone-aware `start_time` and `end_time`", "verify the HA host\nfingerprint out of band"]) {
+    assert.ok(notes.includes(text), `Missing access safeguard: ${text}`);
+  }
 });
 
 test("normal config linker installs the HA site without replacing foreign Pi skills", async (t) => {

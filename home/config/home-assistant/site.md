@@ -38,6 +38,24 @@ Use the skill's `scripts/ha-api.mjs` with this directory's `agent.json`.
 an existing matching browser refresh session through SSH, dynamically finding
 its ID. No memorized refresh-token ID or new long-lived token is needed.
 
+This site's `agent.json` explicitly selects `transport: system-nc` for the
+verified macOS client: Node LAN requests fail while `/usr/bin/nc` succeeds.
+The canonical helper creates a bounded ephemeral loopback relay for REST and
+WebSocket calls; no resident HA proxy, SSH forwarding, or macOS permission
+change is required. It supports this site's approved HTTP origin only, rejects
+HTTPS without downgrading, and never retries an ambiguous batch. For clients
+with working direct networking (including Linux), use `HA_TRANSPORT=direct`;
+`system-nc` requires compatible macOS `/usr/bin/nc` and is not a portable default.
+
+SSH failures now identify host-key/publickey/OAuth stages without printing
+credentials. On a new client, authorize its public key and verify the HA host
+fingerprint out of band; do not disable host-key checks or copy a private key.
+Recorder `history/history_during_period` and `logbook/get_events` are read-only
+helper requests: do not add `--write` for them. Specify bounded entity IDs and
+explicit timezone-aware `start_time` and `end_time`; the default history end
+is only one day after start. Generic regression coverage lives with the helper
+in pi-extensions, not as a second copy in dotfiles.
+
 The SSH add-on has `hassio_api`, but **not** `homeassistant_api`. Its
 `SUPERVISOR_TOKEN` received 401 from `http://supervisor/core/api/`; this is not a
 reason to change add-on security or assume HA is inaccessible. Use HA OAuth.
@@ -296,12 +314,10 @@ cases plus action-scope assertions, no physical test). Backup:
 this automation, removing only its ID (or restoring the backup if otherwise
 unchanged), checking config, and reloading `automation`; no Core restart.
 
-Access verified from **mac-mini.local** using its authorized SSH key. If
-local Node requests fail with `EHOSTUNREACH` while system curl works, run
-bounded API requests through authorized SSH with token exchange and curl
-on HA; keep bearer tokens in shell memory and never print them. The SSH
-add-on refused TCP forwarding. A recorder history request defaults to only
-one day after its start: supply an explicit `end_time` for longer windows.
+Access verified from **mac-mini.local** using its authorized SSH key.
+Use the site's configured `system-nc` helper transport (see Access above)
+instead of reconstructing remote-curl scripts. The SSH add-on refused TCP
+forwarding; it is not required. No long-lived token or global proxy was added.
 
 ## DSC alarm / Envisalink history and constraints
 

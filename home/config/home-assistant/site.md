@@ -31,7 +31,7 @@ before acting: states, versions, IDs, and device availability can change.
 | Main YAML | `/homeassistant/configuration.yaml` |
 | SSH add-on tools verified | `ha`, `jq`, `curl`; do not assume Python or Docker |
 | Local runtime | Node 24; Homebrew Ruby for YAML-based tests |
-| Last observed HA version | `2026.10.2`; inspect `ha core info` before version-dependent changes |
+| Last observed HA version | `2026.10.4` (2026-10-25); inspect `ha core info` before version-dependent changes |
 
 Use the skill's `scripts/ha-api.mjs` with this directory's `agent.json`.
 `HA_TOKEN` may supply an existing approved token; otherwise the helper exchanges
@@ -271,6 +271,37 @@ accessories with existing Govee-to-MQTT power switches:
   Home scene/room cleanup. Do not restore `.storage` while Core is running;
   restoring the historical mixed filter exactly would require a separately
   approved offline operation. Do not reset the bridge or overwrite pairing.
+
+### TV backlight synchronization — HA-owned (2026-10-25)
+
+Owner approved **Living Room TV - backlight follows power**, automation ID
+`living_room_tv_backlight_follow` in `/homeassistant/automations.yaml`.
+It follows `media_player.living_room` locally using only
+`switch.tv_backlight_power_switch` on/off; Govee modes/colors are untouched.
+On/idle/playing/paused/buffering mean on; off/standby mean off. Unknown or
+unavailable TV/switch states never cause an off command. Reconciles on mapped
+TV power transitions (not playback changes), HA startup (10 seconds), and
+backlight reconnection (3 seconds).
+Restart mode plus fresh-state guards prevents obsolete retries; maximum two
+attempts with 15-second feedback waits, then a persistent failure notification.
+No periodic enforcement or idle/paused shutdown timer. Apple TV telemetry can
+still be delayed; reported switch state is not observed physical light state.
+
+Owner will remove equivalent Apple Home on/off automations and obsolete
+TV duplicates. Do not change HomeKit identity/pairing or disable its TV entry.
+Live docs/test: `/homeassistant/README-GOVEE-HOMEKIT.md` and
+`/homeassistant/tests/test-tv-backlight-follow.mjs` (358 HA-rendered fixture
+cases plus action-scope assertions, no physical test). Backup:
+`/homeassistant/backups/tv-backlight-follow-20261025/`. Rollback by disabling
+this automation, removing only its ID (or restoring the backup if otherwise
+unchanged), checking config, and reloading `automation`; no Core restart.
+
+Access verified from **mac-mini.local** using its authorized SSH key. If
+local Node requests fail with `EHOSTUNREACH` while system curl works, run
+bounded API requests through authorized SSH with token exchange and curl
+on HA; keep bearer tokens in shell memory and never print them. The SSH
+add-on refused TCP forwarding. A recorder history request defaults to only
+one day after its start: supply an explicit `end_time` for longer windows.
 
 ## DSC alarm / Envisalink history and constraints
 

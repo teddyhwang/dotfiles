@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>localhost.unifi-relay</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/bin/nc</string>
+      <string>-G</string>
+      <string>5</string>
+      <string>192.168.1.1</string>
+      <string>443</string>
+    </array>
+    <key>inetdCompatibility</key>
+    <dict>
+      <key>Wait</key>
+      <false/>
+    </dict>
+    <key>Sockets</key>
+    <dict>
+      <key>Listeners</key>
+      <dict>
+        <key>SockServiceName</key>
+        <string>12443</string>
+        <key>SockNodeName</key>
+        <string>127.0.0.1</string>
+      </dict>
+    </dict>
+  </dict>
+</plist>

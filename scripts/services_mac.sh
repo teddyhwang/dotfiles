@@ -3,6 +3,14 @@
 
 set -eu
 
+unifi_relay=false
+for argument in "$@"; do
+  case "$argument" in
+    --unifi-relay) unifi_relay=true ;;
+    *) printf 'Unknown argument: %s\nUsage: %s [--unifi-relay]\n' "$argument" "$0" >&2; exit 1 ;;
+  esac
+done
+
 SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 DOTFILES_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd -P)
 # shellcheck source=utils.sh
@@ -18,6 +26,9 @@ ensure_agent() {
   label=$2
   agent="$launch_agents/$name.plist"
   validate_home_target "$agent" || return 1
+  if [ "$name" = unifi-relay ]; then
+    relay_preflight || return 1
+  fi
   if ! cmp -s "$DOTFILES_DIR/apps/$name.plist" "$agent"; then
     if [ -e "$agent" ] || [ -L "$agent" ]; then
       if ! confirm "Replace differing $agent (preserving a backup)?"; then
@@ -48,6 +59,36 @@ ensure_agent() {
   else
     print_info "$name launch agent is loaded"
   fi
+}
+
+# Never take over a listener. A loaded job follows ensure_agent's normal
+# consent/backup policy; an unloaded job must acquire a currently unused port.
+relay_preflight() {
+  if ! command -v launchctl >/dev/null 2>&1; then
+    print_error "UniFi relay requires launchctl; nothing will be installed"
+    return 1
+  fi
+  if [ ! -x /usr/bin/nc ]; then
+    print_error "UniFi relay requires executable /usr/bin/nc; nothing will be installed"
+    return 1
+  fi
+  if launchctl print "$launch_domain/$label" >/dev/null 2>&1; then
+    return 0
+  fi
+  if ! command -v lsof >/dev/null 2>&1; then
+    print_error "UniFi relay requires lsof to check port 12443; nothing will be installed"
+    return 1
+  fi
+  port_status=0
+  lsof -nP -iTCP:12443 -sTCP:LISTEN -t >/dev/null 2>&1 || port_status=$?
+  case "$port_status" in
+    0)
+      print_error "Refusing UniFi relay: TCP port 12443 is occupied. Inspect with: lsof -nP -iTCP:12443 -sTCP:LISTEN"
+      print_warning "No listener was stopped. Identify its owner and arrange a manual handoff before retrying --unifi-relay."
+      return 1 ;;
+    1) return 0 ;;
+    *) print_error "Could not check TCP port 12443 with lsof; refusing UniFi relay setup"; return 1 ;;
+  esac
 }
 
 # Exact historical definitions from 7d20d5b and acba407. Do not infer
@@ -118,6 +159,9 @@ remove_legacy_agent() {
 
 # Only byte-equal managed agents imply prior opt-in; each other destination
 # requires explicit consent before any changes to its file or runtime state.
+if [ "$unifi_relay" = true ]; then
+  ensure_agent unifi-relay localhost.unifi-relay
+fi
 ensure_agent pbcopy localhost.pbcopy
 ensure_agent pbpaste localhost.pbpaste
 

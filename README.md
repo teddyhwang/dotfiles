@@ -169,6 +169,42 @@ managed jobs. Clipboard agents remain opt-in. tmux plugin installation uses a
 private, sessionless server and checks every declared plugin without touching
 your active tmux sessions.
 
+### Optional UniFi MCP relay (macOS)
+
+Prefer granting the actual terminal/Pi execution context **Local Network** access
+in macOS System Settings → Privacy & Security, verifying direct connectivity
+from that context, then setting the MCP endpoint to `192.168.1.1:443` and
+reconnecting MCP. Apple `nc` success alone does not prove Node/uv connectivity.
+
+If you explicitly choose a persistent relay instead, run from this checkout:
+
+```sh
+./scripts/services_mac.sh --unifi-relay
+```
+
+Confirm installation when prompted. Normal setup never installs this relay.
+It installs `~/Library/LaunchAgents/unifi-relay.plist` (`localhost.unifi-relay`):
+launchd listens only on `127.0.0.1:12443` and starts `/usr/bin/nc -G 5
+192.168.1.1 443` per connection. TLS bytes pass through unchanged; this provides
+no authentication for other local users/processes and does not change TCC.
+The command does not edit MCP settings; the relay endpoint is
+`UNIFI_NETWORK_HOST=127.0.0.1`, `UNIFI_NETWORK_PORT=12443`.
+
+Setup requires system `nc`, `launchctl`, and `lsof`. For an unloaded relay it
+refuses any listener on TCP 12443, without stopping processes. Inspect with
+`lsof -nP -iTCP:12443 -sTCP:LISTEN`; if an old manual relay owns the port, identify
+its owner and arrange an explicit manual handoff before retrying. Never stop an
+unidentified listener. A matching loaded agent is left alone; differing plist
+files require consent and are backed up under `~/.local/state/dotfiles/backups`.
+
+Diagnose with `launchctl print gui/$(id -u)/localhost.unifi-relay` and the `lsof`
+command above. A listener is not proof of controller connectivity; reconnect
+MCP and try a read-only request. If bootstrap fails (including a port race),
+resolve the reported conflict and rerun the opt-in command. To disable manually:
+`launchctl bootout gui/$(id -u)/localhost.unifi-relay`, then remove only the
+verified managed `~/Library/LaunchAgents/unifi-relay.plist`. No live deployment
+or endpoint migration is performed by adding this repository wiring.
+
 Ollama remains in the personal Brewfile but is not enabled at login by this
 setup. Optional database servers remain in the work snapshot, not the personal
 list. Pruning the personal Brewfile does not uninstall existing packages, delete

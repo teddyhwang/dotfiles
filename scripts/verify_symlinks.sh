@@ -37,7 +37,9 @@ for directory in \
   "$HOME/.local/bin" \
   "$HOME/.pi/agent" \
   "$HOME/.agents/skills" \
-  "$HOME/.claude"; do
+  "$HOME/.claude" \
+  "$HOME/.ssh" \
+  "$HOME/.gnupg"; do
   if [ -d "$directory" ]; then
     find "$directory" -type l -print 2>/dev/null >>"$links_file"
   fi

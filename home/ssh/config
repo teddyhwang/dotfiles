@@ -1,0 +1,7 @@
+# UseKeychain is a macOS OpenSSH option; other OpenSSH builds reject it.
+IgnoreUnknown UseKeychain
+
+Host *
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed25519

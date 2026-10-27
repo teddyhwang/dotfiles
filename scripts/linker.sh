@@ -45,6 +45,12 @@ for filepath in "$DOTFILES_DIR"/home/config/*; do
   validate_and_symlink "$filepath" "$dst_path"
 done
 
+print_progress "\nSymlinking SSH config..."
+
+# Link only the config file: ~/.ssh also holds keys and known_hosts.
+[ -d "$HOME/.ssh" ] || mkdir -m 700 -- "$HOME/.ssh"
+validate_and_symlink "$DOTFILES_DIR/home/ssh/config" "$HOME/.ssh/config"
+
 print_progress "\nSymlinking Claude config..."
 
 mkdir -p "$HOME/.claude"

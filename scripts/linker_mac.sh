@@ -14,6 +14,16 @@ print_progress "\nSymlinking Hammerspoon config..."
 
 validate_and_symlink "$DOTFILES_DIR/home/.hammerspoon" "$HOME/.hammerspoon"
 
+print_progress "\nSymlinking gpg-agent config..."
+
+# The config names Apple Silicon Homebrew's pinentry-mac path.
+if [ -x /opt/homebrew/bin/pinentry-mac ]; then
+  [ -d "$HOME/.gnupg" ] || mkdir -m 700 -- "$HOME/.gnupg"
+  validate_and_symlink "$DOTFILES_DIR/home/gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
+else
+  print_warning "Skipping gpg-agent.conf: /opt/homebrew/bin/pinentry-mac is missing"
+fi
+
 print_progress "\nSymlinking binaries..."
 
 for filepath in "$DOTFILES_DIR"/home/local/bin/*; do

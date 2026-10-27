@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readlink, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -32,6 +32,8 @@ test("linker works outside the repository and creates parent directories", async
       await readlink(path.join(home, ".pi/agent/models.json")),
       path.join(repo, "home/pi-agent/models.json"),
     );
+    assert.equal(await readlink(path.join(home, ".ssh/config")), path.join(repo, "home/ssh/config"));
+    assert.equal((await stat(path.join(home, ".ssh"))).mode & 0o777, 0o700);
   } finally {
     await Promise.all([rm(home, { recursive: true, force: true }), rm(cwd, { recursive: true, force: true })]);
   }

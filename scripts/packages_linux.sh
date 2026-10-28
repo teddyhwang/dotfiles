@@ -17,7 +17,7 @@ done
 
 # socat backs trackpad-auto-toggle; grim lets WayVNC verify that Hyprland exports its output.
 # taplo-cli and go-yq are check.sh validators (Arch's `yq` is a different tool).
-packages="atuin bash-preexec bat carapace-bin claude-code git-delta go-yq google-chrome grim herdr jq keychain keyd lsof nodejs python ruby rust seahorse shellcheck socat tailscale taplo-cli tig tmux ttf-firacode-nerd ttf-meslo-nerd wayvnc yazi zellij zsh"
+packages="atuin bash-preexec bat carapace-bin claude-code github-cli git-delta go-yq google-chrome grim herdr jq keychain keyd lsof nodejs python ruby rust seahorse shellcheck socat tailscale taplo-cli tig tmux ttf-firacode-nerd ttf-meslo-nerd wayvnc yazi zellij zsh"
 
 packages_to_install=""
 package_count=0

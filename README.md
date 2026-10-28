@@ -304,8 +304,10 @@ Personal Pi extension code and tests live in
 in [`apps/pi/packages.json`](apps/pi/packages.json): personal extensions, Vim
 mode, Herdsman, Autoresearch and Anthropic authentication support. Git sources
 use HTTPS rather than requiring SSH keys. The personal `pi-extensions` repository
-is private: authenticate on the new machine with `gh auth login` followed by
-`gh auth setup-git` before installing it. Public packages need no GitHub login;
+is private: setup checks GitHub authentication, launches browser login when
+needed in a terminal, and runs `gh auth setup-git` before provisioning Pi.
+Unattended setup requires an existing GitHub login; otherwise it stops with
+instructions rather than skipping private extensions. Public packages need no GitHub login;
 setup never copies credentials from another computer.
 
 To install or repair Pi and its packages without rerunning workstation setup:

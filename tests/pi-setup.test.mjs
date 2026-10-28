@@ -496,5 +496,5 @@ test("setup invokes Pi provisioning once at the common end after linking and Her
   const setup = await readFile(path.join(repo, "setup.sh"), "utf8");
   assert.equal((setup.match(/scripts\/pi\.sh/g) || []).length, 1);
   assert.ok(setup.indexOf("scripts/pi.sh") > setup.lastIndexOf("scripts/herdr.sh"));
-  assert.match(setup, /esac\s+sh "\$\{SCRIPT_DIR\}\/scripts\/pi.sh"\s+print_success/);
+  assert.match(setup, /esac\s+sh "\$\{SCRIPT_DIR\}\/scripts\/github.sh"\s+sh "\$\{SCRIPT_DIR\}\/scripts\/pi.sh"\s+print_success/);
 });

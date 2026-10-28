@@ -28,7 +28,7 @@ alias pr='npx @in-the-loop-labs/pair-review'
 alias critique='bunx critique'
 
 alias mini='ssh mac-mini.local'
-alias mini-old='ssh teddys-mac-mini.local'
+alias mini-old='ssh m1-mac-mini.local'
 alias work='ssh teddys-shopify-macBook-pro.local'
 alias mbp='ssh omarchy-mbp.local'
 alias nicole='ssh nicolepaik@nicoles-macbook-air.local'

@@ -300,7 +300,7 @@ Theming", with the highlight overrides from Neovim's `config/colorscheme.lua`.
 
 Personal Pi extension code and tests live in
 [`teddyhwang/pi-extensions`](https://github.com/teddyhwang/pi-extensions).
-Once the Pi CLI is installed, `setup.sh` provisions the shared package baseline
+`setup.sh` installs the Pi CLI when missing, then provisions the shared package baseline
 in [`apps/pi/packages.json`](apps/pi/packages.json): personal extensions, Vim
 mode, Herdsman, Autoresearch and Anthropic authentication support. Git sources
 use HTTPS rather than requiring SSH keys. The personal `pi-extensions` repository
@@ -308,8 +308,7 @@ is private: authenticate on the new machine with `gh auth login` followed by
 `gh auth setup-git` before installing it. Public packages need no GitHub login;
 setup never copies credentials from another computer.
 
-If Pi is installed **after** running setup, install the packages without rerunning
-the rest of workstation setup:
+To install or repair Pi and its packages without rerunning workstation setup:
 
 ```sh
 cd ~/src/github.com/teddyhwang/dotfiles
@@ -317,8 +316,10 @@ sh scripts/pi.sh
 ```
 
 The helper also finds Pi in `~/.local/bin` or `~/.pi/agent/bin` before those
-locations reach a new shell's PATH. Without Pi, setup prints a skip/rerun hint;
-it does not install or update the CLI. It installs missing packages and repairs
+locations reach a new shell's PATH. If missing, it installs the official
+`@earendil-works/pi-coding-agent` npm package with `--ignore-scripts` into
+`~/.local` (no sudo). Existing Pi installations are not upgraded or replaced.
+It installs missing packages and repairs
 missing package/build artifacts, not routine upgrades. Existing package sources,
 pins, resource filters and unrelated settings are preserved. New entries get the
 baseline resource filters; top-level resource/tool defaults are filled only when

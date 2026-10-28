@@ -62,6 +62,12 @@ if (name === 'pi') {
   assert.deepEqual([args[0], ...args.slice(2)], ['-C', 'config', '--get', 'remote.origin.url']);
   if (path.basename(args[1]) === 'legacy-herdsman') console.log('git@github.com:boadij/pi-herdsman.git');
   else process.exit(1);
+} else if (name === 'npm' && args.includes('--global')) {
+  assert.deepEqual(args, ['install', '--global', '--prefix', path.join(home, '.local'), '--ignore-scripts', '--no-audit', '--no-fund', '@earendil-works/pi-coding-agent']);
+  if (process.env.FAIL_INSTALL) process.exit(7);
+  mkdirp(path.join(home, '.local/bin'));
+  fs.copyFileSync(process.argv[1], path.join(home, '.local/bin/pi'));
+  fs.chmodSync(path.join(home, '.local/bin/pi'), 0o755);
 } else if (name === 'npm') {
   assert.deepEqual(args, ['install', '--prefix', path.join(home, '.cache/pi-herdsman-build'), '--no-audit', '--no-fund', 'esbuild@0.28.2']);
   const target = path.join(home, '.cache/pi-herdsman-build/node_modules/esbuild');
@@ -204,15 +210,27 @@ for (const location of ["missing", "local", "agent"]) {
     const result = f.run();
     ok(result);
     if (location === "missing") {
-      assert.match(result.stdout, /install Pi.*sh scripts\/pi.sh/);
+      assert.match(result.stdout, /installing Pi with npm/);
+      assert.equal((await f.calls())[0].name, "npm");
+      assert.deepEqual(await f.data(), baseline);
+      await f.clear();
+      ok(f.run());
       assert.deepEqual(await f.calls(), []);
-      await assert.rejects(stat(f.settings), { code: "ENOENT" });
     } else {
       assert.equal((await f.calls()).filter(c => c.name === "pi").length, 5);
       assert.match(result.stdout, /herdr integration install pi/);
     }
   });
 }
+
+test("Pi installation failure stops before settings or extension changes", async (t) => {
+  const f = await fixture(t, { pi: "missing" });
+  const result = f.run({ FAIL_INSTALL: "1" });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /npm failed/);
+  await assert.rejects(stat(f.settings), { code: "ENOENT" });
+  assert.equal((await f.calls()).length, 1);
+});
 
 test("repairs missing artifacts and missing dist outputs without upgrades or replacing existing esbuild", async (t) => {
   const f = await fixture(t);

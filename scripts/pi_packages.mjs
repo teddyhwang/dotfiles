@@ -433,8 +433,16 @@ class Provisioner {
       }
     }
     if (!pi) {
-      console.log("Pi not found; install Pi, then rerun: sh scripts/pi.sh");
-      return;
+      console.log("Pi not found; installing Pi with npm...");
+      const prefix = this.safe(join(this.home, ".local"));
+      this.npmState(prefix);
+      this.safe(join(prefix, "bin/pi"));
+      this.safe(join(prefix, "lib/node_modules"));
+      this.safe(join(prefix, "lib/node_modules/@earendil-works/pi-coding-agent"));
+      this.command(["npm", "install", "--global", "--prefix", prefix,
+        "--ignore-scripts", "--no-audit", "--no-fund", "@earendil-works/pi-coding-agent"]);
+      pi = join(prefix, "bin/pi");
+      if (!isExecutable(pi)) throw new ProvisionError("Pi installation did not create an executable");
     }
     for (const key of ["extensions", "skills", "defaultTools"]) {
       if (!hasOwn(data, key)) data[key] = need(baseline, key);

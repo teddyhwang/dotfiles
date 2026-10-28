@@ -32,6 +32,7 @@ Darwin)
   fi
   brew_env=$("$brew_bin" shellenv sh)
   eval "$brew_env"
+  sh "${SCRIPT_DIR}/scripts/raycast.sh"
   "${SCRIPT_DIR}/scripts/verify_symlinks.sh"
   "${SCRIPT_DIR}/scripts/directories.sh"
   "${SCRIPT_DIR}/scripts/linker_mac.sh"

@@ -146,6 +146,23 @@ contain stale key paths, credential helpers, or work-only includes.
   `sh scripts/amethyst.sh --restore-preferences` from this checkout to restore
   the saved profile with a backup. Existing preferences are otherwise preserved.
   Launch Amethyst manually afterward; see [Amethyst recovery](../apps/amethyst/README.md).
+- **Raycast settings:** on the source Mac, use Raycast's native Export Settings
+  command to export selected categories to the private path
+  `~/.config/dotfiles/raycast.rayconfig` (create its parent directory first).
+  Transfer the archive privately to the same path on the new Mac; keep its
+  encryption passphrase outside this repository. Do not export into this checkout
+  or reuse the historical tracked archive as your migration source. See
+  [Raycast's import/export guide](https://manual.raycast.com/import-export).
+  After packages and Homebrew's environment are ready, interactive macOS setup
+  offers a default-no handoff to Raycast. Missing archives and noninteractive
+  setup skip gracefully with instructions. Set `RAYCAST_CONFIG_FILE` to use a
+  different private path, or run `sh scripts/raycast.sh --import [FILE]` to open
+  it explicitly without a terminal confirmation. In Raycast's UI, select the
+  categories to import and enter the archive passphrase if requested. Opening
+  the archive is **not** confirmation that import completed; no unattended CLI
+  import is assumed. Reruns never automatically replace settings or record a
+  completion marker; they offer the same optional handoff. App/extension sign-ins,
+  credentials, Accessibility and other permissions still need manual verification.
 - **Displays:** arrange the monitors in System Settings. Hammerspoon uses display
   ordering; verify its application placement on the new monitor arrangement.
 - **Remote access:** Remote Login is opt-in in System Settings. Check hostname,

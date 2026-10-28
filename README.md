@@ -300,7 +300,7 @@ Theming", with the highlight overrides from Neovim's `config/colorscheme.lua`.
 
 Personal Pi extension code and tests live in
 [`teddyhwang/pi-extensions`](https://github.com/teddyhwang/pi-extensions).
-`setup.sh` installs the Pi CLI when missing, then provisions the shared package baseline
+`setup.sh` installs the Pi and QMD CLIs when missing, then provisions the shared package baseline
 in [`apps/pi/packages.json`](apps/pi/packages.json): personal extensions, Vim
 mode, Herdsman, Autoresearch and Anthropic authentication support. Git sources
 use HTTPS rather than requiring SSH keys. The personal `pi-extensions` repository
@@ -320,7 +320,11 @@ sh scripts/pi.sh
 The helper also finds Pi in `~/.local/bin` or `~/.pi/agent/bin` before those
 locations reach a new shell's PATH. If missing, it installs the official
 `@earendil-works/pi-coding-agent` npm package with `--ignore-scripts` into
-`~/.local` (no sudo). Existing Pi installations are not upgraded or replaced.
+`~/.local` (no sudo). The helper also installs `@tobilu/qmd` into `~/.local`
+when `qmd` is absent from both PATH and `~/.local/bin`. QMD uses normal npm
+lifecycle scripts for its native dependencies. Existing Pi and QMD installations
+are not upgraded or replaced. QMD collections, indexing and model downloads
+remain explicit steps; setup only installs the CLI.
 It installs missing packages and repairs
 missing package/build artifacts, not routine upgrades. Existing package sources,
 pins, resource filters and unrelated settings are preserved. New entries get the

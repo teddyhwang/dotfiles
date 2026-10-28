@@ -63,11 +63,14 @@ if (name === 'pi') {
   if (path.basename(args[1]) === 'legacy-herdsman') console.log('git@github.com:boadij/pi-herdsman.git');
   else process.exit(1);
 } else if (name === 'npm' && args.includes('--global')) {
-  assert.deepEqual(args, ['install', '--global', '--prefix', path.join(home, '.local'), '--ignore-scripts', '--no-audit', '--no-fund', '@earendil-works/pi-coding-agent']);
-  if (process.env.FAIL_INSTALL) process.exit(7);
-  mkdirp(path.join(home, '.local/bin'));
-  fs.copyFileSync(process.argv[1], path.join(home, '.local/bin/pi'));
-  fs.chmodSync(path.join(home, '.local/bin/pi'), 0o755);
+  const qmd = args.at(-1) === '@tobilu/qmd';
+  assert.deepEqual(args, ['install', '--global', '--prefix', path.join(home, '.local'), ...(qmd ? [] : ['--ignore-scripts']), '--no-audit', '--no-fund', qmd ? '@tobilu/qmd' : '@earendil-works/pi-coding-agent']);
+  if (qmd ? process.env.FAIL_QMD : process.env.FAIL_INSTALL) process.exit(7);
+  if (qmd && process.env.NO_QMD_EXECUTABLE === 'missing') process.exit(0);
+  const executable = path.join(home, '.local/bin', qmd ? 'qmd' : 'pi');
+  mkdirp(path.dirname(executable));
+  fs.copyFileSync(process.argv[1], executable);
+  fs.chmodSync(executable, qmd && process.env.NO_QMD_EXECUTABLE === 'non-executable' ? 0o644 : 0o755);
 } else if (name === 'npm') {
   assert.deepEqual(args, ['install', '--prefix', path.join(home, '.cache/pi-herdsman-build'), '--no-audit', '--no-fund', 'esbuild@0.28.2']);
   const target = path.join(home, '.cache/pi-herdsman-build/node_modules/esbuild');
@@ -86,7 +89,7 @@ if (name === 'pi') {
 } else throw new Error('unexpected native command');
 `;
 
-async function fixture(t, { pi = "path", herdr = true, node = true } = {}) {
+async function fixture(t, { pi = "path", qmd = "path", herdr = true, node = true } = {}) {
   const base = await realpath(await mkdtemp(path.join(os.tmpdir(), "dotfiles-pi-")));
   t.after(() => rm(base, { recursive: true, force: true }));
   const home = path.join(base, "home");
@@ -97,9 +100,15 @@ async function fixture(t, { pi = "path", herdr = true, node = true } = {}) {
   // The mock `node` hands pi_packages.mjs to the real Node (process.execPath).
   const commands = ["npm", "git", ...(node ? ["node"] : []), ...(herdr ? ["herdr"] : [])];
   if (pi === "path") commands.push("pi");
+  if (qmd === "path") commands.push("qmd");
   for (const name of commands) await writeFile(path.join(bin, name), mock, { mode: 0o755 });
   if (pi === "local" || pi === "agent") {
     const filename = path.join(home, pi === "local" ? ".local/bin/pi" : ".pi/agent/bin/pi");
+    await mkdir(path.dirname(filename), { recursive: true });
+    await writeFile(filename, mock, { mode: 0o755 });
+  }
+  if (qmd === "local") {
+    const filename = path.join(home, ".local/bin/qmd");
     await mkdir(path.dirname(filename), { recursive: true });
     await writeFile(filename, mock, { mode: 0o755 });
   }
@@ -231,6 +240,75 @@ test("Pi installation failure stops before settings or extension changes", async
   await assert.rejects(stat(f.settings), { code: "ENOENT" });
   assert.equal((await f.calls()).length, 1);
 });
+
+for (const location of ["missing", "path", "local"]) {
+  test(`QMD discovery: ${location}; rerun never reinstalls`, async (t) => {
+    const f = await fixture(t, { qmd: location });
+    const executable = path.join(location === "path" ? f.bin : path.join(f.home, ".local/bin"), "qmd");
+    const before = location === "missing" ? null : await stat(executable);
+    ok(f.run());
+    const installs = (await f.calls()).filter(c => c.name === "npm" && c.args.includes("--global"));
+    assert.equal(installs.length, location === "missing" ? 1 : 0);
+    if (location === "missing") {
+      assert.deepEqual(installs[0].args, ["install", "--global", "--prefix", path.join(f.home, ".local"),
+        "--no-audit", "--no-fund", "@tobilu/qmd"]);
+      assert.deepEqual((await f.calls())[0], installs[0]);
+    } else {
+      assert.equal((await stat(executable)).ino, before.ino);
+      assert.equal((await stat(executable)).mtimeMs, before.mtimeMs);
+    }
+    await f.clear();
+    ok(f.run());
+    assert.deepEqual((await f.calls()).map(c => c.name), ["herdr"]);
+  });
+}
+
+test("missing Pi and QMD install independently before package provisioning", async (t) => {
+  const f = await fixture(t, { pi: "missing", qmd: "missing" });
+  ok(f.run());
+  assert.deepEqual((await f.calls()).slice(0, 2).map(c => c.args.at(-1)),
+    ["@earendil-works/pi-coding-agent", "@tobilu/qmd"]);
+  assert.deepEqual(await f.data(), baseline);
+});
+
+for (const failure of ["install", "missing", "non-executable"]) {
+  test(`QMD ${failure} failure stops before settings or package writes`, async (t) => {
+    const f = await fixture(t, { qmd: "missing" });
+    await f.set({ unknown: "unchanged" });
+    const original = await readFile(f.settings);
+    const result = f.run(failure === "install" ? { FAIL_QMD: "1" } : { NO_QMD_EXECUTABLE: failure });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, failure === "install" ? /npm failed/ : /QMD installation did not create an executable/);
+    assert.deepEqual((await f.calls()).map(c => c.name), ["npm"]);
+    assert.deepEqual(await readFile(f.settings), original);
+    await assert.rejects(stat(path.join(f.home, ".local/state/dotfiles/backups")), { code: "ENOENT" });
+  });
+}
+
+for (const destination of ["bin/qmd", "lib/node_modules", "lib/node_modules/@tobilu",
+  "lib/node_modules/@tobilu/qmd", "lib/node_modules/@tobilu/qmd/package.json",
+  "lib/node_modules/@tobilu/qmd/node_modules", "package.json", "package-lock.json",
+  "npm-shrinkwrap.json", "node_modules/.package-lock.json", "node_modules/.bin"]) {
+  for (const pi of ["path", "missing"]) {
+    test(`escaping QMD/npm destination ${destination}, Pi ${pi}, fails before commands or writes`, async (t) => {
+      const f = await fixture(t, { pi, qmd: "missing" });
+      await f.set({ unknown: "unchanged" });
+      const original = await readFile(f.settings);
+      const outside = path.join(path.dirname(f.home), "outside");
+      await mkdir(outside);
+      const target = path.join(f.home, ".local", destination);
+      await mkdir(path.dirname(target), { recursive: true });
+      await symlink(outside, target);
+      const result = f.run();
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /Refusing managed path outside HOME/);
+      assert.deepEqual(await f.calls(), []);
+      assert.deepEqual(await readFile(f.settings), original);
+      assert.deepEqual(await readdir(outside), []);
+      await assert.rejects(stat(path.join(f.home, ".local/state/dotfiles/backups")), { code: "ENOENT" });
+    });
+  }
+}
 
 test("repairs missing artifacts and missing dist outputs without upgrades or replacing existing esbuild", async (t) => {
   const f = await fixture(t);

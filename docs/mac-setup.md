@@ -153,12 +153,14 @@ contain stale key paths, credential helpers, or work-only includes.
   No router ports are opened. Existing aliases still name the existing hosts.
 - **Servers:** Ollama is installed but not enabled at login. Optional databases
   are not in the personal Brewfile. Install/start them deliberately if needed.
-- **Pi:** install the CLI separately and authenticate on this machine. When Pi
-  is available, setup installs the five shared packages from
+- **Pi:** setup installs missing Pi and QMD CLIs into `~/.local` without sudo,
+  then installs the five shared packages from
   [`apps/pi/packages.json`](../apps/pi/packages.json), builds Herdsman when needed,
-  and installs Herdr's Pi integration if herdr is available. If you install Pi
-  after setup, run `sh scripts/pi.sh` from the checkout. The helper finds the
-  standard user install even before a fresh terminal picks up its PATH. It adds
+  and installs Herdr's Pi integration if herdr is available. To install or repair
+  these later, run `sh scripts/pi.sh` from the checkout. The helper finds the
+  standard user installs even before a fresh terminal picks up its PATH and
+  leaves existing Pi and QMD installations unchanged. QMD collections, indexing
+  and model downloads remain explicit steps. Authenticate Pi on this machine. It adds
   missing packages/default selections without replacing existing settings,
   package pins or filters; it never copies credentials or MCP connections from
   another machine. See the [README's Pi section](../README.md#pi-extensions).

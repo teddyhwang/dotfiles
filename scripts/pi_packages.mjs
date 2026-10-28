@@ -395,6 +395,17 @@ class Provisioner {
   run(baseline) {
     validateSettings(baseline);
     let data = this.read();
+    const prefix = join(this.home, ".local");
+    const qmd = which("qmd") ?? (isExecutable(join(prefix, "bin/qmd")) ? join(prefix, "bin/qmd") : null);
+    if (!qmd) {
+      // Preflight QMD even before Pi installation when both CLIs are missing.
+      this.safe(prefix);
+      this.npmState(prefix);
+      this.safe(join(prefix, "bin/qmd"));
+      this.safe(join(prefix, "lib/node_modules"));
+      const target = this.safe(join(prefix, "lib/node_modules/@tobilu/qmd"));
+      this.npmState(target);
+    }
     // Resolve and validate all baseline destinations, including a local clone,
     // before the first install or settings write.
     const existing = new Map();
@@ -443,6 +454,15 @@ class Provisioner {
         "--ignore-scripts", "--no-audit", "--no-fund", "@earendil-works/pi-coding-agent"]);
       pi = join(prefix, "bin/pi");
       if (!isExecutable(pi)) throw new ProvisionError("Pi installation did not create an executable");
+    }
+    if (!qmd) {
+      console.log("QMD not found; installing QMD with npm...");
+      // QMD's native dependencies require normal npm lifecycle scripts.
+      this.command(["npm", "install", "--global", "--prefix", prefix,
+        "--no-audit", "--no-fund", "@tobilu/qmd"]);
+      if (!isExecutable(join(prefix, "bin/qmd"))) {
+        throw new ProvisionError("QMD installation did not create an executable");
+      }
     }
     for (const key of ["extensions", "skills", "defaultTools"]) {
       if (!hasOwn(data, key)) data[key] = need(baseline, key);

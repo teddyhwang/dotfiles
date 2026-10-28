@@ -405,7 +405,9 @@ failed with HTTP 400. If that error comes back, update Herdsman and restart old
 sessions. Do not turn strict tools off.
 
 Herdsman is the default bounded-delegation executor; do not expose both it and
-legacy agent-teams for routine delegation. In `~/.pi/agent/settings.json`, use
+legacy agent-teams for routine delegation. Camofox is removed from the personal
+package and excluded by the baseline for older checkouts. In
+`~/.pi/agent/settings.json`, use
 Pi's package resource filters (merge into existing entries, preserving their
 sources and other filters):
 
@@ -414,7 +416,7 @@ sources and other filters):
   "packages": [
     {
       "source": "git:git@github.com:teddyhwang/pi-extensions",
-      "extensions": ["-extensions/agent-teams/index.ts"]
+      "extensions": ["-extensions/agent-teams/index.ts", "-extensions/camofox-browser/index.ts"]
     },
     {
       "source": "https://github.com/davebcn87/pi-autoresearch",

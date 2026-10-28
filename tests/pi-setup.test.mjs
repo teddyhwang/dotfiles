@@ -139,6 +139,11 @@ async function completeHerd(checkout) {
   await writeFile(path.join(checkout, "package.json"), "{}");
 }
 
+test("baseline excludes the removed Camofox extension even in older package checkouts", () => {
+  const personal = baseline.packages.find(entry => typeof entry === "object" && entry.source.includes("teddyhwang/pi-extensions"));
+  assert.ok(personal.extensions.includes("-extensions/camofox-browser/index.ts"));
+});
+
 test("fresh provisioning installs five packages, filters and defaults, builds upstream and integrates", async (t) => {
   const f = await fixture(t);
   // Untouched even when malformed: these files are not provisioning inputs.

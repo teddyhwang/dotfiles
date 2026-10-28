@@ -3,7 +3,7 @@
     "npm:pi-vim",
     {
       "source": "git:https://github.com/teddyhwang/pi-extensions",
-      "extensions": ["-extensions/agent-teams/index.ts"]
+      "extensions": ["-extensions/agent-teams/index.ts", "-extensions/camofox-browser/index.ts"]
     },
     {
       "source": "https://github.com/davebcn87/pi-autoresearch",

@@ -302,7 +302,8 @@ Personal Pi extension code and tests live in
 [`teddyhwang/pi-extensions`](https://github.com/teddyhwang/pi-extensions).
 `setup.sh` installs the Pi and QMD CLIs when missing, then provisions the shared package baseline
 in [`apps/pi/packages.json`](apps/pi/packages.json): personal extensions, Vim
-mode, Herdsman, Autoresearch and Anthropic authentication support. Git sources
+mode, web search and fetch (`pi-web-access`), Herdsman, Autoresearch and
+Anthropic authentication support. Git sources
 use HTTPS rather than requiring SSH keys. The personal `pi-extensions` repository
 is private: setup checks GitHub authentication, launches browser login when
 needed in a terminal, and runs `gh auth setup-git` before provisioning Pi.
@@ -465,7 +466,11 @@ with medium thinking; `scout`, `researcher` and `reviewer` run GPT-6.1 Sol
 with high thinking. In October sessions Sol finished bounded work several
 times faster and cheaper than an inherited Opus lead, while GPT-6 Luna at
 medium stopped part-way in 10 of 11 implementer runs, so Luna is not used for
-delegated work. All keep the bundled prompts and tools; `generalist` still
+delegated work. All keep the bundled prompts and tools. The bundled
+`researcher` tools (`web_search`, `fetch_content`, `get_search_content`,
+`source_check`) come from `pi-web-access`, which needs no API key: it searches
+through Exa's keyless endpoint or the Codex login and fetches pages over plain
+HTTP. Its curator window and browser-cookie access stay off. `generalist` still
 inherits the lead's model. These providers need their normal Pi authentication.
 
 On work machines (devx detected), setup uses `home/pi-agent/agents/work/`

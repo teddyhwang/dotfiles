@@ -182,7 +182,7 @@ test("existing machine values, SSH equivalents, pinned refs, package filters and
       { source: "git:git@github.com:teddyhwang/pi-extensions.git@custom", extensions: [], skills: ["mine"] },
       { source: "ssh://git@github.com/davebcn87/pi-autoresearch.git@pin", skills: ["custom"] },
       { source: "git:github.com/boadij/pi-herdsman@other-pin", extensions: ["only"] },
-      "npm:@gotgenes/pi-anthropic-auth@9.9.9", "npm:unrelated",
+      "npm:@gotgenes/pi-anthropic-auth@9.9.9", "npm:pi-web-access@1.2.3", "npm:unrelated",
     ],
     extensions: [], skills: ["custom"], defaultTools: ["read"],
     defaultProvider: "private", models: { custom: true }, credentials: { secret: "not-output" }, unknown: [1, 2],
@@ -190,7 +190,7 @@ test("existing machine values, SSH equivalents, pinned refs, package filters and
   await f.set(existing);
   ok(f.run());
   assert.deepEqual(await f.data(), existing);
-  assert.deepEqual((await f.calls()).filter(c => c.name === "pi").map(c => c.args[1]), existing.packages.slice(0, 5).map(e => typeof e === "string" ? e : e.source));
+  assert.deepEqual((await f.calls()).filter(c => c.name === "pi").map(c => c.args[1]), existing.packages.slice(0, baseline.packages.length).map(e => typeof e === "string" ? e : e.source));
   await f.clear();
   const bytes = await readFile(f.settings);
   const mtime = (await stat(f.settings)).mtimeMs;
@@ -211,9 +211,9 @@ test("legacy local Herdsman is identified by read-only origin and built in place
   ok(f.run());
   const data = await f.data();
   assert.deepEqual(data.packages[0], entry);
-  assert.equal(data.packages.length, 5);
+  assert.equal(data.packages.length, baseline.packages.length);
   const calls = await f.calls();
-  assert.equal(calls.filter(c => c.name === "pi").length, 4);
+  assert.equal(calls.filter(c => c.name === "pi").length, baseline.packages.length - 1);
   assert.equal(calls.find(c => c.name === "node").cwd, local);
   assert.ok(!calls.some(c => c.name === "pi" && c.args.includes(herdSource)));
 });
@@ -231,7 +231,7 @@ for (const location of ["missing", "local", "agent"]) {
       ok(f.run());
       assert.deepEqual(await f.calls(), []);
     } else {
-      assert.equal((await f.calls()).filter(c => c.name === "pi").length, 5);
+      assert.equal((await f.calls()).filter(c => c.name === "pi").length, baseline.packages.length);
       assert.match(result.stdout, /herdr integration install pi/);
     }
   });
@@ -345,7 +345,7 @@ test("Pi failure preserves successful filters and retry resumes with baseline fi
   ok(f.run());
   data = await f.data();
   assert.deepEqual(data, baseline);
-  assert.equal((await f.calls()).filter(c => c.name === "pi").length, 3);
+  assert.equal((await f.calls()).filter(c => c.name === "pi").length, baseline.packages.length - 2);
 });
 
 test("private Git package failures explain machine-local authentication without losing progress", async (t) => {
@@ -366,7 +366,7 @@ test("build failure stops integration; retry builds without reinstalling Herdsma
   assert.equal((await f.data()).packages.length, 4);
   await f.clear();
   ok(f.run());
-  assert.deepEqual((await f.calls()).filter(c => c.name === "pi").map(c => c.args[1]), ["npm:@gotgenes/pi-anthropic-auth"]);
+  assert.deepEqual((await f.calls()).filter(c => c.name === "pi").map(c => c.args[1]), baseline.packages.slice(4));
 });
 
 for (const bad of ["{broken", "[]", { packages: {} }, { packages: [1] }, { extensions: false },
@@ -550,7 +550,7 @@ test("case-insensitive GitHub identity preserves native owner/repository checkou
   const calls = await f.calls();
   assert.deepEqual(calls.filter(c => c.name === "pi" && /herdsman/i.test(c.args[1])).map(c => c.args[1]), [source]);
   assert.equal(calls.find(c => c.name === "node").cwd, checkout);
-  assert.equal((await f.data()).packages.length, 5);
+  assert.equal((await f.data()).packages.length, baseline.packages.length);
   assert.deepEqual((await f.data()).packages[0], { source, extensions: [] });
   await f.clear();
   ok(f.run());

@@ -10,7 +10,8 @@
       "skills": []
     },
     "git:github.com/boadij/pi-herdsman@382a18800198b082730d89cd4132d38d25b5d669",
-    "npm:@gotgenes/pi-anthropic-auth"
+    "npm:@gotgenes/pi-anthropic-auth",
+    "npm:pi-web-access"
   ],
   "extensions": ["-extensions/unifi-network/index.ts"],
   "skills": ["-skills/find-skills/SKILL.md", "-../../.agents/skills/find-skills/SKILL.md"],

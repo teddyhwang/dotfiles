@@ -25,7 +25,7 @@ fi
 _shared_init_regen_cache() (
   # The subshell already isolates these variables. Bash 3.2 unwinds `local`
   # variables before EXIT traps on `exit`, losing cleanup paths on failure.
-  _cache="$1" _shell="$2" _tmp="" _piece=""
+  _cache="$1" _shell="$2" _mode="${3:-}" _tmp="" _piece=""
   _cache_dir=$(dirname "$_cache")
   _cache_name=$(basename "$_cache")
   _lock="${_cache}.lock"
@@ -48,6 +48,10 @@ _shared_init_regen_cache() (
   fi
   trap '[[ -n "$_tmp" ]] && rm -f "$_tmp"; [[ -n "$_piece" ]] && rm -f "$_piece"; rmdir "$_lock" 2>/dev/null || true' 0
   trap 'exit 1' HUP INT TERM
+  # A shell that found no cache at startup can reach the lock after another
+  # shell has already published one and released it. Use that cache instead
+  # of running every generator a second time.
+  [[ "$_mode" == missing && -f "$_cache" ]] && exit 0
   find "$_cache_dir" -maxdepth 1 -name "${_cache_name}.tmp.*" -mmin +10 -delete 2>/dev/null || true
 
   _tmp=$(mktemp "${_cache}.tmp.XXXXXX") || exit 1
@@ -112,7 +116,7 @@ if [[ "$_shared_init_regen" == "1" ]]; then
     fi
   else
     # No cache at all — must regen synchronously.
-    if _shared_init_regen_cache "$_shared_init_cache" "$_shell"; then
+    if _shared_init_regen_cache "$_shared_init_cache" "$_shell" missing; then
       source "$_shared_init_cache"
     else
       printf 'warning: could not generate shell initialization cache\n' >&2

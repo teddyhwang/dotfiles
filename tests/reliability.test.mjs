@@ -162,6 +162,24 @@ test("concurrent first shells publish one complete cache in XDG_CACHE_HOME", asy
   assert.deepEqual(await readdir(cacheHome), ["shared_init_cache.bash"]);
 });
 
+test("a first shell that loses the race reuses the cache published before it took the lock", async (t) => {
+  const { home, env } = await fixture(t);
+  const cacheHome = path.join(home, "custom-cache");
+  await mkdir(cacheHome);
+  const cache = path.join(cacheHome, "shared_init_cache.bash");
+  await writeFile(cache, "export CACHE_COMPLETE=yes\n");
+  await executable(path.join(home, "bin/gh"), 'echo generation >>"$HOME/generations"; echo "export CACHE_COMPLETE=yes"');
+  // The shell saw no cache at startup; another shell published one and released
+  // the lock before this shell reached mkdir.
+  const missing = `. "${repo}/home/shared/init"; _shared_init_regen_cache "$XDG_CACHE_HOME/shared_init_cache.bash" bash missing`;
+  ok(run("bash", missing, { ...env, XDG_CACHE_HOME: cacheHome }));
+  assert.equal((await readdir(home)).includes("generations"), false);
+  // A stale-cache refresh must still regenerate even though a cache exists.
+  const stale = `. "${repo}/home/shared/init"; _shared_init_regen_cache "$XDG_CACHE_HOME/shared_init_cache.bash" bash`;
+  ok(run("bash", stale, { ...env, XDG_CACHE_HOME: cacheHome }));
+  assert.equal(await readFile(path.join(home, "generations"), "utf8"), "generation\n");
+});
+
 test("an empty tmux autosave cannot overwrite a rich previous layout", async (t) => {
   const { home, env } = await fixture(t);
   const previous = "pane\tone\npane\ttwo\npane\tthree\npane\tfour\n";

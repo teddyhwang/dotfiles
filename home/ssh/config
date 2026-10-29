@@ -1,6 +1,13 @@
 # UseKeychain is a macOS OpenSSH option; other OpenSSH builds reject it.
 IgnoreUnknown UseKeychain
 
+# Connections to Bonjour hosts from agent sessions intermittently fail at
+# connect() with "Undefined error: 0" (macOS Local Network privacy) and then
+# succeed on the next try. Retry the TCP connect instead of failing the command.
+Host *.local
+  ConnectionAttempts 3
+  ConnectTimeout 10
+
 Host *
   AddKeysToAgent yes
   UseKeychain yes

@@ -38,7 +38,7 @@ for _, key in ipairs({ "escape", "enter", "q", "ctrl+c" }) do
   rex.bind("resize/" .. key, "client.mode.exit")
 end
 
--- Tabs (tmux windows). Rex counts tabs from 1, like my tmux base-index.
+-- Tabs (tmux windows).
 prefixed("c", "client.tab.new")
 prefixed("shift+a", "client.tab.rename") -- tmux: bind A rename-window
 prefixed("shift+7", "client.tab.close") -- prefix+&
@@ -48,10 +48,10 @@ prefixed("ctrl+h", "client.tab.previous")
 prefixed("ctrl+l", "client.tab.next")
 prefixed("shift+,", "client.tab.move.backward") -- prefix+<
 prefixed("shift+.", "client.tab.move.forward") -- prefix+>
-for index = 1, 9 do
-  prefixed(tostring(index), "client.tab.goto", { index = index })
+-- Zero-based like Herdr: prefix+0 is the first tab. Rex counts from 1.
+for digit = 0, 9 do
+  prefixed(tostring(digit), "client.tab.goto", { index = digit + 1 })
 end
-prefixed("0", "client.tab.goto", { index = 10 })
 
 -- Sessions (tmux sessions, Herdr workspaces)
 prefixed("s", "session.switch")

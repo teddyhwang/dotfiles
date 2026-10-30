@@ -300,8 +300,8 @@ Theming", with the highlight overrides from Neovim's `config/colorscheme.lua`.
 
 `home/config/rex/init.lua` gives Rex the tmux and Herdr key bindings, with
 `ctrl+a` as the prefix: `-` and `|` split, `h/j/k/l` focus, `H/J/K/L` move,
-`e` enters resize mode, `c` opens a tab, `1`-`9` pick a tab, and `s` switches
-session. Press `ctrl+a` twice to send a literal `ctrl+a`. Without the prefix,
+`e` enters resize mode, `c` opens a tab, `0`-`9` pick a tab (zero-based, like
+Herdr), and `s` switches session. Press `ctrl+a` twice to send a literal `ctrl+a`. Without the prefix,
 `ctrl+h/j/k/l` move between panes, as in tmux. Rex passes the keys to Vim, and
 Neovim's `config/keymaps.lua` runs `rex focus` at Vim's edge. Setup links only
 `init.lua` into `~/.config/rex`. Check it with `rex config check` and apply it

@@ -98,7 +98,11 @@ floating:
   - id: com.mitchellh.ghostty
     window-titles: []
   - id: com.superlogical.rex
-    window-titles: []
+    # Settings hides its title bar, but its AX title is "Settings - <Section>"
+    # (Server, Interface, Themes, ...). Session windows are
+    # "<terminal title> - <dir> - <session>". Tile everything except Settings.
+    window-titles:
+      - '^(?!Settings(?: - (?:(?! - )[\s\S])+)?$)[\s\S]'
   - id: com.postmanlabs.mac
     window-titles: []
   - id: dev.zed.Zed

@@ -96,9 +96,20 @@ node --test tests/amethyst-window-rules.test.mjs
 
 Tests parse the actual YAML, cover browser/profile/Incognito/Guest titles,
 video and Document PiP titles, empty startup titles, and the popup limitation.
-On macOS they also check Amethyst's Foundation/ICU regex engine via Swift.
+On macOS they also check Amethyst's Foundation/ICU regex engine via
+JavaScript for Automation.
 
 Source references:
 - [Chrome browser accessibility titles](https://github.com/chromium/chromium/blob/main/chrome/browser/ui/views/frame/browser_view.cc) — `GetAccessibleWindowTitleForChannelAndProfile`
 - [Native video PiP window](https://github.com/chromium/chromium/blob/main/chrome/browser/ui/views/overlay/video_overlay_window_views.cc) — `OverlayWindowWidgetDelegate`
 - [Amethyst 0.24.3 title classification](https://github.com/ianyh/Amethyst/blob/v0.24.3/Amethyst/Preferences/UserConfiguration.swift) — `runningApplication(_:byDefaultFloatsForTitle:)`
+
+## Rex: tile session windows, float Settings
+
+Rex hides the Settings window's title bar, but its accessibility title is
+`Settings - <Section>` (for example `Settings - Server`). Session windows are
+`<terminal title> - <dir> - <session>`. The rule tiles every title except
+`Settings` alone or followed by exactly one ` - <Section>` segment, so a
+terminal titled `Settings` inside a session still tiles. Empty startup titles
+float so Amethyst retries classification. The same test file covers these
+cases.

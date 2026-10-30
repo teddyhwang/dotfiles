@@ -54,6 +54,7 @@ for digit = 0, 9 do
 end
 
 -- Sessions (tmux sessions, Herdr workspaces)
+prefixed("shift+n", "session.new") -- Herdr default: new_workspace
 prefixed("s", "session.switch")
 prefixed("shift+s", "session.switch")
 prefixed("w", "session.switch")

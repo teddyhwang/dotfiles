@@ -97,6 +97,8 @@ floating:
     window-titles: []
   - id: com.mitchellh.ghostty
     window-titles: []
+  - id: com.superlogical.rex
+    window-titles: []
   - id: com.postmanlabs.mac
     window-titles: []
   - id: dev.zed.Zed

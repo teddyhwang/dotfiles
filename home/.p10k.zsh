@@ -1,4 +1,33 @@
+# ============================================================================
+# RESPONSIVE LAYOUT
+# ============================================================================
+# Narrow terminals (phones over SSH, split panes) wrap the first prompt line.
+# Pick a layout from $COLUMNS, hide low-value segments with `p10k display`
+# and cap the git branch length. This runs as an invisible first segment, not
+# a precmd hook: p10k builds its display table inside its own precmd (always
+# forced last), so a hook would miss the first prompt of every new shell.
+# Resizes apply on the next prompt; a TRAPWINCH would clash with zsh-async's
+# SIGWINCH fallback.
+typeset -gi _p10k_compact_columns=80 _p10k_medium_columns=120
+typeset -ga _p10k_medium_hidden=(disk_usage ram)
+typeset -ga _p10k_compact_hidden=(os_icon user node_version chruby time vi_mode)
+typeset -gi _git_branch_max=0
+
+prompt_responsive() {
+  local medium=show compact=show
+  if (( COLUMNS < _p10k_compact_columns )); then
+    medium=hide compact=hide _git_branch_max=COLUMNS/3
+  elif (( COLUMNS < _p10k_medium_columns )); then
+    medium=hide _git_branch_max=COLUMNS/3
+  else
+    _git_branch_max=0
+  fi
+  # Unchanged values are skipped inside p10k, so this is cheap per prompt.
+  p10k display '*/'${^_p10k_medium_hidden}=$medium '*/'${^_p10k_compact_hidden}=$compact
+}
+
 typeset -g _git_text=""
+typeset -g _git_shown=""
 typeset -g _git_state=""
 typeset -g _git_workspace=""
 typeset -g _git_worker_init=""
@@ -64,6 +93,23 @@ _git_async() {
   print -r -- "${dir}|${state}|${text}"
 }
 
+# Derive the displayed text from $_git_text, shortening the branch name to
+# $_git_branch_max columns (0 = no limit). Text is "[icon ]branch[ counts]";
+# branch names can't contain spaces, so the branch is the first word.
+_git_fit() {
+  local text=$_git_text prefix="" branch
+  if [[ $text == $'\uF126 '* ]]; then
+    prefix=$'\uF126 '
+    text=${text#"$prefix"}
+  fi
+  branch=${text%% *}
+  text=${text#"$branch"}
+  if (( _git_branch_max > 1 && ${#branch} > _git_branch_max )); then
+    branch="${branch[1,_git_branch_max-1]}…"
+  fi
+  _git_shown=$prefix$branch$text
+}
+
 # Callback: update display variables and trigger redraw (only if changed)
 _git_callback() {
   local job=$1 exit_code=$2 output=$3
@@ -81,6 +127,7 @@ _git_callback() {
 
   _git_state=$state
   _git_text=$text
+  _git_fit
   p10k display -r
 }
 
@@ -115,21 +162,23 @@ prompt_git() {
     fi
   fi
 
+  _git_fit
+
   (( $+functions[async_job] )) && async_job _git_worker _git_async "$_git_workspace"
 
   # Use -c conditions for dynamic state switching (from p10k issue #2471)
-  p10k segment -s LOADING -c '${(M)_git_state:#LOADING}' -et '$_git_text'
-  p10k segment -s CLEAN -c '${(M)_git_state:#CLEAN}' -et '$_git_text'
-  p10k segment -s STAGED -c '${(M)_git_state:#STAGED}' -et '$_git_text'
-  p10k segment -s MODIFIED -c '${(M)_git_state:#MODIFIED}' -et '$_git_text'
+  p10k segment -s LOADING -c '${(M)_git_state:#LOADING}' -et '$_git_shown'
+  p10k segment -s CLEAN -c '${(M)_git_state:#CLEAN}' -et '$_git_shown'
+  p10k segment -s STAGED -c '${(M)_git_state:#STAGED}' -et '$_git_shown'
+  p10k segment -s MODIFIED -c '${(M)_git_state:#MODIFIED}' -et '$_git_shown'
 }
 
 # Bake the last known git segment into p10k's per-directory instant prompt so
 # it's visible from the very first frame instead of popping in after zshrc
 # loads. Captured literally at dump time (hermetic); async corrects it later.
 instant_prompt_git() {
-  [[ -n $_git_state && -n $_git_text ]] || return
-  p10k segment -s "$_git_state" -t "${_git_text//\%/%%}"
+  [[ -n $_git_state && -n $_git_shown ]] || return
+  p10k segment -s "$_git_state" -t "${_git_shown//\%/%%}"
 }
 
 # Same trick for the version segments: p10k doesn't define instant_prompt_*
@@ -202,7 +251,12 @@ POWERLEVEL9K_PYTHON_ICON="\uf81f"
 POWERLEVEL9K_RBENV_ICON="\ue21e"
 POWERLEVEL9K_RUBY_ICON="\ue21e"
 POWERLEVEL9K_SHORTEN_DELIMITER=
-POWERLEVEL9K_SHORTEN_DIR_LENGTH=4
+# truncate_to_unique shortens parents left to right only as far as needed to
+# fit the line and stay under DIR_MAX_LENGTH (a share of the terminal width),
+# so wide screens keep full paths and phones get ~/s/g/t/dotfiles. A max of 0
+# (the default) would always shorten fully.
+POWERLEVEL9K_DIR_MAX_LENGTH='50%'
+POWERLEVEL9K_SHORTEN_DIR_LENGTH=1
 POWERLEVEL9K_SHORTEN_STRATEGY=truncate_to_unique
 POWERLEVEL9K_TIME_FORMAT='%D{%H:%M}'
 POWERLEVEL9K_USER_DEFAULT_BACKGROUND=yellow
@@ -216,6 +270,7 @@ POWERLEVEL9K_VIRTUALENV_VISUAL_IDENTIFIER_EXPANSION=""
 POWERLEVEL9K_VI_MODE_BACKGROUND=green
 POWERLEVEL9K_VI_MODE_FOREGROUND=black
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
+  responsive
   os_icon
   user
   ssh

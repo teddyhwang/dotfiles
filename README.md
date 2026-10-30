@@ -305,7 +305,10 @@ Herdr), `N` opens a session, and `s` switches session. Press `ctrl+a` twice to s
 `ctrl+h/j/k/l` move between panes, as in tmux. Rex passes the keys to Vim, and
 Neovim's `config/keymaps.lua` runs `rex focus` at Vim's edge. Setup links only
 `init.lua` into `~/.config/rex`. Check it with `rex config check` and apply it
-with `ctrl+a r` or `rex config reload`.
+with `ctrl+a r` or `rex config reload`. Rex's session switcher and palette are
+native popups that never see `init.lua`, so Hammerspoon's `rex_pickers.lua`
+turns `ctrl+j/k` into down and up there, and only when a text field other than
+a terminal has focus.
 
 ### Pi extensions
 

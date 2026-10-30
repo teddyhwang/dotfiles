@@ -142,4 +142,7 @@ hs.hotkey.bind({ "cmd", "shift" }, "W", MoveAppsToScreen2)
 -- HDR on and Tailscale off while GeForce NOW runs (global to prevent GC)
 GeForceNow = require("geforce_now").start()
 
+-- ctrl+j/k move through Rex's session switcher and palette (global to prevent GC)
+RexPickers = require("rex_pickers").start()
+
 hs.alert.show("Hammerspoon loaded")

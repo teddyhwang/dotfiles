@@ -475,12 +475,11 @@ substituting APIs.
 
 Herdsman agents inherit the lead's model unless a definition pins one. Setup
 copies the matching profile into `~/.pi/agent/agents/`. Personal machines use
-`home/pi-agent/agents/personal/`: `implementer` runs OpenAI Codex GPT-6.1 Sol
-with medium thinking; `scout`, `researcher` and `reviewer` run GPT-6.1 Sol
-with high thinking. In October sessions Sol finished bounded work several
-times faster and cheaper than an inherited Opus lead, while GPT-6 Luna at
-medium stopped part-way in 10 of 11 implementer runs, so Luna is not used for
-delegated work. All keep the bundled prompts and tools. The bundled
+`home/pi-agent/agents/personal/`: `scout` and `implementer` run Anthropic
+Claude Sonnet 5.5 (high and medium thinking respectively); `researcher` and
+`reviewer` run Claude Opus 5.5 with high thinking. All keep the bundled
+prompts and tools. Each role definition includes explicit authority boundaries,
+coordination rules, and deliverable requirements. The bundled
 `researcher` tools (`web_search`, `fetch_content`, `get_search_content`,
 `source_check`) come from `pi-web-access`, which needs no API key: it searches
 through Exa's keyless endpoint or the Codex login and fetches pages over plain

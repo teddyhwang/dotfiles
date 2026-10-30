@@ -50,6 +50,23 @@ fallback in the same rule, or say what is missing.
 - Google Docs (`docs.google.com`): if a Google Docs tool is available, use it.
   Otherwise ask the user for an export or for the text.
 
+## Agent Delegation
+
+- If Herdsman or Rex agents are available, delegate bounded work to specialists:
+  **scout** (read-only exploration), **implementer** (approved changes),
+  **reviewer** (independent assessment), **researcher** (external facts).
+- Give each agent: specific goal, file paths, acceptance criteria, and explicit
+  authority (can commit, can deploy, read-only, etc.).
+- **You own coordination:** Allocate exclusive worktrees to writers; enforce
+  producer-before-consumer sequencing; limit concurrent heavy tests; verify
+  dependencies and access before delegating.
+- **Integration and deployment:** Name the owner for root/submodule builds,
+  activation consent, and post-deploy checks. Distinguish "implemented" from
+  "deployed and accepted."
+- **Acceptance:** For browser/UI work, require live verification evidence
+  (screenshots, terminal output) before accepting "done."
+- Track blocked agents and coordination failures in ~/toil/index.md.
+
 ## Toil
 
 - Toil Tracker: when a task hits avoidable friction (retries, dead ends,

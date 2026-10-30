@@ -310,6 +310,12 @@ native popups that never see `init.lua`, so Hammerspoon's `rex_pickers.lua`
 turns `ctrl+j/k` into down and up there, and only when a text field other than
 a terminal has focus.
 
+Rex keeps its font and theme in macOS defaults (`com.superlogical.rex`), not
+in `init.lua`. `scripts/rex.sh`, run by setup, writes only those keys
+(JetBrainsMono Nerd Font 12, Merino dark and light themes) and leaves window
+and server preferences alone. Change the values in that script, then run
+`sh scripts/rex.sh` and restart Rex.
+
 ### Pi extensions
 
 Personal Pi extension code and tests live in

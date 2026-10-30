@@ -38,6 +38,7 @@ Darwin)
   "${SCRIPT_DIR}/scripts/linker_mac.sh"
   "${SCRIPT_DIR}/scripts/services_mac.sh"
   "${SCRIPT_DIR}/scripts/herdr.sh"
+  "${SCRIPT_DIR}/scripts/rex.sh"
   "${SCRIPT_DIR}/scripts/zsh.sh"
   "${SCRIPT_DIR}/scripts/bash.sh"
   "${SCRIPT_DIR}/scripts/tmux.sh"

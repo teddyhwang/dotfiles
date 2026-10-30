@@ -31,7 +31,7 @@ for filepath in "$DOTFILES_DIR"/home/config/*; do
 
   # Symlink individual files for configs that shouldn't have the whole dir tracked.
   case "$entry_name" in
-    opencode | tmux | opensessions | zed | herdr)
+    opencode | tmux | opensessions | zed | herdr | rex)
       mkdir -p "$dst_path"
       for subfile in "$filepath"/*; do
         [ -e "$subfile" ] || [ -L "$subfile" ] || continue

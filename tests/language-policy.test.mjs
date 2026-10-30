@@ -18,8 +18,8 @@ const text = (file) => {
 
 const FORBIDDEN_EXTENSIONS = new Set([".py", ".pyw", ".rb", ".pl", ".pm", ".php", ".go", ".rs", ".java", ".kt", ".tcl", ".exp", ".r"]);
 const APP_LANGUAGES = [
-  // Lua: Neovim, Hammerspoon, WezTerm and Hyprland read it.
-  { extension: ".lua", allowed: /^(home\/config\/nvim\/|home\/\.hammerspoon\/|home\/\.wezterm\.lua$|home\/hypr\/)/ },
+  // Lua: Neovim, Hammerspoon, WezTerm, Hyprland and Rex read it.
+  { extension: ".lua", allowed: /^(home\/config\/nvim\/|home\/\.hammerspoon\/|home\/\.wezterm\.lua$|home\/hypr\/|home\/config\/rex\/init\.lua$)/ },
   // QML and JavaScript: Omarchy plugins, Amethyst layouts and opensessions plugins.
   { extension: ".qml", allowed: /^home\/omarchy\/plugins\// },
   { extension: ".js", allowed: /^(home\/omarchy\/plugins\/|apps\/amethyst\/|home\/config\/opensessions\/plugins\/)/ },

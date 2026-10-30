@@ -230,3 +230,17 @@ end, { desc = "Toggle Pi" })
 
 -- Stewardlens
 map("n", "<leader>fs", "<cmd>StewardlensBrowse<cr>", { desc = "Open file in Stewardlens" })
+
+-- Rex pane navigation (Rex outside tmux and Herdr). ~/.config/rex/init.lua
+-- passes ctrl+h/j/k/l to Vim; at Vim's edge, move to the next Rex pane.
+if vim.env.REX_BLOCK and not vim.env.TMUX and vim.env.HERDR_ENV ~= "1" then
+  for key, dir in pairs({ h = "left", j = "down", k = "up", l = "right" }) do
+    map("n", "<C-" .. key .. ">", function()
+      local win = vim.api.nvim_get_current_win()
+      vim.cmd.wincmd(key)
+      if vim.api.nvim_get_current_win() == win then
+        vim.system({ "rex", "focus", dir })
+      end
+    end, { desc = "Navigate " .. dir })
+  end
+end

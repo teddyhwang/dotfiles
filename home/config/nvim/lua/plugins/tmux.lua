@@ -2,7 +2,8 @@ return {
   -- Seamless navigation between tmux panes and vim splits
   {
     "christoomey/vim-tmux-navigator",
-    cond = vim.env.HERDR_ENV ~= "1",
+    -- Herdr and Rex (outside tmux) have their own navigators.
+    cond = vim.env.HERDR_ENV ~= "1" and (vim.env.TMUX ~= nil or vim.env.REX_BLOCK == nil),
     lazy = false,
     keys = {
       { "<C-h>", "<cmd>TmuxNavigateLeft<cr>", desc = "Navigate left" },

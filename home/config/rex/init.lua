@@ -66,6 +66,14 @@ prefixed("ctrl+k", "session.previous")
 prefixed("r", "client.config.reload")
 prefixed("shift+c", "client.settings")
 prefixed("shift+/", "client.palette.toggle") -- prefix+?
+-- Copy mode: Rex has no tmux copy mode. client.find.open opens the scrollback
+-- search bar, the closest equivalent for navigating and highlighting history.
+prefixed("escape", "client.find.open") -- tmux: bind Escape copy-mode
+-- Paste: Rex uses the macOS clipboard rather than a tmux paste buffer.
+-- Sends Cmd+V so the terminal receives a native paste from the system clipboard.
+prefixed("shift+p", "pane.send_key", { key = "cmd+v" }) -- tmux: bind P paste-buffer
+-- Last pane: return to the previously focused pane.
+prefixed("tab", "pane.focus_previous") -- tmux: bind Tab last-pane
 
 -- No-prefix keys, like vim-tmux-navigator: ctrl+h/j/k/l move between panes
 -- unless the pane runs (Neo)vim, which gets the key and calls `rex focus` at

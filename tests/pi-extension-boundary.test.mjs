@@ -148,10 +148,10 @@ test("the generalist override applies everywhere and keeps the bundled prompt an
 test("Herdsman implementation is cheaper at medium thinking while review stays strong at high", async () => {
   const policies = {
     personal: {
-      implementer: "openai-codex/gpt-6.1-sol",
-      reviewer: "openai-codex/gpt-6.1-sol",
-      scout: "openai-codex/gpt-6.1-sol",
-      researcher: "openai-codex/gpt-6.1-sol",
+      implementer: "anthropic/claude-sonnet-5-5",
+      reviewer: "anthropic/claude-opus-5-5",
+      scout: "anthropic/claude-sonnet-5-5",
+      researcher: "anthropic/claude-opus-5-5",
     },
     work: { implementer: "anthropic/claude-sonnet-5-5", reviewer: "anthropic/claude-opus-5-5" },
   };

@@ -1,7 +1,9 @@
 ---
 # Managed by dotfiles: home/pi-agent/agents/personal/reviewer.md
-# Review keeps the stronger model even when the implementer delegates it.
+# Low-volume code review: Opus-5-5 is best at catching subtle bugs, architecture
+# issues, and edge cases. High thinking for thorough review. Keeps the stronger
+# model even when the implementer delegates it.
 name: reviewer
-model: openai-codex/gpt-6.1-sol
+model: anthropic/claude-opus-5-5
 thinking: high
 ---

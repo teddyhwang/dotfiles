@@ -107,6 +107,8 @@ floating:
     window-titles: []
   - id: dev.zed.Zed
     window-titles: []
+  - id: dev.bb.desktop
+    window-titles: []
   # Chrome PWAs
   - id: com.google.Chrome.app.jmhnjadodelkehjlnlddaldfcipngnib
     window-titles: []

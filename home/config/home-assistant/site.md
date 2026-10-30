@@ -336,6 +336,20 @@ connectivity. Verify alarm/zone states read-only. No arm/disarm test without
 specific permission. A Mac Homebridge service restart may require sudo; do not
 assume the SSH add-on or Mac account can run host service-control commands.
 
+Panel clock: HA exposes no panel time. The EVL4 web status page
+(`http://192.168.1.142/`, basic auth user `user` + `envisalink_password`)
+shows `YYYY-MM-DD HH:MM - System Time`; read it from the SSH add-on with curl
+without printing secrets. The only HA way to set the clock is
+`envisalink.alarm_keypress` with `*6<master>1HHMMMMDDYY#` (24 h). The SSH
+add-on's `SUPERVISOR_TOKEN` returns 401 on `http://supervisor/core/api`, so
+send it through the local helper (`--write`) from a private temp file that you
+delete afterward. On 2026-10-30 HA accepted one attempt, but it did **not** change the
+panel clock, and the owner had to reset it on the keypad. The likely cause is
+that HA's stored code isn't the master code, or that TPI keystrokes can't enter
+`*6` programming. Treat this path as unproven. Ask the owner to use the keypad
+instead of retrying blindly. After the keypad reset, the EVL page matched real
+time, so that page **does** show the panel's clock and can be used to check it.
+
 ## Deployment and acceptance shortcuts
 
 1. Back up changed resources to a new timestamped private directory. Do not

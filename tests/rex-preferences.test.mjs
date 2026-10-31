@@ -44,7 +44,7 @@ esac`,
   return { home, store, run, value, writes };
 }
 
-test("writes Rex font and theme preferences, then is idempotent", async (t) => {
+test("writes Rex font, theme and inactive-window preferences, then is idempotent", async (t) => {
   const s = await sandbox(t);
   let result = s.run();
   assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -53,12 +53,13 @@ test("writes Rex font and theme preferences, then is idempotent", async (t) => {
   assert.equal(await s.value("Workspace.terminalFontSmoothing"), "1\n");
   assert.equal(await s.value("Workspace.darkThemeID"), "merino-dark\n");
   assert.equal(await s.value("Workspace.lightThemeID"), "merino-light\n");
-  assert.equal((await s.writes()).length, 7);
+  assert.equal(await s.value("Workspace.usesStandardInactiveWindowPaneStyles"), "0\n");
+  assert.equal((await s.writes()).length, 8);
   assert.match(result.stdout, /Rex preferences setup complete/);
 
   result = s.run();
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.equal((await s.writes()).length, 7, "a rerun must not rewrite matching keys");
+  assert.equal((await s.writes()).length, 8, "a rerun must not rewrite matching keys");
   assert.match(result.stdout, /Rex preferences already configured/);
 });
 
@@ -68,7 +69,7 @@ test("rewrites only keys that differ", async (t) => {
   await writeFile(path.join(s.store, "Workspace.terminalFontPointSize"), "14\n");
   const result = s.run();
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.deepEqual((await s.writes()).slice(7), ["Workspace.terminalFontPointSize"]);
+  assert.deepEqual((await s.writes()).slice(8), ["Workspace.terminalFontPointSize"]);
   assert.equal(await s.value("Workspace.terminalFontPointSize"), "12\n");
 });
 

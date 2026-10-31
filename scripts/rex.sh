@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # Rex keeps appearance settings in macOS defaults, not in init.lua. Write only
-# the shared font and theme keys, so window frames, servers and other
-# machine-specific preferences stay untouched.
+# the shared font, theme and inactive-window keys, so window frames, servers
+# and other machine-specific preferences stay untouched.
 
 set -eu
 
@@ -50,8 +50,12 @@ set_preference bool Workspace.terminalFontSmoothing true
 set_preference string Workspace.interfaceStyle useTheme
 set_preference string Workspace.darkThemeID merino-dark
 set_preference string Workspace.lightThemeID merino-light
+# The standard inactive-window style mutes text colors by about 22% when
+# another app has focus. Off keeps full-strength colors; the background still
+# greys slightly.
+set_preference bool Workspace.usesStandardInactiveWindowPaneStyles false
 
 if [ "$changed" -eq 1 ] && pgrep -x Rex >/dev/null 2>&1; then
-  print_info "Restart Rex to apply the font and theme preferences."
+  print_info "Restart Rex to apply the appearance preferences."
 fi
 print_conditional_success "Rex preferences"

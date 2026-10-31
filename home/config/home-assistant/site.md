@@ -328,7 +328,13 @@ It follows `media_player.living_room` locally using only
 On/idle/playing/buffering mean on; paused/off/standby mean off (owner change
 2026-10-31: pause turns the backlight off, play turns it on). Off waits 3
 seconds so seeking does not flash the lights; on is immediate. Idle (menus,
-between episodes) stays on. Unknown or unavailable TV/switch states never
+between episodes) stays on. Waking from off/standby into any awake state,
+including **paused** (Apple TV resumes a paused show on wake; seen 2026-10-31
+11:10 and 12:01), turns it on (`tv_wake`); paused -> off/standby turns it off
+(`tv_sleep`). Unknown/unavailable -> paused is a reconnect, not a wake.
+Backup before the wake change: `/homeassistant/backups/tv-backlight-wake-20261031/`.
+The template test is now 560 cases (~425 KB); one POST times out, so render
+it in chunks of ~150 fragments. Unknown or unavailable TV/switch states never
 cause an off command. Reconciles on mapped transitions, HA startup
 (10 seconds), and backlight reconnection (3 seconds).
 Restart mode plus fresh-state guards prevents obsolete retries; maximum two

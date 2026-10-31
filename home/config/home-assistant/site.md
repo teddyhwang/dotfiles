@@ -325,19 +325,25 @@ Owner approved **Living Room TV - backlight follows power**, automation ID
 `living_room_tv_backlight_follow` in `/homeassistant/automations.yaml`.
 It follows `media_player.living_room` locally using only
 `switch.tv_backlight_power_switch` on/off; Govee modes/colors are untouched.
-On/idle/playing/paused/buffering mean on; off/standby mean off. Unknown or
-unavailable TV/switch states never cause an off command. Reconciles on mapped
-TV power transitions (not playback changes), HA startup (10 seconds), and
-backlight reconnection (3 seconds).
+On/idle/playing/buffering mean on; paused/off/standby mean off (owner change
+2026-10-31: pause turns the backlight off, play turns it on). Off waits 3
+seconds so seeking does not flash the lights; on is immediate. Idle (menus,
+between episodes) stays on. Unknown or unavailable TV/switch states never
+cause an off command. Reconciles on mapped transitions, HA startup
+(10 seconds), and backlight reconnection (3 seconds).
 Restart mode plus fresh-state guards prevents obsolete retries; maximum two
 attempts with 15-second feedback waits, then a persistent failure notification.
-No periodic enforcement or idle/paused shutdown timer. Apple TV telemetry can
+No periodic enforcement or idle shutdown timer. Apple TV telemetry can
 still be delayed; reported switch state is not observed physical light state.
 
 Known gap (2026-10-31): sleeping the Apple TV mid-show can leave
 `media_player.living_room` on **paused** because the integration misses the
-power-off; a config-entry reload reads **off** immediately. Owner approved
-`living_room_tv_power_recheck`: when the TV has been paused/idle for 2 minutes
+power-off; a config-entry reload reads **off** immediately. Since paused now
+means off, this no longer leaves the backlight on. The interim
+`living_room_tv_power_recheck` automation (reload the Apple TV entry after
+2 minutes paused/idle) was retired the same day and its registry entry
+removed; backup with it: `/homeassistant/backups/tv-backlight-pause-20261031/`.
+Its original design, for reference: when the TV has been paused/idle for 2 minutes
 (fast trigger ignores unknown/unavailable → paused, so reloads cannot loop)
 and every 15 minutes after, if the backlight is on, it only runs
 `homeassistant.reload_config_entry` for the Apple TV. It never commands the

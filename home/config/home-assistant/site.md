@@ -247,6 +247,35 @@ Local Itsyhome is available at `http://localhost:8423` on the Mac:
 - Other paths can actuate devices via GET. Do not probe control endpoints.
 - Itsyhome can't assign rooms; use Apple Home. Do not reset pairing to move or
   rename an accessory. Discover IDs rather than taking the first alarm service.
+  Itsyhome `reachable: true` and cached state do NOT prove new HAP
+  connections work.
+
+### Apple Home "Updating…" / No Response — check mDNS first
+
+On 2026-10-31, the alarm stayed at "Updating…" in Apple Home while HA and
+all three HomeKit entries looked healthy. Cause: Core had started on 10-28
+before the LAN was ready (`Network unreachable` and an Envisalink connect
+error in startup logs). HA's `network` adapter list then held only the
+`hassio`/`docker0` Docker addresses, without `end0` (192.168.1.226). HomeKit
+advertised the bridges only there, so Apple devices could not rediscover them.
+Existing HAP sessions kept working for about 2.5 days (a Christmas Tree
+command still arrived at 06:20), which hid the fault.
+
+1. On the Mac, run `dns-sd -B _hap._tcp local.`. It must list
+   `HASS Bridge …`, `Living Room Apple TV …` and `LYRIQ Doors …`.
+2. If they are missing, read WS `{ "type": "network" }`. The helper needs
+   `--write` for it, though it is a read. The enabled adapters must include
+   `end0`.
+3. A HomeKit config-entry reload does NOT re-detect adapters. Only a Core
+   restart fixes it: `ha core check`, then `ha core restart`. It preserves
+   pairing and sends no device commands. Afterwards confirm that `end0` is
+   listed, that the bridges are advertised, and that the alarm/keypad report
+   live states. Get the owner's approval first; the restart briefly drops the
+   DSC TPI link.
+
+The recurring `pair verify without being paired first` errors from a few
+Apple devices (for example 192.168.1.251) predate this incident. They are not
+this failure mode, and other controllers kept working.
 
 ## Govee — Apple Home power only for TV and outdoor patterns
 

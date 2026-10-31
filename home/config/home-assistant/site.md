@@ -334,6 +334,18 @@ attempts with 15-second feedback waits, then a persistent failure notification.
 No periodic enforcement or idle/paused shutdown timer. Apple TV telemetry can
 still be delayed; reported switch state is not observed physical light state.
 
+Known gap (2026-10-31): sleeping the Apple TV mid-show can leave
+`media_player.living_room` on **paused** because the integration misses the
+power-off; a config-entry reload reads **off** immediately. Owner approved
+`living_room_tv_power_recheck`: when the TV has been paused/idle for 2 minutes
+(fast trigger ignores unknown/unavailable → paused, so reloads cannot loop)
+and every 15 minutes after, if the backlight is on, it only runs
+`homeassistant.reload_config_entry` for the Apple TV. It never commands the
+TV or lights; the follow automation acts on the refreshed state. Backup:
+`/homeassistant/backups/tv-power-recheck-20261031/`. Large template-test POST
+bodies (~230 KB) fail over `system-nc` with ECONNRESET; `HA_TRANSPORT=direct`
+worked from this Mac.
+
 Owner will remove equivalent Apple Home on/off automations and obsolete
 TV duplicates. Do not change HomeKit identity/pairing or disable its TV entry.
 Live docs/test: `/homeassistant/README-GOVEE-HOMEKIT.md` and

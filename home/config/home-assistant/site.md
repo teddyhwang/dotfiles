@@ -335,6 +335,18 @@ are untouched. Current design (owner, 2026-10-31 evening):
   is not a pause. Apple TV events never turn it on while the Samsung is off.
 - Reconciles at HA startup (10 seconds) and Samsung/backlight reconnection
   (3 seconds): Samsung off -> off; Samsung on -> off if Apple TV paused, else on.
+- **Fast off via ping** (owner chose this 2026-10-31): the Samsung entity
+  reports off ~66 s late (the encrypted bridge's cached websocket stays
+  "alive" until timeout), but the TV leaves the network at once. Ping entry
+  `01M6AKS20TFEX6W15CJE4NWRD6` (`binary_sensor.192_168_1_149`, count 3,
+  polling disabled) is refreshed only by `living_room_tv_power_probe`: Apple
+  TV awake -> idle/off/standby with Samsung and backlight on pings at ~0/10/20 s
+  (coordinator refresh is debounced to one per 10 s); Samsung on for 30 s
+  pings once as a baseline. `tv_unreachable` (ping on -> off) turns the
+  backlight off unless the Apple TV is playing/buffering. Verified
+  `homeassistant.update_entity` triggers a real ping (debug log: 3/3 replies in
+  2 s). Backup: `/homeassistant/backups/tv-backlight-ping-20261031/`. Test now
+  1019 HA-rendered cases.
 Same-day history: Apple-TV-only power with paused = off
 (backup `/homeassistant/backups/tv-backlight-pause-20261031/`), then wake
 into paused = on (`tv-backlight-wake-20261031/`), then this Samsung version

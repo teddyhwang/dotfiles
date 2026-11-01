@@ -324,29 +324,39 @@ accessories with existing Govee-to-MQTT power switches:
 Owner approved **Living Room TV - backlight follows power**, automation ID
 `living_room_tv_backlight_follow` in `/homeassistant/automations.yaml`.
 It uses only `switch.tv_backlight_power_switch` on/off; Govee modes/colors
-are untouched. Current design (owner, 2026-10-31 evening):
-- **Power follows the Samsung TV** (`media_player.tv_samsung_led65_un65hu8550`):
-  Samsung -> on turns the backlight on even if the Apple TV wakes into a
-  paused show; Samsung -> off turns it off. Unknown/unavailable never acts;
-  changes from them are reconnects (reconcile only).
-- **Pause/play follows the Apple TV** (`media_player.living_room`) while the
-  Samsung is on: playing/idle/buffering -> on; paused from an awake state for
-  3 seconds -> off (seeking does not flash). Waking/reconnecting into paused
-  is not a pause. Apple TV events never turn it on while the Samsung is off.
-- Reconciles at HA startup (10 seconds) and Samsung/backlight reconnection
-  (3 seconds): Samsung off -> off; Samsung on -> off if Apple TV paused, else on.
+are untouched. Current design (owner, 2026-11-01): **layered fallbacks**.
+Each signal acts on its own transition; the first to arrive wins and later
+ones confirm, so a missed or unavailable source never blocks the others.
+- **Off, fastest first:** Apple TV awake -> off/standby (`atv_off`, the
+  original signal); Apple TV awake -> paused for 3 s (`atv_paused`); ping
+  on -> off while the Apple TV is not playing (`tv_unreachable`); Samsung ->
+  off (`tv_power_off`, ~66 s late, final backstop).
+- **On:** Apple TV off/standby -> any awake state including paused
+  (`atv_wake`, original); Apple TV -> playing/idle/buffering/on from an awake
+  state unless the Samsung says off (`atv_on`; the Apple TV stays awake at
+  idle after the TV is turned off, seen 2026-11-01 00:06 onward); Samsung ->
+  on (`tv_power_on`, catches a missed Apple TV wake).
+- Transitions from unknown/unavailable (Samsung, Apple TV or backlight)
+  reconcile after 3 s, as does HA startup after 10 s: Samsung off -> off;
+  Samsung on -> off if Apple TV paused else on; Samsung unknown -> Apple TV
+  awake = on, paused/off/standby = off.
+- Each attempt re-renders the same target template and stops if its signal
+  no longer holds. Pre-change backup:
+  `/homeassistant/backups/tv-backlight-layers-20261101/`. Test: 605
+  HA-rendered cases plus per-layer scenarios.
 - **Fast off via ping** (owner chose this 2026-10-31): the Samsung entity
   reports off ~66 s late (the encrypted bridge's cached websocket stays
   "alive" until timeout), but the TV leaves the network at once. Ping entry
   `01M6AKS20TFEX6W15CJE4NWRD6` (`binary_sensor.192_168_1_149`, count 3,
   polling disabled) is refreshed only by `living_room_tv_power_probe`: Apple
-  TV awake -> idle/off/standby with Samsung and backlight on pings at ~0/10/20 s
+  TV awake -> idle/off/standby with backlight on and Samsung not `off` pings at ~0/10/20 s
   (coordinator refresh is debounced to one per 10 s); Samsung on for 30 s
   pings once as a baseline. `tv_unreachable` (ping on -> off) turns the
   backlight off unless the Apple TV is playing/buffering. Verified
   `homeassistant.update_entity` triggers a real ping (debug log: 3/3 replies in
-  2 s). Backup: `/homeassistant/backups/tv-backlight-ping-20261031/`. Test now
-  1019 HA-rendered cases.
+  2 s). Backup: `/homeassistant/backups/tv-backlight-ping-20261031/`.
+  First real off (2026-11-01 00:06:42 Apple TV idle -> 00:07:01 ping off ->
+  00:07:07 backlight off, ~25 s; Samsung still `on` at 00:07:35).
 Same-day history: Apple-TV-only power with paused = off
 (backup `/homeassistant/backups/tv-backlight-pause-20261031/`), then wake
 into paused = on (`tv-backlight-wake-20261031/`), then this Samsung version

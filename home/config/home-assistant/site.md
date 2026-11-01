@@ -358,6 +358,19 @@ TV or lights; the follow automation acts on the refreshed state. Backup:
 bodies (~230 KB) fail over `system-nc` with ECONNRESET; `HA_TRANSPORT=direct`
 worked from this Mac.
 
+Missed wake (2026-10-31 20:18-22:40): the Apple TV integration also missed a
+wake (stayed `off` while playing Netflix, no log errors); a config-entry
+reload read `playing` and the backlight followed. To use the TV's own power
+instead, the owner approved adding the Samsung TV: **UN65HU8550** (2014 H
+series, "[TV]Samsung LED65"), Wi-Fi `192.168.1.149` (no DHCP reservation
+verified; UniFi was unreachable). Added via the `samsungtv` integration with
+the on-screen PIN (encrypted method, port 8000), entry
+`01M6AG6F79BXR3MYCY4CCBYKZG`: `media_player.tv_samsung_led65_un65hu8550`,
+`remote.tv_samsung_led65_un65hu8550`. Not in any HomeKit bridge (explicit
+allowlists). Not yet used by the backlight automation: first confirm how
+quickly it reports `off` when the TV powers down (2014 models usually drop off
+the network; Instant On may delay that).
+
 Owner will remove equivalent Apple Home on/off automations and obsolete
 TV duplicates. Do not change HomeKit identity/pairing or disable its TV entry.
 Live docs/test: `/homeassistant/README-GOVEE-HOMEKIT.md` and

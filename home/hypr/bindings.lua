@@ -18,8 +18,39 @@ o.bind("SUPER + SHIFT + J", "Swap window down", hl.dsp.window.swap({ direction =
 o.bind("SUPER + SHIFT + K", "Swap window up", hl.dsp.window.swap({ direction = "u" }))
 o.bind("SUPER + SHIFT + L", "Swap window to the right", hl.dsp.window.swap({ direction = "r" }))
 
--- New homes for the defaults displaced above. SUPER + W still closes windows.
+-- New homes for the defaults displaced above. SUPER + Q always closes windows.
 o.bind("SUPER + Q", "Close window", hl.dsp.window.close())
+
+-- SUPER + W closes the tab in full browsers, like Cmd+W on macOS, and closes
+-- the window everywhere else. Browser tags come from Omarchy's
+-- default/hypr/apps/browser.lua; dynamic tags carry a trailing "*". Chrome web
+-- apps are not tagged, so they keep closing their window. The down/up split
+-- mirrors Omarchy's clipboard bindings, which avoid send_shortcut leaving the
+-- synthetic key stuck.
+local browser_tags = { ["chromium-based-browser"] = true, ["firefox-based-browser"] = true }
+
+local function active_window_is_browser()
+  local window = hl.get_active_window()
+  for _, tag in ipairs(window and window.tags or {}) do
+    if browser_tags[tag:gsub("%*$", "")] then
+      return true
+    end
+  end
+  return false
+end
+
+hl.unbind("SUPER + W") -- was: Close window
+o.bind("SUPER + W", "Close tab or window", function()
+  if not active_window_is_browser() then
+    hl.dispatch(hl.dsp.window.close())
+    return
+  end
+
+  hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "down" }))
+  hl.timer(function()
+    hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "up" }))
+  end, { timeout = 50, type = "oneshot" })
+end)
 o.bind("SUPER + BACKSLASH", "Toggle window split", hl.dsp.layout("togglesplit"))
 
 hl.unbind("SUPER + SLASH") -- was: Monitor scaling up

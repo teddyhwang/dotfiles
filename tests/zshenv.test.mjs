@@ -20,7 +20,8 @@ async function fixture(t, architectures) {
     await mkdir(bin, { recursive: true });
     for (const [name, body] of [
       ["brew", "echo 'brew must not run at shell startup' >&2; exit 1"],
-      ["mosh-server", "echo mosh-ready"],
+      // System PATH intentionally comes first; do not invoke a host mosh-server.
+      ["dotfiles-test-mosh-server", "echo mosh-ready"],
     ]) {
       const filename = path.join(bin, name);
       await writeFile(filename, `#!/bin/sh\n${body}\n`);
@@ -52,7 +53,7 @@ for (const [label, architectures, chosen] of [
 ]) {
   test(`noninteractive Zsh finds mosh-server on ${label}`, async (t) => {
     const { home, prefixes } = await fixture(t, architectures);
-    assert.equal(run(home, "mosh-server"), "mosh-ready\n");
+    assert.equal(run(home, "dotfiles-test-mosh-server"), "mosh-ready\n");
     assert.equal(
       run(home, 'print -r -- "$PATH"'),
       `${systemPath}:${prefixes[chosen]}/bin:${prefixes[chosen]}/sbin\n`,

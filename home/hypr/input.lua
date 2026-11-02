@@ -18,6 +18,6 @@ hl.config({
   },
 })
 
--- Deskflow's libei pointer emits discrete wheel ticks, so scale them at the
--- compositor rather than with Deskflow's ineffective client scroll setting.
-hl.device({ name = "unknown-device", scroll_factor = 0.05 })
+-- No scroll_factor rule for "unknown-device": WayVNC's virtual pointer and
+-- Deskflow's libei pointer share that name, and the old 0.05 Deskflow rule made
+-- VNC scrolling 20x slower. Both now use the default 1.0.

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -35,9 +36,9 @@ async function fixture(t, architectures) {
   return { home, prefixes };
 }
 
-function run(home, script, inheritedPath = systemPath) {
+function run(home, script, inheritedPath = systemPath, extraEnv = {}) {
   const result = spawnSync("zsh", ["-c", script], {
-    env: { HOME: home, ZDOTDIR: home, PATH: inheritedPath },
+    env: { HOME: home, ZDOTDIR: home, PATH: inheritedPath, ...extraEnv },
     encoding: "utf8",
     timeout: 10_000,
   });
@@ -66,6 +67,27 @@ test("noninteractive Zsh preserves PATH without Homebrew", async (t) => {
   const { home } = await fixture(t, []);
   assert.equal(run(home, 'print -r -- "$PATH"'), `${systemPath}\n`);
   assert.equal(run(home, ":"), "");
+});
+
+test("noninteractive Zsh uses the GCR agent only when no agent is inherited", async (t) => {
+  const { home } = await fixture(t, []);
+  const runtime = path.join(home, "run");
+  const socket = path.join(runtime, "gcr/ssh");
+  const show = 'print -r -- "${SSH_AUTH_SOCK-unset}"';
+
+  assert.equal(run(home, show, systemPath, { XDG_RUNTIME_DIR: runtime }), "unset\n");
+
+  await mkdir(path.dirname(socket), { recursive: true });
+  const server = createServer();
+  await new Promise((resolve) => server.listen(socket, resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+
+  assert.equal(run(home, show, systemPath, { XDG_RUNTIME_DIR: runtime }), `${socket}\n`);
+  assert.equal(
+    run(home, show, systemPath, { XDG_RUNTIME_DIR: runtime, SSH_AUTH_SOCK: "/forwarded" }),
+    "/forwarded\n",
+  );
+  assert.equal(run(home, show), "unset\n");
 });
 
 test("Homebrew paths preserve inherited precedence and do not accumulate", async (t) => {

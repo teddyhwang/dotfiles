@@ -195,6 +195,34 @@ last-requested state and the earlier recommendation not to use a timeout.
   Home to locked without invoking the door command script; its configured
   duration remained 5 minutes. Remote start stays 10 minutes.
 
+### LYRIQ remote start — one retry on GM "Command Failure"
+
+Since 2026-11-01 GM intermittently accepts a start and then reports
+`FAILURE` about 80 s later (onstar2mqtt: `Command Failure`; it drops GM's
+reason). The myCadillac app and later HA starts still worked, so this is GM
+flakiness, not a broken integration. On 2026-11-02 the owner approved this
+behavior:
+
+- `switch.lyriq_start` on runs hidden `script.lyriq_remote_start`
+  (`mode: single`). Off stops that script, then sends cancelstart and cancels
+  the timer.
+- The script waits up to 110 s for fresh feedback from hidden trigger sensor
+  `sensor.lyriq_start_command_result`, which reads the startVehicle MQTT topic
+  in one payload. **Only** an explicit `Command Failure` retries: once, after
+  60 s, and only if Car is still on. Timeouts, other errors and no feedback
+  are never retried. They notify and leave the estimate running.
+- A final failure cancels the timer (Car off in Apple Home) and notifies
+  through HA and `notify.mobile_app_teddys_iphone_pro`.
+- **Do not** add more retries, a loop, or retries on ambiguous results.
+  Use `stop`, not a bare `condition`, to end a script from inside an if-block.
+  A bare condition ends only that block; the runtime mock caught this.
+- Tests: `tests/test-lyriq-config.mjs` has 47 live Jinja cases plus
+  `--emit-start-mock`, which builds a mock package that runs the real script
+  logic with no vehicle entities. Procedure and results are in
+  `README-LYRIQ.md`. Backup: `/homeassistant/backups/lyriq-start-retry-*/`.
+- The `counter` domain has no reload service on this install. Use
+  `input_number` for temporary YAML test counters.
+
 ### OnStar2MQTT facts and auth lessons
 
 - Add-on slug: `020296af_onstar2mqtt_bigthundersr_vehicle1`.

@@ -13,4 +13,9 @@ theme = "tinted-theming"
 
 keybind = shift+enter=text:\x1b[13;2u
 
+# Omarchy's Super+V sends Shift+Insert to terminals. Ghostty's default maps it
+# to the PRIMARY selection, so Herdr copies (CLIPBOARD via wl-copy) never
+# pasted. Paste the system clipboard instead; middle-click still pastes PRIMARY.
+keybind = shift+insert=paste_from_clipboard
+
 auto-update-channel = tip

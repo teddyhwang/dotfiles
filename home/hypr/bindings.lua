@@ -21,12 +21,15 @@ o.bind("SUPER + SHIFT + L", "Swap window to the right", hl.dsp.window.swap({ dir
 -- New homes for the defaults displaced above. SUPER + Q always closes windows.
 o.bind("SUPER + Q", "Close window", hl.dsp.window.close())
 
--- SUPER + W closes the tab in full browsers, like Cmd+W on macOS, and closes
--- the window everywhere else. Browser tags come from Omarchy's
--- default/hypr/apps/browser.lua; dynamic tags carry a trailing "*". Chrome web
--- apps are not tagged, so they keep closing their window. The down/up split
--- mirrors Omarchy's clipboard bindings, which avoid send_shortcut leaving the
--- synthetic key stuck.
+-- macOS-style Command shortcuts. These used to be keyd remaps, but keyd only
+-- sees physical evdev keyboards. WayVNC (Screen Sharing's Command arrives as
+-- Super through the macvnc keymap) and Deskflow type through virtual keyboards
+-- that go straight to Hyprland, so they never got them. Hyprland binds see
+-- every keyboard, physical or virtual.
+--
+-- Browser tags come from Omarchy's default/hypr/apps/browser.lua; dynamic tags
+-- carry a trailing "*". Chrome web apps are not tagged, so they keep the
+-- non-browser behavior.
 local browser_tags = { ["chromium-based-browser"] = true, ["firefox-based-browser"] = true }
 
 local function active_window_is_browser()
@@ -39,18 +42,78 @@ local function active_window_is_browser()
   return false
 end
 
-hl.unbind("SUPER + W") -- was: Close window
-o.bind("SUPER + W", "Close tab or window", function()
-  if not active_window_is_browser() then
-    hl.dispatch(hl.dsp.window.close())
-    return
+-- Sends mods+key to the focused surface. The down/up split mirrors Omarchy's
+-- clipboard bindings, which avoid send_shortcut leaving the synthetic key
+-- stuck. A repeating bind fires again before the release timer runs, so the
+-- key stays down while the chord is held and the app repeats it as usual.
+local held_shortcuts = {}
+
+local function press_shortcut(mods, key)
+  local id = mods .. " " .. key
+  local state = held_shortcuts[id] or { generation = 0, down = false }
+  held_shortcuts[id] = state
+  state.generation = state.generation + 1
+  local generation = state.generation
+
+  if not state.down then
+    state.down = true
+    hl.dispatch(hl.dsp.send_key_state({ mods = mods, key = key, state = "down" }))
   end
 
-  hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "down" }))
   hl.timer(function()
-    hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "up" }))
+    if state.generation == generation then
+      state.down = false
+      hl.dispatch(hl.dsp.send_key_state({ mods = mods, key = key, state = "up" }))
+    end
   end, { timeout = 50, type = "oneshot" })
-end)
+end
+
+local function shortcut(mods, key)
+  return function()
+    press_shortcut(mods, key)
+  end
+end
+
+local function dispatch(dispatcher)
+  return function()
+    hl.dispatch(dispatcher)
+  end
+end
+
+-- In browsers, send mods+key. Elsewhere, call `otherwise`, which either runs
+-- the old dispatcher or forwards the original chord unchanged.
+local function browser_shortcut(mods, key, otherwise)
+  return function()
+    if active_window_is_browser() then
+      press_shortcut(mods, key)
+    else
+      otherwise()
+    end
+  end
+end
+
+-- Global text editing: Cmd+A selects all, Cmd+arrows move by word.
+o.bind("SUPER + A", "Select all", shortcut("CTRL", "A"))
+for _, arrow in ipairs({ "LEFT", "RIGHT", "UP", "DOWN" }) do
+  hl.unbind("SUPER + " .. arrow) -- was: Focus window (SUPER + H/J/K/L still do)
+  o.bind("SUPER + " .. arrow, "Ctrl+" .. arrow:lower(), shortcut("CTRL", arrow), { repeating = true })
+end
+
+-- Browser tabs. Hyprland resolves bind keysyms without Shift, so these match
+-- whether the keyboard reports the key as a bracket or a brace.
+o.bind("SUPER + SHIFT + bracketleft", "Previous browser tab",
+  browser_shortcut("CTRL SHIFT", "Tab", shortcut("SUPER SHIFT", "bracketleft")), { repeating = true })
+o.bind("SUPER + SHIFT + bracketright", "Next browser tab",
+  browser_shortcut("CTRL", "Tab", shortcut("SUPER SHIFT", "bracketright")), { repeating = true })
+
+hl.unbind("SUPER + T") -- was: Toggle window floating/tiling
+o.bind("SUPER + T", "New tab or toggle floating",
+  browser_shortcut("CTRL", "T", dispatch(hl.dsp.window.float({ action = "toggle" }))))
+o.bind("SUPER + R", "Reload browser tab", browser_shortcut("CTRL", "R", shortcut("SUPER", "R")))
+
+-- SUPER + W closes the tab in full browsers and the window everywhere else.
+hl.unbind("SUPER + W") -- was: Close window
+o.bind("SUPER + W", "Close tab or window", browser_shortcut("CTRL", "W", dispatch(hl.dsp.window.close())))
 o.bind("SUPER + BACKSLASH", "Toggle window split", hl.dsp.layout("togglesplit"))
 
 hl.unbind("SUPER + SLASH") -- was: Monitor scaling up

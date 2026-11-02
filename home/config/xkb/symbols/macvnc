@@ -4,7 +4,9 @@
 // Super. WayVNC types a modifier by pressing the lowest keycode that has its
 // keysym on any level, then Hyprland reads that key's base level. Parking
 // Alt_L above Super_L on <LALT> therefore turns Command into Super, and giving
-// <META> a base Alt_L turns Option into Alt.
+// <META> a base Alt_L turns Option into Alt. The right-hand keys get the same
+// treatment in case a client sends Alt_R and Meta_R for them: <RALT> turns
+// Alt_R into Super, and <HYPR> carries Meta_R, which no other key has.
 default partial alphanumeric_keys modifier_keys
 xkb_symbols "basic" {
     include "us"
@@ -22,6 +24,18 @@ xkb_symbols "basic" {
         actions[Group1] = [ SetMods(modifiers=Mod1), SetMods(modifiers=Mod1) ]
     };
 
+    key <RALT> {
+        type[Group1] = "TWO_LEVEL",
+        symbols[Group1] = [ Super_R, Alt_R ],
+        actions[Group1] = [ SetMods(modifiers=Mod4), SetMods(modifiers=Mod4) ]
+    };
+
+    key <HYPR> {
+        type[Group1] = "TWO_LEVEL",
+        symbols[Group1] = [ Alt_R, Meta_R ],
+        actions[Group1] = [ SetMods(modifiers=Mod1), SetMods(modifiers=Mod1) ]
+    };
+
     // Screen Sharing sends Shift+Tab as Shift_L plus plain Tab, not
     // ISO_Left_Tab. WayVNC only keeps a held modifier when the requested
     // keysym sits on the level that modifier selects; otherwise it
@@ -35,5 +49,5 @@ xkb_symbols "basic" {
 
     // Super_L now resolves to <LALT>, so keep a real Win key working for
     // clients that do send Super.
-    modifier_map Mod4 { <LWIN> };
+    modifier_map Mod4 { <LWIN>, <RWIN> };
 };

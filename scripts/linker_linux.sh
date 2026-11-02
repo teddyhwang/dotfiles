@@ -47,46 +47,37 @@ if command -v systemctl >/dev/null 2>&1; then
   systemctl --user daemon-reload || print_warning "Could not reload the systemd user manager"
 fi
 
-print_progress "\nInstalling keyd config..."
+print_progress "\nRetiring keyd..."
 
-validate_and_symlink "$DOTFILES_DIR/home/keyd/app.conf" "$HOME/.config/keyd/app.conf"
-
-keyd_source="$DOTFILES_DIR/home/keyd/default.conf"
-keyd_target="/etc/keyd/default.conf"
-install_keyd_config=0
-keep_existing_keyd_config=0
-if [ ! -e "$keyd_target" ]; then
-  install_keyd_config=1
-elif ! cmp -s "$keyd_source" "$keyd_target"; then
-  if confirm "$keyd_target differs; replace it?"; then
-    install_keyd_config=1
-  else
-    keep_existing_keyd_config=1
-  fi
+# home/hypr/bindings.lua now provides the macOS-style Super shortcuts that keyd
+# used to remap. keyd only sees physical keyboards, so WayVNC and Deskflow,
+# which type through virtual keyboards, never got them. While keyd runs, its
+# remaps win over Hyprland for physical keyboards.
+legacy_keyd_app_conf="$HOME/.config/keyd/app.conf"
+if [ -L "$legacy_keyd_app_conf" ] && \
+  [ "$(readlink "$legacy_keyd_app_conf")" = "$DOTFILES_DIR/home/keyd/app.conf" ]; then
+  rm -- "$legacy_keyd_app_conf"
+  track_change
 fi
 
-if [ "$install_keyd_config" -eq 1 ]; then
-  if [ "$(id -u)" -eq 0 ]; then
-    install -m 0644 "$keyd_source" "$keyd_target"
-  elif command -v sudo >/dev/null 2>&1; then
-    sudo install -m 0644 "$keyd_source" "$keyd_target"
-  else
-    print_error "sudo is required to install $keyd_target"
-    exit 1
+if command -v systemctl >/dev/null 2>&1; then
+  if systemctl --user is-enabled --quiet keyd-application-mapper.service 2>/dev/null; then
+    systemctl --user disable --now keyd-application-mapper.service
+    track_change
   fi
-  track_change
 
-  if command -v systemctl >/dev/null 2>&1; then
-    if [ "$(id -u)" -eq 0 ]; then
-      systemctl enable --now keyd.service
+  if systemctl is-enabled --quiet keyd.service 2>/dev/null; then
+    if confirm "Hyprland now handles keyd's shortcuts; disable keyd.service?"; then
+      if [ "$(id -u)" -eq 0 ]; then
+        systemctl disable --now keyd.service
+      else
+        sudo systemctl disable --now keyd.service
+      fi
+      track_change
     else
-      sudo systemctl enable --now keyd.service
+      print_warning "keyd.service is still enabled; its remaps override Hyprland on physical keyboards"
     fi
   fi
-elif [ "$keep_existing_keyd_config" -eq 1 ]; then
-  print_warning "Keeping the existing $keyd_target"
-else
-  print_info "$keyd_target is already configured"
 fi
 
 if [ -n "${OMARCHY_PATH:-}" ]; then

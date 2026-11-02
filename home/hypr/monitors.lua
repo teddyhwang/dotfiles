@@ -10,6 +10,10 @@ local clamshell = o.shell_succeeds("omarchy hw clamshell")
 hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
 
+-- USB-C to HDMI: use the highest advertised 4K 16:9 mode, not the ultrawide
+-- preferred mode. Match the display so this survives connector renumbering.
+hl.monitor({ output = "desc:Samsung Electric Company C49RG9x HNKNA00386", mode = "3840x2160@60", position = "0x0", scale = 1 })
+
 -- DP-3 does not expose an EDID, so provide its native 2560x1440 mode explicitly.
 if clamshell then
   -- With the lid closed, render natively for the external panel. Omarchy's

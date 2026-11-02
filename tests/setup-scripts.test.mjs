@@ -112,6 +112,46 @@ esac`,
   });
 }
 
+for (const accepted of [true, false]) {
+  test(`Linux package setup ${accepted ? "allows" : "respects declining"} the yq conflict replacement`, async (t) => {
+    const home = await mkdtemp(path.join(tmpdir(), "dotfiles-yq-conflict-"));
+    t.after(() => rm(home, { recursive: true, force: true }));
+    const bin = path.join(home, "bin");
+    const log = path.join(home, "yay.log");
+    await mkdir(bin);
+    await symlink("/usr/bin/dirname", path.join(bin, "dirname"));
+    const commands = {
+      pacman: `test "$1" = -Q || exit 99
+case "$2" in
+  go-yq|jq) exit 1 ;;
+  *) exit 0 ;;
+esac`,
+      yay: `printf '%s\\n' "$*" >>"$YAY_LOG"
+case "$*" in
+  '-S --needed go-yq') exit ${accepted ? 0 : 1} ;;
+  '-S --needed --noconfirm jq') exit 0 ;;
+  *) exit 99 ;;
+esac`,
+    };
+    for (const [command, body] of Object.entries(commands)) {
+      const executable = path.join(bin, command);
+      await writeFile(executable, `#!/bin/sh\n${body}\n`);
+      await chmod(executable, 0o755);
+    }
+
+    const result = run("/bin/sh", [path.join(repo, "scripts/packages_linux.sh")], {
+      env: { ...process.env, HOME: home, PATH: bin, YAY_LOG: log },
+      input: "",
+    });
+    assert.equal(result.status, accepted ? 0 : 1, result.stderr || result.stdout);
+    assert.match(result.stdout, /yq conflicts with the required go-yq/);
+    assert.equal(
+      await readFile(log, "utf8"),
+      `-S --needed go-yq\n${accepted ? "-S --needed --noconfirm jq\n" : ""}`,
+    );
+  });
+}
+
 test("macOS package setup selects the personal or work Brewfile without implicit upgrades", async () => {
   const home = await mkdtemp(path.join(tmpdir(), "dotfiles-macos-home-"));
   const bin = path.join(home, "bin");

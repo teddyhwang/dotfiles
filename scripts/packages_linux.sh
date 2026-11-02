@@ -25,6 +25,12 @@ package_count=0
 for package in $packages; do
   if pacman -Q "$package" >/dev/null 2>&1; then
     print_info "$package is already installed"
+  elif [ "$package" = go-yq ] && pacman -Q yq >/dev/null 2>&1; then
+    # pacman's conflict-removal prompt defaults to No under --noconfirm.
+    # Let the user explicitly approve replacing the incompatible jq wrapper.
+    print_warning "Arch's yq conflicts with the required go-yq; approve replacing yq when prompted."
+    yay -S --needed go-yq
+    track_change
   elif [ "$package" = shellcheck ] && command -v shellcheck >/dev/null 2>&1; then
     # Mason and other tool managers can already provide the validator.
     print_info "shellcheck is already available on PATH; skipping the pacman package"

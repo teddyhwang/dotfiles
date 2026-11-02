@@ -12,7 +12,8 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy
 
 -- USB-C to HDMI: use the highest advertised 4K 16:9 mode, not the ultrawide
 -- preferred mode. Match the display so this survives connector renumbering.
-hl.monitor({ output = "desc:Samsung Electric Company C49RG9x HNKNA00386", mode = "3840x2160@60", position = "0x0", scale = 1 })
+-- Retina-style 2x scaling renders at 4K with a 1920x1080 logical workspace.
+hl.monitor({ output = "desc:Samsung Electric Company C49RG9x HNKNA00386", mode = "3840x2160@60", position = "0x0", scale = 2 })
 
 -- DP-3 does not expose an EDID, so provide its native 2560x1440 mode explicitly.
 if clamshell then

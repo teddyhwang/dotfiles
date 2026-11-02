@@ -22,6 +22,17 @@ xkb_symbols "basic" {
         actions[Group1] = [ SetMods(modifiers=Mod1), SetMods(modifiers=Mod1) ]
     };
 
+    // Screen Sharing sends Shift+Tab as Shift_L plus plain Tab, not
+    // ISO_Left_Tab. WayVNC only keeps a held modifier when the requested
+    // keysym sits on the level that modifier selects; otherwise it
+    // temporarily drops the modifier to reach the keysym's own level. Putting
+    // Tab on the shifted level too keeps Shift held, so terminals receive
+    // Shift+Tab (CSI Z) instead of a bare Tab.
+    key <TAB> {
+        type[Group1] = "TWO_LEVEL",
+        symbols[Group1] = [ Tab, Tab ]
+    };
+
     // Super_L now resolves to <LALT>, so keep a real Win key working for
     // clients that do send Super.
     modifier_map Mod4 { <LWIN> };

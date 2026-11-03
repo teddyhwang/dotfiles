@@ -115,11 +115,19 @@ map("n", "<leader>gd", "<cmd>lua require('snacks').picker.git_diff()<cr>", { des
 map("n", "<leader>gs", "<cmd>lua require('snacks').picker.git_status()<cr>", { desc = "Git status" })
 map("n", "<leader>lg", "<cmd>lua require('snacks').lazygit()<cr>", { desc = "Lazygit" })
 
--- GitLinker - Generate GitHub permalinks
-map("n", "<leader>gy", "<cmd>GitLink<cr>", { desc = "Copy git permalink" })
-map("n", "<leader>gY", "<cmd>GitLink!<cr>", { desc = "Open git permalink in browser" })
-map("n", "<leader>gv", "<cmd>GitLink blame<cr>", { desc = "Copy git blame link" })
-map("n", "<leader>gV", "<cmd>GitLink! blame<cr>", { desc = "Open git blame link in browser" })
+map({ "n", "x" }, "<leader>gy", function()
+  Snacks.gitbrowse({
+    what = "permalink",
+    notify = false,
+    open = function(url)
+      vim.fn.setreg("+", url)
+      Snacks.notify(("Copied [%s](%s)"):format(url, url), { title = "Git Browse" })
+    end,
+  })
+end, { desc = "Copy git permalink" })
+map({ "n", "x" }, "<leader>gY", function()
+  Snacks.gitbrowse({ what = "permalink" })
+end, { desc = "Open git permalink in browser" })
 
 map("n", "<leader>gws", function()
   require("snacks").picker.worktrees()

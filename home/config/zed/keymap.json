@@ -82,7 +82,7 @@
       "\\ s h": "zed::OpenDocs",
       "\\ s m": "vim::ToggleMarksView",
 
-      // Git (snacks, gitlinker, gitsigns, worktrees.nvim)
+      // Git (snacks, gitsigns, worktrees.nvim)
       "\\ g b": "git::Branch",
       "\\ g l": "git_graph::Open",
       "\\ g shift-l": "git_graph::Open",

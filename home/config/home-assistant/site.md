@@ -222,6 +222,17 @@ behavior:
   `README-LYRIQ.md`. Backup: `/homeassistant/backups/lyriq-start-retry-*/`.
 - The `counter` domain has no reload service on this install. Use
   `input_number` for temporary YAML test counters.
+- Also approved 2026-11-02: when GM refuses the initial POST with an HTTP
+  error (sensor attribute `rejected_before_send`, e.g. 503 ONS-212), treat it
+  as did-not-start: Car off and notify, no retry. Errors while polling stay
+  ambiguous. 61 Jinja cases plus 11 mock scenarios passed.
+- **GM's real reason:** onstar2mqtt drops it. Read it with a read-only GET of
+  `veh/cmd/v3/history/start/requests/<requestId>`, run on the HA host with the
+  add-on's token (never print it). The procedure is in `README-LYRIQ.md`.
+  Since 11-01, the failures are mostly `ONS-217`: the car didn't answer GM's
+  SMS wake-up within 70 s. There was one `ONS-220` `GENERAL_RSS_FAILURE`
+  (the car refused). GM can finish a failure after the add-on's 90 s
+  `ONSTAR_POLL_TIMEOUT`, which then shows up as "Command Timeout".
 
 ### OnStar2MQTT facts and auth lessons
 

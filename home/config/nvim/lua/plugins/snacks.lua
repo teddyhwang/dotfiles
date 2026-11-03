@@ -6,6 +6,16 @@ return {
       opts.indent = { enabled = true }
       opts.explorer = { enabled = true }
       opts.bigfile = { enabled = true }
+      opts.gitbrowse = vim.tbl_deep_extend("force", opts.gitbrowse or {}, {
+        url_patterns = {
+          ["delta%.shopify%.io"] = {
+            branch = "/tree/{branch}",
+            file = "/blob/{branch}/{file}#L{line_start}-L{line_end}",
+            permalink = "/blob/{commit}/{file}#L{line_start}-L{line_end}",
+            commit = "/commit/{commit}",
+          },
+        },
+      })
 
       -- Add custom toggle for autoformat
       opts.toggle = vim.tbl_deep_extend("force", opts.toggle or {}, {

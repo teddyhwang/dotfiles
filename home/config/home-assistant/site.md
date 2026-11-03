@@ -233,6 +233,17 @@ behavior:
   SMS wake-up within 70 s. There was one `ONS-220` `GENERAL_RSS_FAILURE`
   (the car refused). GM can finish a failure after the add-on's 90 s
   `ONSTAR_POLL_TIMEOUT`, which then shows up as "Command Timeout".
+- Approved 2026-11-02: add-on `ONSTAR_POLL_TIMEOUT` raised **90 → 150 s**.
+  The start and door scripts wait **170 s**; always keep them longer than the
+  add-on timeout. The add-on restarted once, reused its saved tokens and needed
+  no sign-in.
+- **Changing add-on options safely:** the `ha` CLI has no options command.
+  On the HA host, POST `{"options": <full current options with one key
+  changed>}` to `http://supervisor/addons/<slug>/options` with
+  `$SUPERVISOR_TOKEN`, built with `jq` and never printed. Afterwards, compare
+  only the changed **key names**. **Never show the output of
+  `/options/validate`:** its error message repeats every option, including the
+  GM password, TOTP seed and PIN. That happened on 2026-11-02.
 
 ### OnStar2MQTT facts and auth lessons
 

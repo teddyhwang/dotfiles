@@ -50,6 +50,14 @@ fallback in the same rule, or say what is missing.
 - Google Docs (`docs.google.com`): if a Google Docs tool is available, use it.
   Otherwise ask the user for an export or for the text.
 
+## Disk space
+
+- On macOS, `du` counts each APFS clone at full size, so it can show much more
+  than `df` reports as used. Chrome's leftover `code_sign_clone` app copies are
+  an example: 230 GB in `du` freed 3 GB. Before you delete something to free
+  space, look first at build output and caches, and check `df` before and after
+  each deletion.
+
 ## Agent Delegation
 
 - If Herdsman or Rex agents are available, delegate bounded work to specialists:

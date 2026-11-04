@@ -326,14 +326,17 @@ test("shared environment keeps PATH unique and exposes mise tools to SSH shells"
   }
 });
 
-test("worktree helpers fail safely", () => {
+test("worktree helpers fail safely", async (t) => {
   const functions = path.join(repo, "home/shared/functions");
+  const primaryRepo = await mkdtemp(path.join(tmpdir(), "dotfiles-gwd-"));
+  t.after(() => rm(primaryRepo, { recursive: true, force: true }));
+  assert.equal(run("git", ["init", "-q"], { cwd: primaryRepo }).status, 0);
   const missingName = run("bash", ["--noprofile", "--norc", "-c", `. "${functions}"; gwn; printf 'alive\\n'`]);
   assert.equal(missingName.status, 0, missingName.stderr);
   assert.match(missingName.stdout, /alive/);
   assert.match(missingName.stderr, /Usage: gwn/);
 
-  const primary = run("bash", ["--noprofile", "--norc", "-c", `. "${functions}"; gwd`]);
+  const primary = run("bash", ["--noprofile", "--norc", "-c", `. "${functions}"; gwd`], { cwd: primaryRepo });
   assert.notEqual(primary.status, 0);
   assert.match(primary.stderr, /refusing to remove the primary worktree/);
 });

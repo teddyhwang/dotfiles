@@ -34,6 +34,8 @@ appendFileSync(process.env.HERDR_TEST_LOG, JSON.stringify(args) + "\\n");
 let result = {};
 if (args[0] === "pane" && args[1] === "process-info") {
   result = { process_info: { foreground_processes: JSON.parse(process.env.HERDR_TEST_PROCESSES) } };
+} else if (args[0] === "pane" && args[1] === "edges") {
+  result = { edges: JSON.parse(process.env.HERDR_TEST_EDGES ?? "{}") };
 } else if (args[1] === "list") {
   result = {
     panes: [{ pane_id: "w1:p2", workspace_id: "w1", tab_id: "w1:t2", cwd: "/test" }],
@@ -49,6 +51,7 @@ console.log(JSON.stringify({ result }));
     await symlink(currentHerdr, path.join(bin, "herdr"));
   }
   await symlink(jq.stdout.trim(), path.join(bin, "jq"));
+  await symlink(path.resolve("home/local/bin/herdr-nav"), path.join(bin, "herdr-nav"));
   await executable(path.join(bin, "fzf"), "#!/bin/sh\nhead -n 1\n");
   await executable(path.join(bin, "pbpaste"), "#!/bin/sh\nprintf 'clipboard text'\n");
   const log = path.join(home, "calls.jsonl");
@@ -77,6 +80,10 @@ const processInfo = ["pane", "process-info", "--pane", "w1:p1"];
 const shell = [{ argv0: "/bin/zsh", name: "zsh" }];
 const vim = [{ argv0: "/usr/local/bin/nvim", name: "nvim" }];
 const sendKeys = (key) => ["pane", "send-keys", "w1:p1", key];
+const edges = ["pane", "edges", "--pane", "w1:p1"];
+const focus = (direction) => ["pane", "focus", "--direction", direction, "--pane", "w1:p1"];
+const zoom = (flag) => ["pane", "zoom", flag, "--pane", "w1:p1"];
+const resize = (direction) => ["pane", "resize", "--pane", "w1:p1", "--direction", direction, "--amount", "0.01"];
 const openPicker = (entrypoint) => ["plugin", "pane", "open", "--plugin", "teddyhwang.pickers", "--entrypoint", entrypoint];
 const cases = [];
 for (let index = 0; index <= 9; index += 1) {
@@ -101,27 +108,34 @@ cases.push(
   ["prefix+x", shell, [["pane", "close", "w1:p1"]]],
   ["prefix+shift+p", shell, [["pane", "send-text", "w1:p1", "clipboard text"]]],
 );
-for (const [key, direction] of [["ctrl+j", "down"], ["ctrl+k", "up"]]) {
-  cases.push([key, shell, [processInfo, ["plugin", "action", "invoke", `herdr-splits.nav-${direction}`]]]);
-  for (const name of ["fzf", "atuin", "tv"]) {
-    cases.push([key, [{ argv0: `/usr/local/bin/${name}`, name }], [processInfo, sendKeys(key)]]);
-  }
-}
 for (const [key, direction] of [["h", "left"], ["j", "down"], ["k", "up"], ["l", "right"]]) {
-  cases.push([`ctrl+alt+${key}`, shell, [processInfo, ["pane", "resize", "--pane", "w1:p1", "--direction", direction, "--amount", "0.01"]]]);
+  const chord = `ctrl+${key}`;
+  cases.push(
+    [chord, shell, [processInfo, edges, focus(direction)]],
+    [chord, vim, [processInfo, sendKeys(chord)]],
+    [chord, [{ name: "vim" }], [processInfo, sendKeys(chord)]],
+    [chord, shell, [processInfo, edges], { [direction]: true }],
+    [chord, shell, [processInfo, edges, zoom("--off"), edges, focus(direction)], { layout: { zoomed: true } }],
+    [chord, shell, [processInfo, edges, zoom("--off"), edges, zoom("--on")], { [direction]: true, layout: { zoomed: true } }],
+  );
+  for (const name of ["fzf", "atuin", "tv"]) {
+    const passes = direction === "up" || direction === "down";
+    cases.push([chord, [{ argv0: `/usr/local/bin/${name}`, name }], passes ? [processInfo, sendKeys(chord)] : [processInfo, edges, focus(direction)]]);
+  }
+  cases.push([`ctrl+alt+${key}`, shell, [processInfo, resize(direction)]]);
   cases.push([`ctrl+alt+${key}`, vim, [processInfo, sendKeys(`ctrl+alt+${key}`)]]);
 }
 
 for (const mode of ["provided", "unset", "empty"]) {
   test(`Herdr bindings use the running binary or PATH fallback (${mode})`, async (t) => {
     const { env, log } = await fixture(t, mode);
-    for (const [key, processes, expected] of cases) {
-      await t.test(`${key} with ${JSON.stringify(processes)}`, async () => {
+    for (const [key, processes, expected, paneEdges = {}] of cases) {
+      await t.test(`${key} with ${JSON.stringify(processes)} at ${JSON.stringify(paneEdges)}`, async () => {
         await writeFile(log, "");
         const binding = bindings.find((entry) => entry.key === key);
         assert.ok(binding, `missing binding: ${key}`);
         const result = spawnSync("/bin/sh", ["-c", binding.command], {
-          env: { ...env, HERDR_TEST_PROCESSES: JSON.stringify(processes) },
+          env: { ...env, HERDR_TEST_PROCESSES: JSON.stringify(processes), HERDR_TEST_EDGES: JSON.stringify(paneEdges) },
           encoding: "utf8",
           timeout: 5_000,
         });
@@ -132,6 +146,33 @@ for (const mode of ["provided", "unset", "empty"]) {
     }
   });
 }
+
+test("herdr-nav hand-off actions from Neovim never send keys back to it", async (t) => {
+  const { env, log } = await fixture(t, "unset");
+  const script = path.resolve("home/local/bin/herdr-nav");
+  const run = (args, extra = {}) => spawnSync(script, args, {
+    env: { ...env, HERDR_TEST_PROCESSES: JSON.stringify(vim), HERDR_TEST_EDGES: "{}", ...extra },
+    encoding: "utf8",
+    timeout: 5_000,
+  });
+  const calls = async () => (await readFile(log, "utf8")).trim().split("\n").filter(Boolean).map((line) => JSON.parse(line));
+  for (const [args, expected, paneEdges = {}] of [
+    [["focus", "left"], [edges, focus("left")]],
+    [["focus", "up"], [edges], { up: true }],
+    [["focus", "right"], [edges, zoom("--off"), edges, focus("right")], { layout: { zoomed: true } }],
+    [["resize-pane", "down"], [resize("down")]],
+  ]) {
+    await writeFile(log, "");
+    const result = run(args, { HERDR_TEST_EDGES: JSON.stringify(paneEdges) });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(await calls(), expected, args.join(" "));
+  }
+  await writeFile(log, "");
+  assert.equal(run(["move", "sideways"]).status, 2);
+  assert.equal(run(["jump", "left"]).status, 2);
+  assert.equal(run(["move", "left"], { HERDR_ACTIVE_PANE_ID: "" }).status, 0);
+  assert.deepEqual(await calls(), []);
+});
 
 test("herdr-focus-pane sends an exact pane.focus socket request", async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), "herdr-focus-pane-"));
@@ -186,7 +227,7 @@ test("all Herdr shell commands parse and CLI-backed bindings have regression cov
     if (binding.type === "plugin_action") continue;
     const result = spawnSync("/bin/sh", ["-n", "-c", binding.command], { encoding: "utf8" });
     assert.equal(result.status, 0, `${binding.key}: ${result.stderr}`);
-    if (/\bherdr\s|HERDR_BIN_PATH/.test(binding.command)) {
+    if (/\bherdr\s|HERDR_BIN_PATH|\bherdr-nav\b/.test(binding.command)) {
       assert.ok(coveredKeys.has(binding.key), `untested Herdr CLI binding: ${binding.key}`);
     }
   }

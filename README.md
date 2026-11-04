@@ -211,10 +211,16 @@ list. Pruning the personal Brewfile does not uninstall existing packages, delete
 application/database data, or stop previously enabled services. Avoid treating
 `brew bundle cleanup --force` as part of this pruning: installed packages outside
 the curated list can still be in use.
-`home/config/nvim/lazy-lock.json` is machine-local and ignored by Git. Herdr setup
-uses its `herdr-splits.nvim` revision when present, or a pinned fallback from
-`scripts/herdr.sh` before Neovim has installed the plugin. Neovim's Herdr plugin
-also synchronizes the Herdr side when it builds or loads inside Herdr.
+`home/config/nvim/lazy-lock.json` is machine-local and ignored by Git.
+
+`ctrl+h/j/k/l` moves between panes and `ctrl+alt+h/j/k/l` resizes them, in the
+Herdr TUI and in the Herdr app. Inside Neovim the same keys move between and
+resize Neovim windows first, and go to the multiplexer only at an edge.
+Neovim finds the nearest herdr, herdr-core or tmux process above it, because
+Herdr app terminals can inherit stale `HERDR_*` variables. The Herdr TUI side is
+`home/local/bin/herdr-nav` and the Neovim side is
+`home/config/nvim/lua/util/herdr-nav.lua`. The Herdr app side is the `splits`
+mod in `~/.config/herdr-app`. Herdr setup removes the old `herdr-splits` plugin.
 
 ### Mosh access on macOS
 

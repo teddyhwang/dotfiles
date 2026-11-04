@@ -245,103 +245,54 @@ command = '${SHELL:-/bin/sh}'
 
 [[keys.command]]
 key = "ctrl+h"
-type = "plugin_action"
+type = "shell"
 description = "navigate left"
-command = "herdr-splits.nav-left"
+command = 'exec herdr-nav move left'
 
 [[keys.command]]
 key = "ctrl+l"
-type = "plugin_action"
+type = "shell"
 description = "navigate right"
-command = "herdr-splits.nav-right"
+command = 'exec herdr-nav move right'
 
 [[keys.command]]
 key = "ctrl+j"
 type = "shell"
 description = "navigate down"
-command = '''
-pane="$HERDR_ACTIVE_PANE_ID"
-if "${HERDR_BIN_PATH:-herdr}" pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv)$"))' >/dev/null 2>&1; then
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+j
-else
-  "${HERDR_BIN_PATH:-herdr}" plugin action invoke herdr-splits.nav-down >/dev/null 2>&1
-fi
-'''
+command = 'exec herdr-nav move down'
 
 [[keys.command]]
 key = "ctrl+k"
 type = "shell"
 description = "navigate up"
-command = '''
-pane="$HERDR_ACTIVE_PANE_ID"
-if "${HERDR_BIN_PATH:-herdr}" pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0, .name)] | map(select(. != null) | sub(".*/"; "")) | any(test("^(fzf|atuin|tv)$"))' >/dev/null 2>&1; then
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+k
-else
-  "${HERDR_BIN_PATH:-herdr}" plugin action invoke herdr-splits.nav-up >/dev/null 2>&1
-fi
-'''
+command = 'exec herdr-nav move up'
 
 [[keys.command]]
 key = "ctrl+alt+h"
 type = "shell"
 description = "resize left"
-command = '''
-pane="$HERDR_ACTIVE_PANE_ID"
-if "${HERDR_BIN_PATH:-herdr}" pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+alt+h
-else
-  "${HERDR_BIN_PATH:-herdr}" pane resize --pane "$pane" --direction left --amount 0.01 >/dev/null 2>&1
-fi
-'''
+command = 'exec herdr-nav resize left'
 
 [[keys.command]]
 key = "ctrl+alt+j"
 type = "shell"
 description = "resize down"
-command = '''
-pane="$HERDR_ACTIVE_PANE_ID"
-if "${HERDR_BIN_PATH:-herdr}" pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+alt+j
-else
-  "${HERDR_BIN_PATH:-herdr}" pane resize --pane "$pane" --direction down --amount 0.01 >/dev/null 2>&1
-fi
-'''
+command = 'exec herdr-nav resize down'
 
 [[keys.command]]
 key = "ctrl+alt+k"
 type = "shell"
 description = "resize up"
-command = '''
-pane="$HERDR_ACTIVE_PANE_ID"
-if "${HERDR_BIN_PATH:-herdr}" pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+alt+k
-else
-  "${HERDR_BIN_PATH:-herdr}" pane resize --pane "$pane" --direction up --amount 0.01 >/dev/null 2>&1
-fi
-'''
+command = 'exec herdr-nav resize up'
 
 [[keys.command]]
 key = "ctrl+alt+l"
 type = "shell"
 description = "resize right"
-command = '''
-pane="$HERDR_ACTIVE_PANE_ID"
-if "${HERDR_BIN_PATH:-herdr}" pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+alt+l
-else
-  "${HERDR_BIN_PATH:-herdr}" pane resize --pane "$pane" --direction right --amount 0.01 >/dev/null 2>&1
-fi
-'''
+command = 'exec herdr-nav resize right'
 
 [[keys.command]]
 key = "ctrl+x"
 type = "shell"
 description = "clear screen"
-command = '''
-pane="$HERDR_ACTIVE_PANE_ID"
-if "${HERDR_BIN_PATH:-herdr}" pane process-info --pane "$pane" | jq -e '[.result.process_info.foreground_processes[]? | (.argv0 // .name // "") | sub(".*/"; "")] | any(test("^g?(view|n?vim?)(diff)?$"))' >/dev/null 2>&1; then
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+x
-else
-  "${HERDR_BIN_PATH:-herdr}" pane send-keys "$pane" ctrl+l
-fi
-'''
+command = 'exec herdr-nav clear'

@@ -1,0 +1,89 @@
+#!/bin/sh
+
+set -u
+
+herdr=${HERDR_BIN_PATH:-herdr}
+pane=${HERDR_ACTIVE_PANE_ID:-}
+action=${1:-}
+direction=${2:-}
+vim='^g?(view|n?vim?)(diff)?$'
+
+usage() {
+  printf 'usage: herdr-nav move|focus|resize|resize-pane left|down|up|right\n       herdr-nav clear\n' >&2
+  exit 2
+}
+
+case $direction in
+  left) key=h ;;
+  down) key=j ;;
+  up) key=k ;;
+  right) key=l ;;
+  '') [ "$action" = clear ] || usage ;;
+  *) usage ;;
+esac
+
+[ -n "$pane" ] || exit 0
+
+runs() {
+  "$herdr" pane process-info --pane "$pane" 2>/dev/null |
+    jq -e --arg pattern "$1" \
+      '[.result.process_info.foreground_processes[]? | (.argv0, .name) | select(type == "string") | sub(".*/"; "")] | any(test($pattern))' \
+      >/dev/null 2>&1
+}
+
+edges() {
+  "$herdr" pane edges --pane "$pane" 2>/dev/null || printf '{}'
+}
+
+at_edge() {
+  printf '%s' "$1" | jq -e --arg direction "$direction" '.result.edges[$direction] == true' >/dev/null 2>&1
+}
+
+zoomed() {
+  printf '%s' "$1" | jq -e '.result.edges.layout.zoomed == true' >/dev/null 2>&1
+}
+
+focus() {
+  current=$(edges)
+  if zoomed "$current"; then
+    "$herdr" pane zoom --off --pane "$pane" >/dev/null 2>&1
+    if at_edge "$(edges)"; then
+      exec "$herdr" pane zoom --on --pane "$pane"
+    fi
+  elif at_edge "$current"; then
+    exit 0
+  fi
+  exec "$herdr" pane focus --direction "$direction" --pane "$pane"
+}
+
+resize_pane() {
+  exec "$herdr" pane resize --pane "$pane" --direction "$direction" --amount 0.01
+}
+
+case $action in
+  move)
+    pattern=$vim
+    case $direction in
+      up | down) pattern="$vim|^(fzf|atuin|tv)\$" ;;
+    esac
+    if runs "$pattern"; then
+      exec "$herdr" pane send-keys "$pane" "ctrl+$key"
+    fi
+    focus
+    ;;
+  focus) focus ;;
+  resize)
+    if runs "$vim"; then
+      exec "$herdr" pane send-keys "$pane" "ctrl+alt+$key"
+    fi
+    resize_pane
+    ;;
+  resize-pane) resize_pane ;;
+  clear)
+    if runs "$vim"; then
+      exec "$herdr" pane send-keys "$pane" ctrl+x
+    fi
+    exec "$herdr" pane send-keys "$pane" ctrl+l
+    ;;
+  *) usage ;;
+esac

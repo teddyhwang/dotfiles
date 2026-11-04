@@ -1,34 +1,19 @@
+local nav = require("util.herdr-nav")
+
 return {
   {
-    "lmilojevicc/herdr-splits.nvim",
-    cond = vim.env.HERDR_ENV == "1",
-    event = "VeryLazy",
-    build = ":lua require('herdr-splits').sync_herdr()",
-    config = function()
-      require("herdr-splits").setup({
-        -- Git exports GIT_DIR to its editor, and `herdr plugin install` runs `git init`
-        -- with it, re-initializing the calling repo (it broke every World tree once).
-        auto_sync_herdr = vim.env.GIT_DIR == nil,
-        default_amount = 0.01,
-        at_edge = "stop",
-        nav_at_edge = "stop",
-        resize_keys = {
-          left = "<C-M-h>",
-          down = "<C-M-j>",
-          up = "<C-M-k>",
-          right = "<C-M-l>",
-        },
-      })
-    end,
+    "herdr-nav",
+    virtual = true,
+    cond = nav.enabled(),
     keys = {
-      { "<C-h>", function() require("herdr-splits").move_cursor_left() end, desc = "Navigate left" },
-      { "<C-j>", function() require("herdr-splits").move_cursor_down() end, desc = "Navigate down" },
-      { "<C-k>", function() require("herdr-splits").move_cursor_up() end, desc = "Navigate up" },
-      { "<C-l>", function() require("herdr-splits").move_cursor_right() end, desc = "Navigate right" },
-      { "<C-M-h>", function() require("herdr-splits").resize_left() end, desc = "Resize left" },
-      { "<C-M-j>", function() require("herdr-splits").resize_down() end, desc = "Resize down" },
-      { "<C-M-k>", function() require("herdr-splits").resize_up() end, desc = "Resize up" },
-      { "<C-M-l>", function() require("herdr-splits").resize_right() end, desc = "Resize right" },
+      { "<C-h>", function() nav.move("left") end, desc = "Navigate left" },
+      { "<C-j>", function() nav.move("down") end, desc = "Navigate down" },
+      { "<C-k>", function() nav.move("up") end, desc = "Navigate up" },
+      { "<C-l>", function() nav.move("right") end, desc = "Navigate right" },
+      { "<C-M-h>", function() nav.resize("left") end, desc = "Resize left" },
+      { "<C-M-j>", function() nav.resize("down") end, desc = "Resize down" },
+      { "<C-M-k>", function() nav.resize("up") end, desc = "Resize up" },
+      { "<C-M-l>", function() nav.resize("right") end, desc = "Resize right" },
     },
   },
 }

@@ -7,10 +7,7 @@ DOTFILES_DIR=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd -P)
 # shellcheck source=utils.sh
 . "${SCRIPT_DIR}/utils.sh"
 
-plugin_source="lmilojevicc/herdr-splits.nvim"
-plugin_id="herdr-splits"
-lazy_lock="$DOTFILES_DIR/home/config/nvim/lazy-lock.json"
-expected_actions='["nav-left","nav-down","nav-up","nav-right","resize-left","resize-down","resize-up","resize-right"]'
+legacy_plugin_id="herdr-splits"
 tab_autoname_plugin_id="teddyhwang.tab-autoname"
 tab_autoname_plugin_path="$DOTFILES_DIR/plugins/herdr-tab-autoname"
 tab_autoname_events='["workspace.focused","tab.created","tab.closed","tab.renamed","tab.moved","tab.focused","pane.created","pane.closed","pane.moved","pane.exited","pane.agent_detected","pane.agent_status_changed"]'
@@ -38,7 +35,7 @@ find_executable() {
 }
 
 if ! herdr_bin=$(find_executable herdr); then
-  print_error "herdr is required before installing $plugin_source"
+  print_error "herdr is required before configuring Herdr plugins"
   exit 1
 fi
 
@@ -47,44 +44,9 @@ if ! jq_bin=$(find_executable jq); then
   exit 1
 fi
 
-# Neovim's lockfile is machine-local and may not exist until its first run.
-# Prefer its revision when available; otherwise bootstrap with the last shared pin.
-plugin_ref=""
-if [ -e "$lazy_lock" ]; then
-  if ! plugin_ref=$("$jq_bin" -r '."herdr-splits.nvim".commit // empty' "$lazy_lock"); then
-    print_error "Could not read Neovim lockfile: $lazy_lock"
-    exit 1
-  fi
-fi
-if [ -z "$plugin_ref" ]; then
-  plugin_ref="94f30cf4e9ac76ddf185a3acd0977be728fa4106"
-  print_info "No local Neovim pin for $plugin_id; using setup's pinned revision $plugin_ref"
-fi
-
-plugin_matches() {
-  # The dollar-prefixed names below are jq variables, not shell variables.
+plugin_installed() {
   # shellcheck disable=SC2016
-  "$jq_bin" -e \
-    --arg id "$plugin_id" \
-    --arg owner "${plugin_source%%/*}" \
-    --arg repo "${plugin_source#*/}" \
-    --arg ref "$plugin_ref" \
-    --argjson actions "$expected_actions" '
-      any(.result.plugins[]?;
-        .plugin_id == $id and
-        .source.kind == "github" and
-        .source.owner == $owner and
-        .source.repo == $repo and
-        .source.resolved_commit == $ref and
-        (($actions - [.actions[].id]) | length == 0)
-      )
-    ' >/dev/null
-}
-
-plugin_enabled() {
-  # shellcheck disable=SC2016
-  "$jq_bin" -e --arg id "$plugin_id" \
-    'any(.result.plugins[]?; .plugin_id == $id and .enabled == true)' >/dev/null
+  "$jq_bin" -e --arg id "$1" 'any(.result.plugins[]?; .plugin_id == $id)' >/dev/null
 }
 
 list_plugins() {
@@ -96,29 +58,18 @@ if ! plugins_json=$(list_plugins); then
   exit 1
 fi
 
-if ! printf '%s' "$plugins_json" | plugin_matches; then
-  print_progress "Installing $plugin_source at $plugin_ref..."
-  "$herdr_bin" plugin install "$plugin_source" --ref "$plugin_ref" --yes
+if printf '%s' "$plugins_json" | plugin_installed "$legacy_plugin_id"; then
+  print_progress "Uninstalling $legacy_plugin_id (replaced by herdr-nav)..."
+  "$herdr_bin" plugin uninstall "$legacy_plugin_id"
   track_change
   if ! plugins_json=$(list_plugins); then
-    print_error "Could not list Herdr plugins after installation"
+    print_error "Could not list Herdr plugins after uninstalling $legacy_plugin_id"
     exit 1
   fi
-elif ! printf '%s' "$plugins_json" | plugin_enabled; then
-  print_progress "Enabling $plugin_id..."
-  "$herdr_bin" plugin enable "$plugin_id"
-  track_change
-  if ! plugins_json=$(list_plugins); then
-    print_error "Could not list Herdr plugins after enabling $plugin_id"
+  if printf '%s' "$plugins_json" | plugin_installed "$legacy_plugin_id"; then
+    print_error "$legacy_plugin_id is still installed"
     exit 1
   fi
-else
-  print_info "$plugin_id is installed, enabled, and matches revision $plugin_ref"
-fi
-
-if ! printf '%s' "$plugins_json" | plugin_matches || ! printf '%s' "$plugins_json" | plugin_enabled; then
-  print_error "$plugin_id failed post-install verification"
-  exit 1
 fi
 
 if [ ! -x "$HOME/.local/bin/herdr-tab-autoname" ]; then

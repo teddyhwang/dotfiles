@@ -23,7 +23,7 @@ if ! yq --version 2>&1 | grep -q mikefarah; then
 fi
 
 printf 'Checking shell syntax...\n'
-for file in bootstrap.sh setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh; do
+for file in bootstrap.sh setup.sh scripts/*.sh plugins/herdr-tab-autoname/schedule.sh home/local/bin/herdr-nav; do
   [[ "$file" == "scripts/check.sh" ]] && continue
   sh -n "$file"
 done
@@ -57,6 +57,7 @@ shellcheck -x -S warning \
   home/shared/aliases home/shared/env home/shared/functions home/shared/init \
   home/local/bin/external-display-stay-awake \
   home/local/bin/fix-windows.sh \
+  home/local/bin/herdr-nav \
   home/local/bin/herdr-tab-autoname \
   home/local/bin/tinty-herdr-hook \
   home/local/bin/trackpad-auto-toggle \

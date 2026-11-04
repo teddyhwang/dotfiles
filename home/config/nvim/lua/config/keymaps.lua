@@ -114,6 +114,7 @@ map("n", "<leader>gl", "<cmd>lua require('snacks').picker.git_log()<cr>", { desc
 map("n", "<leader>gd", "<cmd>lua require('snacks').picker.git_diff()<cr>", { desc = "Git diff" })
 map("n", "<leader>gs", "<cmd>lua require('snacks').picker.git_status()<cr>", { desc = "Git status" })
 map("n", "<leader>lg", "<cmd>lua require('snacks').lazygit()<cr>", { desc = "Lazygit" })
+vim.keymap.del({ "n", "x" }, "<leader>gY")
 
 map("n", "<leader>gws", function()
   require("snacks").picker.worktrees()

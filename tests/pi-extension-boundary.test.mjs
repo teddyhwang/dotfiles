@@ -56,9 +56,6 @@ const personalAgents = ["implementer.md", "researcher.md", "reviewer.md", "scout
 const bundledAgents = new Set(["generalist.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"]);
 const piExtension = (name) => `~/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/${name}/index.ts`;
 const listed = (source, field) => JSON.parse(source.match(new RegExp(`^${field}: (\\[.*\\])$`, "m"))?.[1] ?? "null");
-// The bundled implementer, scout and reviewer set noExtensions. Shopify's pi
-// wrapper refuses --no-extensions on devices with managed hooks, so the work
-// overrides turn it off. The bundled researcher keeps extension discovery.
 const discoveryOverrideAgents = new Set(["data-auditor.md", "implementer.md", "reviewer.md", "scout.md"]);
 const readOnlyAgents = new Set(["reviewer.md", "scout.md"]);
 

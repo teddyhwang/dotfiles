@@ -5,8 +5,6 @@
 # parse JSON, and the lead redid 46% of their audits. readonly_bash comes from
 # the pi-extensions readonly-shell extension. It runs rg, jq, and python3 in an
 # OS sandbox with no network and no writes outside a per-call TMPDIR.
-# Shopify's pi wrapper refuses --no-extensions when /etc/shopify/pi/hooks.json
-# exists, so extension discovery stays on.
 name: data-auditor
 description: Read-only auditor that checks claims, counts, and attributions against local data (JSONL, JSON, markdown caches, logs) with a sandboxed shell for rg, jq, and python3; returns a verdict and evidence for each claim. Use for memory-sync audits and data verification, not for code reconnaissance
 model: anthropic/claude-sonnet-5-5

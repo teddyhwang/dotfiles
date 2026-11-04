@@ -1,8 +1,6 @@
 ---
 # Managed by dotfiles: home/pi-agent/agents/work/scout.md
-# Work machines only. Shopify's pi wrapper refuses --no-extensions when
-# /etc/shopify/pi/hooks.json exists, so every launch failed with a startup
-# timeout. noExtensions: false keeps the bundled policy from adding the flag.
+# Work machines only.
 # The appended body stops calls to tools that scouts do not have. In 30 days,
 # scouts made 77 bash calls that failed with "Tool bash not found".
 # Herdsman v0.27.0 (boadij/pi-herdsman#395) did not stop them: in a replay of

@@ -1,8 +1,6 @@
 ---
 # Managed by dotfiles: home/pi-agent/agents/work/reviewer.md
-# Work machines only. Shopify's pi wrapper refuses --no-extensions when
-# /etc/shopify/pi/hooks.json exists, so every launch failed with a startup
-# timeout. noExtensions: false keeps the bundled policy from adding the flag.
+# Work machines only.
 # The appended body stops calls to tools that reviewers do not have. Keep it
 # after Herdsman v0.27.0; see the replay note in scout.md.
 name: reviewer

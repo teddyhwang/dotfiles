@@ -1,10 +1,6 @@
 ---
 # Managed by dotfiles: home/pi-agent/agents/work/implementer.md
-# Work machines only. Shopify's pi wrapper refuses --no-extensions when
-# /etc/shopify/pi/hooks.json exists, so every launch failed with a startup
-# timeout. noExtensions: false keeps the bundled policy from adding the flag.
-# Explicit entries must name the file that discovery loads (index.ts); a
-# directory path loads background-jobs twice and Pi exits on the tool conflict.
+# Work machines only.
 # Herdsman caps a managed agent's bash call without a timeout, so long jobs
 # need a background runner. Without one, implementers polled with sleep: 103
 # calls and 330 minutes in 30 days. background-jobs adds bg_run and bg_wait.

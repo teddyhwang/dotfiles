@@ -1,12 +1,14 @@
 ---
 # Managed by dotfiles: home/pi-agent/agents/work/reviewer.md
-# Work machines only. A pinned model keeps the bundled noExtensions policy, so
-# load the Shopify AI proxy that supplies the anthropic provider explicitly.
+# Work machines only. Shopify's pi wrapper refuses --no-extensions when
+# /etc/shopify/pi/hooks.json exists, so every launch failed with a startup
+# timeout. noExtensions: false keeps the bundled policy from adding the flag.
 # The appended body stops calls to tools that reviewers do not have. Keep it
 # after Herdsman v0.27.0; see the replay note in scout.md.
 name: reviewer
 model: anthropic/claude-opus-5-5
 thinking: high
+noExtensions: false
 extensions: ["~/.pi/agent/extensions/shopify-proxy", "builtin:mcp"]
 bodyMode: append
 ---

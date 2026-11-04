@@ -1,7 +1,8 @@
 ---
 # Managed by dotfiles: home/pi-agent/agents/work/implementer.md
-# Work machines only. A pinned model keeps the bundled noExtensions policy, so
-# load the Shopify AI proxy that supplies the anthropic provider explicitly.
+# Work machines only. Shopify's pi wrapper refuses --no-extensions when
+# /etc/shopify/pi/hooks.json exists, so every launch failed with a startup
+# timeout. noExtensions: false keeps the bundled policy from adding the flag.
 # Herdsman caps a managed agent's bash call without a timeout, so long jobs
 # need a background runner. Without one, implementers polled with sleep: 103
 # calls and 330 minutes in 30 days. background-jobs adds bg_run and bg_wait.
@@ -12,6 +13,7 @@
 name: implementer
 model: anthropic/claude-sonnet-5-5
 thinking: medium
+noExtensions: false
 extensions: ["~/.pi/agent/extensions/shopify-proxy", "~/.pi/agent/extensions/background-jobs", "~/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/shell-guard/index.ts"]
 tools: ["read", "bash", "edit", "write", "bg_run", "bg_wait", "bg_log", "bg_stop", "bg_list"]
 bodyMode: append

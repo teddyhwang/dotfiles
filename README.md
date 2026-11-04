@@ -533,10 +533,13 @@ rule to change files with `edit`.
 Sonnet 5.5 is the weakest Claude model allowed for delegated work; do not pin
 Claude 4.x or Haiku models. Tests enforce this floor and both profiles' explicit
 implementer/reviewer model and thinking levels. The copies are not symlinks
-because Herdsman ignores symlinked definitions. A pinned model keeps the
-bundled `noExtensions` policy, so the `scout` and `reviewer` overrides load
-the Shopify AI proxy extension explicitly. The bundled `researcher` keeps
-extension discovery and needs no extension entry. An override with a body
+because Herdsman ignores symlinked definitions. Shopify's `pi` wrapper refuses
+`--no-extensions` when `/etc/shopify/pi/hooks.json` exists, and the agent then
+fails to start with `timed out waiting for agent startup`. So the work
+`implementer`, `scout`, `reviewer` and `data-auditor` set `noExtensions: false`
+and keep extension discovery. Their explicit extension entries, such as the
+Shopify AI proxy, stay in place. The bundled `researcher` keeps extension
+discovery and needs no extension entry. An override with a body
 must set `bodyMode: append`, or its body replaces the bundled prompt; a test
 enforces this. Setup replaces or removes only files that carry the
 `# Managed by dotfiles:` marker; unmarked interactive overrides are preserved.

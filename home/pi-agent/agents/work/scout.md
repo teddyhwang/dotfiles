@@ -1,7 +1,8 @@
 ---
 # Managed by dotfiles: home/pi-agent/agents/work/scout.md
-# Work machines only. A pinned model keeps the bundled noExtensions policy, so
-# load the Shopify AI proxy that supplies the anthropic provider explicitly.
+# Work machines only. Shopify's pi wrapper refuses --no-extensions when
+# /etc/shopify/pi/hooks.json exists, so every launch failed with a startup
+# timeout. noExtensions: false keeps the bundled policy from adding the flag.
 # The appended body stops calls to tools that scouts do not have. In 30 days,
 # scouts made 77 bash calls that failed with "Tool bash not found".
 # Herdsman v0.27.0 (boadij/pi-herdsman#395) did not stop them: in a replay of
@@ -9,6 +10,7 @@
 name: scout
 model: anthropic/claude-sonnet-5-5
 thinking: high
+noExtensions: false
 extensions: ["~/.pi/agent/extensions/shopify-proxy", "builtin:mcp"]
 bodyMode: append
 ---

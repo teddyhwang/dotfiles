@@ -56,10 +56,10 @@ const personalAgents = ["implementer.md", "researcher.md", "reviewer.md", "scout
 const bundledAgents = new Set(["generalist.md", "implementer.md", "researcher.md", "reviewer.md", "scout.md"]);
 const piExtension = (name) => `~/.pi/agent/git/github.com/teddyhwang/pi-extensions/extensions/${name}/index.ts`;
 const listed = (source, field) => JSON.parse(source.match(new RegExp(`^${field}: (\\[.*\\])$`, "m"))?.[1] ?? "null");
-// The bundled implementer, scout and reviewer set noExtensions, so a pinned
-// model needs the proxy loaded explicitly. The bundled researcher keeps
-// extension discovery.
-const proxyLoadingAgents = new Set(["implementer.md", "reviewer.md", "scout.md"]);
+// The bundled implementer, scout and reviewer set noExtensions. Shopify's pi
+// wrapper refuses --no-extensions on devices with managed hooks, so the work
+// overrides turn it off. The bundled researcher keeps extension discovery.
+const discoveryOverrideAgents = new Set(["data-auditor.md", "implementer.md", "reviewer.md", "scout.md"]);
 const readOnlyAgents = new Set(["reviewer.md", "scout.md"]);
 
 // An override body replaces the bundled prompt unless it sets bodyMode: append.
@@ -98,6 +98,9 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
     assert.ok(source.startsWith(`---\n# Managed by dotfiles: home/pi-agent/agents/work/${name}\n`));
     if (bundledAgents.has(name)) assertKeepsBundledPrompt(name, source);
     else assert.doesNotMatch(source, /^bodyMode:/m, `${name} is a new role; bodyMode is valid only on overrides`);
+    if (discoveryOverrideAgents.has(name)) {
+      assert.match(source, /^noExtensions: false$/m, `${name} must not launch with --no-extensions`);
+    }
     assert.match(source, new RegExp(`^name: ${name.replace(".md", "")}$`, "m"));
     // Quality floor: Claude Sonnet 5.5. No 4.x or Haiku models for delegated work.
     const model = source.match(/^model: (.+)$/m)?.[1];
@@ -126,7 +129,6 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
     } else if (name === "data-auditor.md") {
       assert.match(source, /^description: \S/m, "a new role needs a description for the lead");
       assert.match(source, /^systemPromptMode: replace$/m);
-      assert.match(source, /^noExtensions: true$/m);
       assert.match(source, /^inheritGlobalContext: false$/m);
       assert.deepEqual(listed(source, "extensions"), ["~/.pi/agent/extensions/shopify-proxy", piExtension("readonly-shell")]);
       assert.deepEqual(listed(source, "tools"), ["read", "ls", "find", "grep", "readonly_bash"], "the auditor stays read-only");

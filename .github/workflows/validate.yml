@@ -18,7 +18,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    # A run takes about 3 minutes, but the wait for a macOS runner counts too.
+    # Two waits of 15 minutes failed on 2026-11-04 before any step ran.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

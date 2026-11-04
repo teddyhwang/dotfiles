@@ -120,7 +120,7 @@ test("work Herdsman overrides keep the bundled prompt and load the proxy for the
     } else if (name === "implementer.md") {
       assert.deepEqual(listed(source, "extensions"), [
         "~/.pi/agent/extensions/shopify-proxy",
-        "~/.pi/agent/extensions/background-jobs",
+        "~/.pi/agent/extensions/background-jobs/index.ts",
         piExtension("shell-guard"),
       ]);
       for (const tool of ["read", "bash", "edit", "write", "bg_run", "bg_wait", "bg_log"]) {

@@ -217,7 +217,10 @@ the curated list can still be in use.
 Herdr TUI and in the Herdr app. Inside Neovim the same keys move between and
 resize Neovim windows first, and go to the multiplexer only at an edge.
 Neovim finds the nearest herdr, herdr-core or tmux process above it, because
-Herdr app terminals can inherit stale `HERDR_*` variables. The Herdr TUI side is
+Herdr app terminals can inherit stale `HERDR_*` variables. `home/shared/env`
+drops them when the nearest herdr, herdr-core or tmux process above the shell
+is herdr-core. Otherwise Pi sends status and delegated panes to the herdr TUI
+pane that launched the app. The Herdr TUI side is
 `home/local/bin/herdr-nav` and the Neovim side is
 `home/config/nvim/lua/util/herdr-nav.lua`. The Herdr app side is the `splits`
 mod in `~/.config/herdr-app`. Herdr setup removes the old `herdr-splits` plugin.

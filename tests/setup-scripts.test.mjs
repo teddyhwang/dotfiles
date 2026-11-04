@@ -326,6 +326,44 @@ test("shared environment keeps PATH unique and exposes mise tools to SSH shells"
   }
 });
 
+test("shared environment drops HERDR_* that a Herdr app terminal inherited from a herdr TUI pane", async (t) => {
+  const home = await mkdtemp(path.join(tmpdir(), "dotfiles-herdr-env-"));
+  t.after(() => rm(home, { recursive: true, force: true }));
+  const bin = path.join(home, "bin");
+  await mkdir(bin);
+  const psLog = path.join(home, "ps.log");
+  await writeFile(path.join(bin, "ps"), `#!${process.execPath}
+const { appendFileSync } = require("node:fs");
+const chain = JSON.parse(process.env.FAKE_PS_CHAIN);
+const pid = Number(process.argv[process.argv.indexOf("-p") + 1]);
+appendFileSync(process.env.FAKE_PS_LOG, pid + "\\n");
+const index = pid > 9000 && pid <= 9000 + chain.length ? pid - 9000 : 0;
+if (index >= chain.length) process.exit(1);
+console.log(\`  \${index + 1 < chain.length ? 9001 + index : 1} \${chain[index]}\`);
+`, { mode: 0o755 });
+  const stale = { HERDR_ENV: "1", HERDR_PANE_ID: "w1:p2", HERDR_SOCKET_PATH: "/stale/herdr.sock", HERDR_WORKSPACE_ID: "w1" };
+  const probe = async (chain, env) => {
+    await rm(psLog, { force: true });
+    const result = run("bash", ["--noprofile", "--norc", "-c", `. "${repo}/home/shared/env"; printf '%s|%s|%s\\n' "\${HERDR_ENV:-}" "\${HERDR_PANE_ID:-}" "\${HERDR_SOCKET_PATH:-}"`], {
+      env: { ...process.env, HOME: home, PATH: `${bin}:/usr/bin:/bin`, FAKE_PS_CHAIN: JSON.stringify(chain), FAKE_PS_LOG: psLog, ...env },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const calls = (await readFile(psLog, "utf8").catch(() => "")).trim().split("\n").filter(Boolean).length;
+    return { values: result.stdout.trim().split("\n").pop(), calls };
+  };
+
+  const app = await probe(["login", "/Applications/Herdr.app/herdr-core"], { ...stale, HC_TERMINAL_ID: "t1" });
+  assert.equal(app.values, "||");
+  assert.equal(app.calls, 2);
+
+  const tuiInApp = await probe(["zsh", "herdr", "herdr-core"], { ...stale, HC_TERMINAL_ID: "t1" });
+  assert.equal(tuiInApp.values, "1|w1:p2|/stale/herdr.sock");
+
+  const tui = await probe(["herdr-core"], stale);
+  assert.equal(tui.values, "1|w1:p2|/stale/herdr.sock");
+  assert.equal(tui.calls, 0);
+});
+
 test("worktree helpers fail safely", async (t) => {
   const functions = path.join(repo, "home/shared/functions");
   const primaryRepo = await mkdtemp(path.join(tmpdir(), "dotfiles-gwd-"));

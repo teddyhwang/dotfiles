@@ -88,6 +88,23 @@ if [[ -z "${XDG_CONFIG_HOME:-}" ]]; then
   export XDG_CONFIG_HOME="$HOME/.config"
 fi
 
+if [[ "${HERDR_ENV:-}" == 1 && -n "${HC_TERMINAL_ID:-}" ]]; then
+  _herdr_pid=$PPID
+  for _herdr_hop in 1 2 3 4 5 6 7 8; do
+    [[ "$_herdr_pid" -gt 1 ]] || break
+    read -r _herdr_ppid _herdr_comm <<<"$(ps -o ppid=,comm= -p "$_herdr_pid" 2>/dev/null)"
+    case "${_herdr_comm##*/}" in
+    herdr-core)
+      unset HERDR_ENV HERDR_PANE_ID HERDR_TAB_ID HERDR_WORKSPACE_ID HERDR_SOCKET_PATH HERDR_STARTUP_CWD
+      break
+      ;;
+    herdr | tmux) break ;;
+    esac
+    _herdr_pid=${_herdr_ppid:-0}
+  done
+  unset _herdr_pid _herdr_ppid _herdr_comm _herdr_hop
+fi
+
 # Pi 1.1 disables inline images whenever TERM_PROGRAM=herdr, but Herdr forwards
 # the Kitty graphics protocol to a capable outer terminal. Re-enable previews
 # only when Herdr was launched from one; an explicit PI_IMAGE_PROTOCOL wins.

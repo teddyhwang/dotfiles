@@ -109,6 +109,8 @@ floating:
     window-titles: []
   - id: dev.bb.desktop
     window-titles: []
+  - id: dev.herdr.app
+    window-titles: []
   # Chrome PWAs
   - id: com.google.Chrome.app.jmhnjadodelkehjlnlddaldfcipngnib
     window-titles: []

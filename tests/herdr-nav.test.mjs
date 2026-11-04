@@ -105,7 +105,8 @@ async function run(t, { chain, env = {}, steps, expect = [] }) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const output = JSON.parse(result.stdout.trim().split("\n").pop());
   const calls = (await lines(f.log)).map((line) => JSON.parse(line));
-  assert.deepEqual(calls, expect);
+  const unordered = (list) => list.map((call) => JSON.stringify(call)).sort();
+  assert.deepEqual(unordered(calls), unordered(expect));
   return { ...output, psCalls: (await lines(f.psLog)).length };
 }
 

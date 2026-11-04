@@ -7,6 +7,7 @@ return {
       opts.explorer = { enabled = true }
       opts.bigfile = { enabled = true }
       opts.gitbrowse = vim.tbl_deep_extend("force", opts.gitbrowse or {}, {
+        what = "permalink",
         url_patterns = {
           ["delta%.shopify%.io"] = {
             branch = "/tree/{branch}",

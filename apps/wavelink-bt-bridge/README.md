@@ -33,11 +33,11 @@ two clocks and plays the result on the headset.
   the drift.
 - A rate control with an integral term measures the drift between the two
   clocks and cancels it, so the buffer holds its target exactly.
-- Wave Link captures app audio with a process tap on the macOS default output.
-  If the headset were the default output, Wave Link would also capture and
-  mute the helper. The audio would then feed back into the mix. While the
-  bridge runs, the helper moves the default output to another device: Elgato
-  hardware first, then the built-in speakers. Wave Link mutes app audio there
+- Wave Link captures the apps of per-app channels with a process tap on the
+  macOS default output. If the headset were the default output, Wave Link
+  would also capture and mute the helper. The audio would then feed back into
+  the mix. While the bridge runs, the helper moves the default output to
+  another device: Elgato hardware first, then the built-in speakers. Wave Link mutes app audio there
   and mixes it. When the bridge stops, the helper moves the default output
   back to the headset.
 - The helper bridges only while all of these are true:
@@ -59,7 +59,13 @@ two clocks and plays the result on the headset.
 1. Remove the headset from the outputs of every mix in Wave Link, and never
    choose it as the main output.
 2. Keep the headset connected to the Mac over Bluetooth.
-3. Choose where to listen with Wave Link's main output:
+3. Do not add "System Audio" to any channel. Wave Link 3.4.0 captures System
+   Audio with a tap that includes every process not assigned to a channel, on
+   every output device. It also mutes what it captures. The tap catches the
+   bridge, mutes it on the headset, and feeds it back into the mix. Moving the
+   macOS default output does not help. Add the apps you need to channels one
+   by one.
+4. Choose where to listen with Wave Link's main output:
    - **Wave XLR** (the trigger device): the helper plays the Personal Mix on
      the headset. Nothing plays from the Wave XLR unless something is plugged
      into its headphone jack.
@@ -102,6 +108,9 @@ changes the binary.
 
 ## Limits
 
+- "System Audio" in a channel breaks the bridge (see step 3 of "Set up Wave
+  Link"). The helper stays idle while a channel that goes to its mix has
+  System Audio.
 - The volume keys change the volume of the macOS default output, which is not
   the headset while the bridge runs. Use the buttons on the headset or the mix
   volume in Wave Link.

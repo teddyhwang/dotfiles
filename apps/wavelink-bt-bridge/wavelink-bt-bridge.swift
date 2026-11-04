@@ -234,6 +234,23 @@ func waveLinkMainOutputIs(_ config: [String: Any], _ device: Device) -> Bool {
   return main.name.map { device.name.localizedCaseInsensitiveContains($0) } ?? true
 }
 
+func waveLinkSystemAudioChannel(_ config: [String: Any], mixDeviceName: String) -> String? {
+  let mixIDs = (config["mixes"] as? [[String: Any]] ?? []).compactMap { mix -> String? in
+    guard let name = mix["name"] as? String, mixDeviceName.hasSuffix(name) else { return nil }
+    return mix["id"] as? String
+  }
+  let routed = (config["channelToMix"] as? [[String: Any]] ?? []).compactMap { route -> String? in
+    guard let mix = route["mixID"] as? String, mixIDs.contains(mix) else { return nil }
+    return route["channelID"] as? String
+  }
+  for channel in config["channels"] as? [[String: Any]] ?? [] {
+    guard let id = channel["id"] as? String, routed.contains(id) else { continue }
+    let applications = (channel["source"] as? [String: Any])?["applications"] as? [String] ?? []
+    if applications.contains("com.elgato.wavelink.system-audio") { return channel["name"] as? String ?? "unnamed" }
+  }
+  return nil
+}
+
 /// Returns whether a process with this bundle ID is connected to CoreAudio,
 /// or nil when the system cannot tell.
 func audioProcessRunning(bundleID: String) -> Bool? {
@@ -873,6 +890,11 @@ final class Supervisor {
         return "Idle: Wave Link's main output is \(main). To listen on \(headset.label), choose \(trigger.label) there"
       }
     }
+    if options.watchesWaveLink, let input,
+       let channel = waveLinkSystemAudioChannel(waveLinkConfig.current(), mixDeviceName: input.name) {
+      return "Idle: Wave Link's System Audio source (channel \"\(channel)\") captures and mutes this helper. " +
+        "Remove System Audio from that channel"
+    }
     return nil
   }
 
@@ -1178,6 +1200,36 @@ func selfTest() -> Bool {
          "the Wave Link check finds the main output and mix outputs")
   expect(waveLinkUses(config, deviceUID: "uid-6").isEmpty, "the Wave Link check ignores other devices")
   expect(waveLinkUses([:], deviceUID: "uid-3").isEmpty, "the Wave Link check accepts a missing config")
+
+  let systemAudio = "com.elgato.wavelink.system-audio"
+  let audioConfig: [String: Any] = [
+    "mixes": [["id": "m1", "name": "Personal Mix"], ["id": "m2", "name": "Stream Mix"]],
+    "channelToMix": [
+      ["channelID": "c1", "mixID": "m1"],
+      ["channelID": "c2", "mixID": "m2"],
+      ["channelID": "c3", "mixID": "m1"],
+    ],
+    "channels": [
+      ["id": "c1", "name": "Finder", "source": ["applications": ["com.apple.finder", systemAudio]]],
+      ["id": "c2", "name": "OBS Only", "source": ["applications": [systemAudio]]],
+      ["id": "c3", "name": "Spotify", "source": ["applications": ["com.spotify.client"]]],
+      ["id": "c4", "name": "Mic", "source": ["type": "device"]],
+    ],
+  ]
+  expect(waveLinkSystemAudioChannel(audioConfig, mixDeviceName: "Elgato Wave Link Personal Mix") == "Finder",
+         "System Audio in a channel routed to the bridged mix is found")
+  expect(waveLinkSystemAudioChannel(audioConfig, mixDeviceName: "Elgato Wave Link Stream Mix") == "OBS Only",
+         "System Audio is found per mix")
+  var routedElsewhere = audioConfig
+  routedElsewhere["channelToMix"] = [["channelID": "c1", "mixID": "m2"], ["channelID": "c3", "mixID": "m1"]]
+  expect(waveLinkSystemAudioChannel(routedElsewhere, mixDeviceName: "Elgato Wave Link Personal Mix") == nil,
+         "System Audio in a channel not routed to the bridged mix is ignored")
+  var withoutSystemAudio = audioConfig
+  withoutSystemAudio["channels"] = [["id": "c3", "name": "Spotify", "source": ["applications": ["com.spotify.client"]]]]
+  expect(waveLinkSystemAudioChannel(withoutSystemAudio, mixDeviceName: "Elgato Wave Link Personal Mix") == nil,
+         "a config without System Audio is accepted")
+  expect(waveLinkSystemAudioChannel([:], mixDeviceName: "Elgato Wave Link Personal Mix") == nil,
+         "the System Audio check accepts a missing config")
 
   // Wave Link's main output matches CoreAudio devices by UID, and Elgato
   // hardware by serial number.

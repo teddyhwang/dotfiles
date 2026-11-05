@@ -122,6 +122,8 @@ floating:
     window-titles: []
   - id: com.google.Chrome.app.pbfnijeaandcecgknghggmdkaklbccjd
     window-titles: []
+  - id: com.google.Chrome.app.oicdcpcoleghiibbkjcmafejkamfembm  # Qlaw
+    window-titles: []
 
 # ─── Keybindings (managed via plist, not YAML) ───────────────────────────
 # Reference of current bindings (live in KeyboardShortcuts_* plist entries):

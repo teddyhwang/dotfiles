@@ -36,16 +36,76 @@ xkb_symbols "basic" {
         actions[Group1] = [ SetMods(modifiers=Mod1), SetMods(modifiers=Mod1) ]
     };
 
-    // Screen Sharing sends Shift+Tab as Shift_L plus plain Tab, not
-    // ISO_Left_Tab. WayVNC only keeps a held modifier when the requested
-    // keysym sits on the level that modifier selects; otherwise it
-    // temporarily drops the modifier to reach the keysym's own level. Putting
-    // Tab on the shifted level too keeps Shift held, so terminals receive
-    // Shift+Tab (CSI Z) instead of a bare Tab.
-    key <TAB> {
-        type[Group1] = "TWO_LEVEL",
-        symbols[Group1] = [ Tab, Tab ]
-    };
+    // Screen Sharing sends Shift+Tab and shifted Command chords on digits and
+    // punctuation (Cmd+Shift+] for the next browser tab) as Shift_L plus the
+    // unshifted keysym: Tab, bracketright, 4. Letters arrive as capitals and
+    // are fine. WayVNC only keeps the held modifiers when the requested keysym
+    // sits on the level they select. Otherwise it releases every modifier,
+    // Command and Shift included, to type the bare keysym, so Hyprland and
+    // Chrome saw a plain ]. Each of these keys therefore carries its unshifted
+    // keysym on both levels, which keeps Shift and Command held.
+    key <TAB> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ Tab, Tab ] };
+    key <AE01> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 1, 1 ] };
+    key <AE02> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 2, 2 ] };
+    key <AE03> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 3, 3 ] };
+    key <AE04> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 4, 4 ] };
+    key <AE05> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 5, 5 ] };
+    key <AE06> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 6, 6 ] };
+    key <AE07> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 7, 7 ] };
+    key <AE08> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 8, 8 ] };
+    key <AE09> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 9, 9 ] };
+    key <AE10> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ 0, 0 ] };
+    key <AE11> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ minus, minus ] };
+    key <AE12> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ equal, equal ] };
+    key <TLDE> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ grave, grave ] };
+    key <AD11> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ bracketleft, bracketleft ] };
+    key <AD12> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ bracketright, bracketright ] };
+    key <BKSL> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ backslash, backslash ] };
+    key <AC10> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ semicolon, semicolon ] };
+    key <AC11> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ apostrophe, apostrophe ] };
+    key <AB08> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ comma, comma ] };
+    key <AB09> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ period, period ] };
+    key <AB10> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ slash, slash ] };
+
+    // The shifted symbols move to spare keycodes so typing them still works:
+    // Screen Sharing sends { as Shift_L plus braceleft. The keymap rules add
+    // inet(evdev) after this layout, and it puts the launcher symbol back on
+    // level 1 of most spares. That is harmless, because WayVNC always types a
+    // spare with Shift held to reach level 2. Apps read these keycodes through
+    // this keymap, so each spare must pass these checks, all tested over
+    // WayVNC:
+    //   - Chrome drops keycodes missing from its evdev table
+    //     (ui/events/keycodes/dom/dom_code_data.inc), so Launch1-4, Xfer and
+    //     the like type nothing there.
+    //   - Ghostty encodes F13-F24 and keypad keys from the keycode: { on F14
+    //     typed ESC[26;2~.
+    //   - Hyprland resolves bind keysyms through the plain US layout, so the
+    //     key's US symbol must not be bound: media and brightness keys would
+    //     fire Omarchy's bindings. Keycodes with no US symbol are out too,
+    //     because Hyprland matches their empty keysym against every code:N
+    //     binding with the same modifiers.
+    //   - At or below 255, so Xwayland can use it.
+    key <I128> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ exclam, exclam ] };
+    key <I152> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ at, at ] };
+    key <I158> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ numbersign, numbersign ] };
+    key <I163> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ dollar, dollar ] };
+    key <I164> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ percent, percent ] };
+    key <I177> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ asciicircum, asciicircum ] };
+    key <I179> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ ampersand, ampersand ] };
+    key <I189> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ asterisk, asterisk ] };
+    key <I187> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ parenleft, parenleft ] };
+    key <I188> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ parenright, parenright ] };
+    key <I212> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ underscore, underscore ] };
+    key <I217> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ plus, plus ] };
+    key <I239> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ asciitilde, asciitilde ] };
+    key <I240> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ braceleft, braceleft ] };
+    key <I241> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ braceright, braceright ] };
+    key <I243> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ bar, bar ] };
+    key <I182> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ colon, colon ] };
+    key <I235> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ quotedbl, quotedbl ] };
+    key <I214> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ less, less ] };
+    // > needs no spare: the ISO <LSGT> key already has it on level 2.
+    key <I190> { type[Group1] = "TWO_LEVEL", symbols[Group1] = [ question, question ] };
 
     // Super_L now resolves to <LALT>, so keep a real Win key working for
     // clients that do send Super.

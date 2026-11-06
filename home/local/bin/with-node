@@ -1,0 +1,51 @@
+#!/bin/sh
+# Run a command with Node 24 or newer first on PATH.
+#
+# Usage: with-node COMMAND [ARG...]
+#
+# The Node scripts in this directory are ES modules without a .mjs extension.
+# Node before 22.7 loads them as CommonJS and stops at the first `import`.
+# Tinty and Zed run them in the current project's environment, and a project
+# can put an older Node first on PATH (`dev` reads its .nvmrc). This wrapper
+# finds the first Node 24 or newer on PATH and puts its directory first.
+
+set -u
+
+minimum=24
+
+if [ "$#" -eq 0 ]; then
+  printf 'usage: with-node COMMAND [ARG...]\n' >&2
+  exit 2
+fi
+
+found=
+set -f
+old_ifs=$IFS
+IFS=:
+for dir in $PATH; do
+  IFS=$old_ifs
+  # A relative or empty entry depends on the current directory. Do not run a
+  # project's ./node.
+  case $dir in /*) ;; *) continue ;; esac
+  [ -f "$dir/node" ] && [ -x "$dir/node" ] || continue
+  version=$("$dir/node" --version 2>/dev/null) || continue
+  major=${version#v}
+  major=${major%%.*}
+  case $major in '' | *[!0-9]*) continue ;; esac
+  if [ "$major" -ge "$minimum" ]; then
+    set +f
+    PATH=$dir:$PATH
+    export PATH
+    exec "$@"
+  fi
+  found="$found $version"
+done
+IFS=$old_ifs
+set +f
+
+if [ -n "$found" ]; then
+  printf 'with-node: %s needs Node %s or newer, but PATH has only:%s\n' "$1" "$minimum" "$found" >&2
+else
+  printf 'with-node: %s needs Node %s or newer, but no node is on PATH\n' "$1" "$minimum" >&2
+fi
+exit 1

@@ -305,6 +305,13 @@ The tinty hook `tinty-zed-hook` installs each scheme as the theme "Tinted
 Theming", with the highlight overrides from Neovim's `config/colorscheme.lua`.
 `tinty apply` therefore switches Zed and Neovim together.
 
+The Node scripts in `home/local/bin` are ES modules without a `.mjs`
+extension, and Node before 22.7 cannot run them. A project can put an older
+Node first on PATH (for example, `dev` reads its `.nvmrc`). Tinty and Zed run
+these scripts in the current project, so they call them through `with-node`.
+`with-node` finds the first Node 24 or newer on PATH and puts its directory
+first.
+
 ### Rex
 
 `home/config/rex/init.lua` gives Rex the tmux and Herdr key bindings, with

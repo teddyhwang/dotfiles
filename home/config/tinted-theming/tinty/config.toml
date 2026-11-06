@@ -48,7 +48,8 @@ name = "base16-opencode"
 path = "https://github.com/scaryrawr/base16-opencode"
 themes-dir = "themes"
 supported-systems = ["base16", "base24"]
-hook = 'tinty-opencode-hook "$TINTY_THEME_FILE_PATH"'
+# with-node skips an older Node that the current project puts first on PATH.
+hook = 'with-node tinty-opencode-hook "$TINTY_THEME_FILE_PATH"'
 
 [[items]]
 name = "tinted-zed"
@@ -57,4 +58,4 @@ themes-dir = "themes"
 supported-systems = ["base16", "base24"]
 # Installs the theme as "Tinted Theming" (selected in zed/settings.json) with the
 # same highlight overrides as Neovim's colorscheme.lua.
-hook = 'tinty-zed-hook "$TINTY_THEME_FILE_PATH"'
+hook = 'with-node tinty-zed-hook "$TINTY_THEME_FILE_PATH"'

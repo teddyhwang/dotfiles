@@ -207,7 +207,7 @@ test("bindings use namespaced actions", () => {
 
 test("tinty installs the Zed theme through the Neovim-matching hook", () => {
   const config = readFileSync(path.join(repo, "home/config/tinted-theming/tinty/config.toml"), "utf8");
-  assert.match(config, /^hook = 'tinty-zed-hook "\$TINTY_THEME_FILE_PATH"'$/m);
+  assert.match(config, /^hook = 'with-node tinty-zed-hook "\$TINTY_THEME_FILE_PATH"'$/m);
   assert.equal(statSync(path.join(repo, "home/local/bin/tinty-zed-hook")).mode & 0o111, 0o111);
 });
 

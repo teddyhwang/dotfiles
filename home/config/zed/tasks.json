@@ -21,9 +21,10 @@
     "show_command": false
   },
   {
-    // \oo, \os, \ov: other.nvim alternate file (zed-other-file).
+    // \oo, \os, \ov: other.nvim alternate file (zed-other-file). with-node skips
+    // an older Node that the project puts first on PATH.
     "label": "alternate file",
-    "command": "target=$(zed-other-file \"$ZED_FILE\") && zed \"$target\"",
+    "command": "target=$(with-node zed-other-file \"$ZED_FILE\") && zed \"$target\"",
     "reveal": "never",
     "hide": "on_success",
     "show_summary": false,

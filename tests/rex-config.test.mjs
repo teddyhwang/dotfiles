@@ -17,7 +17,25 @@ test("key handlers do not queue client actions", () => {
   // Rex rejects rex.client.queue inside a rex.bind function at key time
   // ("a key handler cannot queue client actions"), which `rex config check`
   // does not catch. Handlers must call server methods with rex.call instead.
-  assert.doesNotMatch(config, /rex\.client\.queue/);
+  // Config actions (rex.action) may queue them, so every queue call must sit
+  // inside a top-level rex.action({ ... }) block.
+  const actions = [...config.matchAll(/^rex\.action\(\{[\s\S]*?^\}\)/gm)].map((m) => [
+    m.index,
+    m.index + m[0].length,
+  ]);
+  const queues = [...config.matchAll(/rex\.client\.queue/g)].map((m) => m.index);
+  for (const index of queues) {
+    const line = config.slice(0, index).split("\n").length;
+    assert.ok(
+      actions.some(([start, end]) => index > start && index < end),
+      `init.lua:${line} queues a client action outside rex.action`,
+    );
+  }
+});
+
+test("prefix+tab goes to the last location", () => {
+  assert.match(config, /^prefixed\("tab", "last_location"\)$/m);
+  assert.match(config, /^\s+name = "last_location",$/m);
 });
 
 test("Rex accepts the configuration", {

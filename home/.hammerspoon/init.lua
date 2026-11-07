@@ -145,4 +145,8 @@ GeForceNow = require("geforce_now").start()
 -- ctrl+j/k move through Rex's session switcher and palette (global to prevent GC)
 RexPickers = require("rex_pickers").start()
 
+-- Shortcuts go to the remote computer, not Raycast, while Screen Sharing is
+-- frontmost (global to prevent GC)
+ScreenSharingKeys = require("screen_sharing_keys").start()
+
 hs.alert.show("Hammerspoon loaded")

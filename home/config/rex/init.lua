@@ -18,7 +18,10 @@ end
 -- the sidebar) is noticed at the next tracked key, because the location has
 -- changed since the last note. Config actions from the app run on its home
 -- server with ctx.server naming the remote host, so the history can cross
--- hosts. `rex do last_location_log --json` shows recent jumps.
+-- hosts. The app's session.select only finds sessions on the host it shows,
+-- and no action selects a host, so a jump to another host focuses the pane
+-- there and opens the Switch Host picker for the last step.
+-- `rex do last_location_log --json` shows recent jumps.
 local history = {} -- client ID -> { current = location, previous = location }
 local log = {}
 
@@ -120,12 +123,18 @@ rex.action({
       state.previous = nil
       return
     end
-    if elsewhere(ctx, target) then
+    if target.server ~= ctx.server then
+      -- The host shows the session you left it on, now focused on the pane.
+      rex.client.queue("client.host.switch")
+      remember_log("other host " .. describe(here) .. " -> " .. describe(target))
+    elseif target.session_id ~= ctx.session_id then
       -- A session keeps the window and pane you left it on, so selecting it
       -- is enough when focus could not reach the target's server.
       rex.client.queue("session.select", { session_id = target.session_id })
+      remember_log("jumped " .. describe(here) .. " -> " .. describe(target))
+    else
+      remember_log("jumped " .. describe(here) .. " -> " .. describe(target))
     end
-    remember_log("jumped " .. describe(here) .. " -> " .. describe(target))
     state.previous, state.current = here, target
   end,
 })

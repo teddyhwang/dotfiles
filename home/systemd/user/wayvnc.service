@@ -10,7 +10,9 @@ Type=simple
 ExecStartPre=%h/.local/bin/wayvnc-output-recover
 # macOS Screen Sharing sends Command as Alt and never sends Super; the macvnc
 # layout (~/.config/xkb/symbols/macvnc) maps it back to Super for Hyprland.
-ExecStart=/usr/bin/wayvnc --gpu --render-cursor --keyboard=macvnc
+# --max-fps=60 matches the display; the default 30 adds up to 33 ms before a
+# keystroke's echo is sent, which is noticeable over a direct LAN link.
+ExecStart=/usr/bin/wayvnc --gpu --render-cursor --keyboard=macvnc --max-fps=60
 # WayVNC exits successfully when its captured output disappears, so restart
 # clean exits as well as crashes after KVM/display reconnects.
 Restart=always
